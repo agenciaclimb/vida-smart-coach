@@ -1,0 +1,142 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --primary: 217 91% 60%; /* Azul Vibrante */
+  --primary-foreground: 0 0% 100%;
+  --lime-accent: 84 78% 51%; /* Verde Limão */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 217 91% 60%;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  --lime-accent: 84 78% 51%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 217 91% 60%;
+  --background: 222.2 84% 4.9%;
+  --foreground: 0 0% 100%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 0 0% 100%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 0 0% 100%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.vida-smart-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%);
+}
+
+.vida-smart-card {
+  background: hsl(var(--card));
+}
+
+.chat-bubble-user {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.9));
+  color: hsl(var(--primary-foreground));
+}
+
+.chat-bubble-ai {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.35s;
+  transform-origin: 50% 50%;
+}
+
+.btn-lime-accent {
+  background-color: hsl(var(--lime-accent));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+.btn-lime-accent:hover {
+  background-color: hsl(var(--lime-accent) / 0.9);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-card-dark {
+    background: rgba(10, 10, 20, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes blob {
+	0% {
+		transform: translate(0px, 0px) scale(1);
+	}
+	33% {
+		transform: translate(30px, -50px) scale(1.1);
+	}
+	66% {
+		transform: translate(-20px, 20px) scale(0.9);
+	}
+	100% {
+		transform: translate(0px, 0px) scale(1);
+	}
+}
+
+.animate-blob {
+	animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+	animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+	animation-delay: 4s;
+}
