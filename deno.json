@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "npm:stripe@12.15.0": "npm:stripe@12.15.0"
+  }
+}
