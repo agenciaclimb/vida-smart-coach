@@ -31,21 +31,21 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     const { 
-      key, 
-      data, 
+      event,
       instance, 
+      data,
       destination,
       messageType,
       message 
     } = body
 
-    if (!key || !data) {
-      console.log("Missing required fields in webhook payload")
+    if (!data || event !== 'messages.upsert') {
+      console.log("Not a messages.upsert event or missing data:", { event, hasData: !!data })
       return new Response(
         JSON.stringify({ 
           ok: true, 
           received: true,
-          message: "Webhook received but missing required fields" 
+          message: "Webhook received but not a processable message event" 
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
@@ -59,13 +59,28 @@ serve(async (req) => {
                           data.message?.extendedTextMessage?.text ||
                           message?.text ||
                           'Mensagem não suportada'
+    
+    if (data.key?.fromMe) {
+      console.log("Skipping message from bot itself")
+      return new Response(
+        JSON.stringify({ 
+          ok: true, 
+          received: true,
+          message: "Message from bot itself, skipped" 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 200 
+        }
+      )
+    }
 
     const { error: saveError } = await supabase
       .from('whatsapp_messages')
       .insert({
         phone_number: phoneNumber,
         message_content: messageContent,
-        message_type: messageType || 'text',
+        message_type: data.messageType || messageType || 'text',
         webhook_data: body,
         received_at: new Date().toISOString(),
         instance_id: instance
