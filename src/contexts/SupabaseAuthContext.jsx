@@ -95,15 +95,59 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUserProfile]);
   
   const signUp = useCallback(async (email, password, metadata) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { user: data.user, error };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        // Verificar se é um erro real ou apenas confirmação pendente
+        if (error.message?.includes('User already registered') || 
+            error.message?.includes('already been registered')) {
+          return { success: false, error: 'Este email já está cadastrado. Tente fazer login.' };
+        }
+        return { success: false, error: error.message };
+      }
+
+      // CORREÇÃO PRINCIPAL: Verificar se o usuário foi criado com sucesso
+      if (data?.user) {
+        // Se o usuário foi criado mas não está confirmado
+        if (!data.user.email_confirmed_at) {
+          return { 
+            success: true, 
+            needsConfirmation: true,
+            message: 'Conta criada com sucesso! Verifique seu email para confirmar o cadastro.',
+            user: data.user 
+          };
+        }
+        
+        // Se o usuário foi criado e já está confirmado
+        return { 
+          success: true, 
+          needsConfirmation: false,
+          message: 'Conta criada e confirmada com sucesso!',
+          user: data.user 
+        };
+      }
+
+      // Fallback - se chegou até aqui, algo inesperado aconteceu
+      return { 
+        success: false, 
+        error: 'Erro inesperado durante o cadastro. Tente novamente.' 
+      };
+
+    } catch (error) {
+      console.error('Erro no signup:', error);
+      return { 
+        success: false, 
+        error: 'Erro de conexão. Verifique sua internet e tente novamente.' 
+      };
+    }
   }, []);
 
   const signIn = useCallback(async (email, password) => {

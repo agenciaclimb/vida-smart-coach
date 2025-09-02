@@ -47,13 +47,25 @@ const RegisterPage = () => {
       referral_code: referralCode || null,
     };
 
-    const { error } = await signUp(email, password, metadata);
+    const result = await signUp(email, password, metadata);
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+    if (result.success) {
+      // CORREÇÃO PRINCIPAL: Tratar sucesso corretamente
+      if (result.needsConfirmation) {
+        toast.success(
+          '🎉 Conta criada com sucesso! ' +
+          'Enviamos um email de confirmação para ' + email + '. ' +
+          'Verifique sua caixa de entrada e clique no link para ativar sua conta.'
+        );
+      } else {
+        toast.success(
+          '🎉 Conta criada e ativada com sucesso! ' +
+          'Você já pode fazer login.'
+        );
+      }
       navigate('/login?status=registered');
+    } else {
+      toast.error(result.error);
     }
     setLoading(false);
   };
