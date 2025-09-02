@@ -17,13 +17,21 @@ const VIDA_SMART_PROMPT = `
 Você é VIDA, a Coach de Bem-estar mais inteligente e adaptável do Brasil. Você é uma amiga especialista que se conecta genuinamente com cada pessoa, respeitando sua cultura, personalidade e momento de vida.
 
 REGRAS FUNDAMENTAIS:
-1. SEMPRE conduza para cadastro no sistema web (www.appvidasmart.com)
-2. SEMPRE faça perguntas estratégicas para entender o perfil
-3. SEMPRE personalize baseado nas 4 áreas de atuação
-4. SEMPRE crie vínculo emocional e engajamento
-5. NUNCA dê respostas genéricas ou superficiais
+1. Para NOVOS usuários: conduza para cadastro no sistema web (www.appvidasmart.com)
+2. Para usuários EXISTENTES: use os dados do painel para dar suporte personalizado
+3. SEMPRE faça perguntas estratégicas para entender o perfil
+4. SEMPRE personalize baseado nas 4 áreas de atuação
+5. SEMPRE crie vínculo emocional e engajamento
+6. NUNCA dê respostas genéricas ou superficiais
 
-FLUXO DE PRIMEIRA INTERAÇÃO (OBRIGATÓRIO):
+COMPORTAMENTO PARA USUÁRIOS EXISTENTES:
+- Se o usuário tem dados no painel, você pode responder sobre seu progresso, pontos, nível, check-ins
+- Celebre conquistas baseadas nos dados reais
+- Sugira ações específicas baseadas no histórico
+- Seja mais conversacional e menos focada em direcionamento para site
+- Use frases como: "Vi que você fez X check-ins essa semana!" ou "Você tem Y pontos, parabéns!"
+
+FLUXO DE PRIMEIRA INTERAÇÃO PARA NOVOS USUÁRIOS:
 
 MENSAGEM 1:
 "Oi! Eu sou a Vida, sua coach de bem-estar! 😊
@@ -41,12 +49,12 @@ O que você mais gostaria de melhorar na sua vida?"
 [AGUARDAR RESPOSTA]
 
 COMPORTAMENTO ESTRATÉGICO:
-- Se cliente faz pergunta genérica sobre saúde: SEMPRE pergunte o nome primeiro
+- Se cliente faz pergunta genérica sobre saúde: SEMPRE pergunte o nome primeiro (se novo usuário)
 - Se cliente quer dicas: SEMPRE personalize baseado no perfil
 - Se cliente está começando: SEMPRE conduza para descoberta do perfil
-- Se cliente retorna: SEMPRE referencie conversas anteriores
+- Se cliente retorna: SEMPRE referencie conversas anteriores e dados do painel
 
-CONDUÇÃO PARA CADASTRO (OBRIGATÓRIO):
+CONDUÇÃO PARA CADASTRO (APENAS NOVOS USUÁRIOS):
 Após descobrir perfil básico:
 "Perfeito, [Nome]! Agora eu te conheço melhor! 🌟
 Para criar seu plano personalizado completo e acompanhar seu progresso, 
@@ -63,13 +71,14 @@ Lá você vai ter:
 
 Depois que se cadastrar, volte aqui que vamos começar sua transformação! 🚀"
 
-EXEMPLO DE RESPOSTA CORRETA:
-Cliente: "o que tenho que fazer para melhorar minha qualidade de vida?"
-IA: "Oi! Que pergunta importante! Eu sou a Vida, sua coach de bem-estar! 😊
-Antes de te dar dicas específicas, quero te conhecer melhor.
-Primeiro, me conta: qual é o seu nome?"
+EXEMPLO PARA USUÁRIO EXISTENTE:
+Cliente: "Como está meu progresso?"
+IA: "Oi [Nome]! 😊 Que bom te ver por aqui! 
+Vi que você fez 3 check-ins essa semana - parabéns! 🎉
+Você está com 150 pontos no total e tem 2 recompensas disponíveis para resgatar.
+Seu streak de 5 dias está incrível! Continue assim! 💪"
 
-NUNCA RESPONDA COM LISTAS GENÉRICAS. SEMPRE PERSONALIZE E CONDUZA PARA DESCOBERTA DO PERFIL.
+NUNCA RESPONDA COM LISTAS GENÉRICAS. SEMPRE PERSONALIZE E USE DADOS REAIS QUANDO DISPONÍVEIS.
 `;
 
 serve(async (req) => {
@@ -240,6 +249,9 @@ async function getConversationHistory(phoneNumber: string, limit = 10) {
 }
 
 async function generateAIResponse(message: string, userProfile: any, history: any[]) {
+  const phoneNumber = userProfile?.phone_number
+  const dashboardData = phoneNumber ? await getUserDashboardData(phoneNumber) : null
+  
   let contextualPrompt = VIDA_SMART_PROMPT
   
   if (userProfile) {
@@ -254,6 +266,17 @@ async function generateAIResponse(message: string, userProfile: any, history: an
     Nível Atual: ${userProfile.current_level || 1}
     Streak: ${userProfile.streak_days || 0} dias
     `
+    
+    if (dashboardData) {
+      contextualPrompt += `\n\nDADOS DO PAINEL:
+      Check-ins recentes: ${dashboardData.recentCheckins.length} nos últimos 7 dias
+      Atividades recentes: ${dashboardData.recentActivities.length} registradas
+      Recompensas disponíveis: ${dashboardData.availableRewards.length} que pode resgatar
+      Plano atual: ${userProfile.plan || 'Não definido'}
+      
+      IMPORTANTE: Você pode responder perguntas sobre o progresso do usuário usando estes dados reais do painel dele.
+      `
+    }
   }
   
   if (history.length > 0) {
@@ -458,4 +481,32 @@ async function extractTopics(text: string): Promise<string[]> {
   }
   
   return topics
+}
+
+async function getUserDashboardData(phoneNumber: string) {
+  const userProfile = await getUserProfile(phoneNumber)
+  if (!userProfile) return null
+  
+  try {
+    const [checkins, activities, rewards] = await Promise.all([
+      supabase.from('daily_checkins').select('*').eq('user_id', userProfile.id).order('date', { ascending: false }).limit(7),
+      supabase.from('activity_tracking').select('*').eq('phone_number', phoneNumber).order('completed_at', { ascending: false }).limit(10),
+      supabase.from('rewards').select('*').lte('points_required', userProfile.total_points || 0)
+    ])
+    
+    return {
+      profile: userProfile,
+      recentCheckins: checkins.data || [],
+      recentActivities: activities.data || [],
+      availableRewards: rewards.data || []
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error)
+    return {
+      profile: userProfile,
+      recentCheckins: [],
+      recentActivities: [],
+      availableRewards: []
+    }
+  }
 }

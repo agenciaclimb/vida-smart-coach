@@ -44,7 +44,7 @@ const RewardsTab = () => {
         if (newPoints < 0) throw new Error("Cliente não tem pontos suficientes.");
 
         const { error: updateError } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .update({ points: newPoints })
             .eq('id', client.id);
         if (updateError) throw updateError;
