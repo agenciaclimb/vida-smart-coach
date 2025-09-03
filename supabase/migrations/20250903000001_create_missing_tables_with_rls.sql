@@ -1,7 +1,7 @@
 
 
 CREATE TABLE IF NOT EXISTS public.conversations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     whatsapp_number VARCHAR(20) NOT NULL,
     status VARCHAR(20) DEFAULT 'active',
@@ -17,7 +17,7 @@ CREATE POLICY "Users can only access their own conversations" ON public.conversa
     FOR ALL USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.interactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
     message_type VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE POLICY "Users can only access their own interactions" ON public.interacti
     );
 
 CREATE TABLE IF NOT EXISTS public.checkins (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     checkin_type VARCHAR(30) NOT NULL,
     data JSONB NOT NULL,
@@ -50,7 +50,7 @@ CREATE POLICY "Users can only access their own checkins" ON public.checkins
     FOR ALL USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.plan_days (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     plan_data JSONB NOT NULL,
@@ -66,7 +66,7 @@ CREATE POLICY "Users can only access their own plan_days" ON public.plan_days
     FOR ALL USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.measurements (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     measurement_type VARCHAR(30) NOT NULL,
     value DECIMAL(10,2) NOT NULL,
@@ -82,7 +82,7 @@ CREATE POLICY "Users can only access their own measurements" ON public.measureme
     FOR ALL USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.points_ledger (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     points_change INTEGER NOT NULL,
     reason TEXT NOT NULL,
@@ -99,7 +99,7 @@ CREATE POLICY "Users can insert own points_ledger" ON public.points_ledger
     FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
 
 CREATE TABLE IF NOT EXISTS public.commissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     referrer_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     commission_type VARCHAR(30) NOT NULL,
@@ -141,3 +141,30 @@ CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON public.conversat
 
 CREATE TRIGGER update_plan_days_updated_at BEFORE UPDATE ON public.plan_days
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE OR REPLACE FUNCTION public.create_user_profile_on_signup()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.user_profiles (
+        id,
+        name,
+        email,
+        activity_level,
+        role,
+        phone_number
+    ) VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+        NEW.email,
+        'moderate',
+        COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+        NEW.raw_user_meta_data->>'phone'
+    );
+    RETURN NEW;
+END;
+$$ language 'plpgsql' SECURITY DEFINER;
+
+CREATE TRIGGER create_user_profile_on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.create_user_profile_on_signup();
