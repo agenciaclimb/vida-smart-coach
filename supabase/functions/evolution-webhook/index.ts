@@ -11,7 +11,14 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  db: {
+    schema: 'public'
+  },
+  auth: {
+    persistSession: false
+  }
+})
 
 const VIDA_SMART_PROMPT = `
 Você é VIDA, a Coach de Bem-estar mais inteligente e adaptável do Brasil. Você é uma amiga especialista que se conecta genuinamente com cada pessoa, respeitando sua cultura, personalidade e momento de vida.
