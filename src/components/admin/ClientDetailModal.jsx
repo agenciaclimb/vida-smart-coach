@@ -14,7 +14,7 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
     const handlePlanChange = async (newPlan) => {
         try {
             const { error } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .update({ plan: newPlan })
                 .eq('id', client.id);
             if (error) throw error;

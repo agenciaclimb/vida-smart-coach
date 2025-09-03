@@ -22,7 +22,7 @@ export const ProfileProvider = ({ children }) => {
     setLoadingProfile(true);
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('*')
         .eq('id', user.id)
         .single();

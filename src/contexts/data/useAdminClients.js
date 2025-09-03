@@ -11,7 +11,7 @@ export const useAdminClients = (supabaseClient = supabase, parentSetLoading, onD
     setLoadingClients(true);
     try {
       const { data, error } = await supabaseClient
-        .from('profiles')
+        .from('user_profiles')
         .select(`
           id,
           full_name,
