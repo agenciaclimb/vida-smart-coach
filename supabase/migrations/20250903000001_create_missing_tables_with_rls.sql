@@ -145,23 +145,23 @@ CREATE TRIGGER update_plan_days_updated_at BEFORE UPDATE ON public.plan_days
 CREATE OR REPLACE FUNCTION public.create_user_profile_on_signup()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM public.user_profiles WHERE id = NEW.id) THEN
-        INSERT INTO public.user_profiles (
-            id,
-            name,
-            email,
-            activity_level,
-            role,
-            phone_number
-        ) VALUES (
-            NEW.id,
-            COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
-            NEW.email,
-            'moderate',
-            COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
-            NEW.raw_user_meta_data->>'phone'
-        );
-    END IF;
+    INSERT INTO public.user_profiles (
+        id,
+        name,
+        email,
+        activity_level,
+        role,
+        phone_number
+    ) VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+        COALESCE(NEW.email, 'usuario@temp.com'),
+        'moderate',
+        COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+        NEW.raw_user_meta_data->>'phone'
+    )
+    ON CONFLICT (id) DO NOTHING;
+    
     RETURN NEW;
 EXCEPTION
     WHEN OTHERS THEN
