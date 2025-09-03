@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS gamification (
 ALTER TABLE gamification ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own gamification" ON gamification FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own gamification" ON gamification FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can insert own gamification" ON gamification FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
 CREATE POLICY "Users can update own gamification" ON gamification FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE TRIGGER update_gamification_updated_at BEFORE UPDATE ON gamification FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -24,7 +24,7 @@ BEGIN
     INSERT INTO gamification (user_id) VALUES (NEW.id);
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql' SECURITY DEFINER;
 
 CREATE TRIGGER create_gamification_on_user_creation 
     AFTER INSERT ON user_profiles 

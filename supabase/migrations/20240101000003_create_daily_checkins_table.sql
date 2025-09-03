@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS daily_checkins (
 ALTER TABLE daily_checkins ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own checkins" ON daily_checkins FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own checkins" ON daily_checkins FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can insert own checkins" ON daily_checkins FOR INSERT WITH CHECK (auth.uid() = user_id OR auth.role() = 'service_role');
 CREATE POLICY "Users can update own checkins" ON daily_checkins FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE INDEX idx_daily_checkins_user_date ON daily_checkins(user_id, date DESC);
