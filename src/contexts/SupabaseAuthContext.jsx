@@ -96,23 +96,16 @@ export const AuthProvider = ({ children }) => {
   
   const signUp = useCallback(async (email, password, metadata) => {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/account-upsert`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          fullName: metadata?.full_name,
-          phone: metadata?.phone,
-        }),
+      const { invokeFn } = await import('../core/supabase.js');
+      
+      const result = await invokeFn('account-upsert', {
+        email,
+        password,
+        fullName: metadata?.full_name,
+        phone: metadata?.phone,
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.ok) {
+      if (!result.ok) {
         return { 
           user: null, 
           error: { 
