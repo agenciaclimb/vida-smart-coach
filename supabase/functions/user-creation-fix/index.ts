@@ -1,0 +1,199 @@
+import { createClient } from "npm:@supabase/supabase-js@2.38.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const { phone, fullName, email, password } = await req.json().catch(() => ({}));
+    const phoneClean = String(phone ?? "").replace(/\D/g, "");
+
+    if (!phoneClean && !email) {
+      return new Response(JSON.stringify({ ok: false, error: "phone or email required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    let existingUser = null;
+    if (phoneClean) {
+      const { data: existingByPhone } = await supabase
+        .from("profiles")
+        .select("id, phone, email")
+        .eq("phone", phoneClean)
+        .maybeSingle();
+      
+      if (existingByPhone) existingUser = existingByPhone;
+    }
+    
+    if (!existingUser && email) {
+      const { data: usersByEmail } = await supabase.auth.admin.listUsers({
+        filters: {
+          email: email.toLowerCase()
+        }
+      });
+      
+      if (usersByEmail?.users?.length > 0) {
+        existingUser = {
+          id: usersByEmail.users[0].id,
+          email: usersByEmail.users[0].email
+        };
+      }
+    }
+
+    let userId = existingUser?.id;
+    const referralToken = crypto.randomUUID();
+
+    if (!userId) {
+      const randomPassword = password || Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      const authOptions = {
+        user_metadata: {
+          full_name: fullName || "Usuário",
+          role: "client",
+        }
+      };
+
+      if (phoneClean) {
+        Object.assign(authOptions, {
+          phone: phoneClean,
+          phone_confirm: true,
+          password: randomPassword,
+        });
+      } else if (email) {
+        Object.assign(authOptions, {
+          email: email.toLowerCase(),
+          email_confirm: true,
+          password: randomPassword,
+        });
+      }
+
+      console.log("Creating user with options:", JSON.stringify({
+        ...authOptions,
+        password: "REDACTED"
+      }));
+
+      try {
+        const { data: created, error: createError } = await supabase.auth.admin.createUser(authOptions);
+
+        if (createError) {
+          console.error("User creation error:", createError);
+          return new Response(
+            JSON.stringify({ 
+              ok: false, 
+              error: createError.message,
+              code: createError.code || 'unknown' 
+            }),
+            { 
+              status: typeof createError.status === 'number' ? createError.status : 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        userId = created?.user?.id;
+      } catch (error) {
+        console.error("Exception during user creation:", error);
+        return new Response(
+          JSON.stringify({ 
+            ok: false, 
+            error: error instanceof Error ? error.message : String(error),
+            type: error.constructor?.name || 'Error' 
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
+      if (!userId) {
+        throw new Error("Failed to create user");
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const { data: profileExists } = await supabase
+        .from("profiles")
+        .select("id, phone")
+        .eq("id", userId)
+        .maybeSingle();
+      
+      if (!profileExists) {
+        console.log("Profile not created by trigger, creating manually");
+        
+        try {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              id: userId,
+              phone: phoneClean || null,
+              role: "client",
+              full_name: fullName || "Usuário",
+              name: fullName || "Usuário",
+              referral_token: referralToken
+            });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+        } catch (profileException) {
+          console.error("Exception during profile creation:", profileException);
+        }
+      } else if (phoneClean && !profileExists.phone) {
+        await supabase
+          .from("profiles")
+          .update({ phone: phoneClean })
+          .eq("id", userId);
+      }
+    }
+
+    const { data: base } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "app_base_url")
+      .maybeSingle();
+
+    const baseUrl = base?.value || Deno.env.get("APP_BASE_URL") || "";
+    const referralUrl = baseUrl ? `${baseUrl}/register?ref=${referralToken}` : null;
+
+    return new Response(
+      JSON.stringify({ 
+        ok: true, 
+        userId, 
+        phone: phoneClean || null,
+        email: email?.toLowerCase() || null,
+        referralUrl 
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    const error = e instanceof Error ? e : new Error(String(e));
+    console.error("account-upsert ERROR:", error.message, error.stack);
+    
+    return new Response(JSON.stringify({ 
+      ok: false, 
+      error: error.message,
+      stack: error.stack 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

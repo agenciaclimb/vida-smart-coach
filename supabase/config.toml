@@ -352,6 +352,12 @@ verify_jwt = false
 [functions.account-upsert-fixed]
 verify_jwt = false
 
+[functions.account-upsert-fixed-corrected]
+verify_jwt = false
+
+[functions.user-creation-fix]
+verify_jwt = false
+
 [functions.evolution-webhook]
 verify_jwt = false
 

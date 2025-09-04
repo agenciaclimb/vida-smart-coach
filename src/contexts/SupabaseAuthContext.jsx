@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
   
   const signUp = useCallback(async (email, password, metadata) => {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/account-upsert-fixed-corrected`, {
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/user-creation-fix`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
