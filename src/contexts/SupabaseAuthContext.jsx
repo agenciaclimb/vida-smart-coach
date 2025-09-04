@@ -95,15 +95,52 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUserProfile]);
   
   const signUp = useCallback(async (email, password, metadata) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { user: data.user, error };
+    try {
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/account-upsert-fixed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: metadata?.full_name,
+          phone: metadata?.phone,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        return { 
+          user: null, 
+          error: { 
+            message: result.error || 'Signup failed',
+            code: result.code || 'signup_error'
+          } 
+        };
+      }
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error after signup:', sessionError);
+      }
+
+      return { 
+        user: { id: result.userId, email: result.email }, 
+        error: null 
+      };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { 
+        user: null, 
+        error: { 
+          message: error.message || 'Network error during signup',
+          code: 'network_error'
+        } 
+      };
+    }
   }, []);
 
   const signIn = useCallback(async (email, password) => {
