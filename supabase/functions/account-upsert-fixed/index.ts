@@ -30,20 +30,11 @@ Deno.serve(async (req) => {
     });
 
     let existingUser = null;
-    if (phoneClean) {
-      const { data: existingByPhone } = await supabase
-        .from("user_profiles")
-        .select("id, phone, email")
-        .eq("phone", phoneClean)
-        .maybeSingle();
-      
-      if (existingByPhone) existingUser = existingByPhone;
-    }
     
     if (!existingUser && email) {
       const { data: existingByEmail } = await supabase
         .from("user_profiles")
-        .select("id, phone, email")
+        .select("id, email")
         .eq("email", email.toLowerCase())
         .maybeSingle();
       
@@ -116,9 +107,7 @@ Deno.serve(async (req) => {
           .from("user_profiles")
           .upsert({
             id: userId,
-            phone: phoneClean || null,
             email: email?.toLowerCase() || null,
-            full_name: fullName || "Usuário",
             name: fullName || "Usuário",
             role: "client",
             activity_level: "moderate",
@@ -143,7 +132,6 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         ok: true, 
         userId, 
-        phone: phoneClean || null,
         email: email?.toLowerCase() || null,
         referralUrl 
       }),
