@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     if (phoneClean) {
       const { data: existingByPhone } = await supabase
         .from("user_profiles")
-        .select("id, phone, email")
-        .eq("phone", phoneClean)
+        .select("id, whatsapp_number, name")
+        .eq("whatsapp_number", phoneClean)
         .maybeSingle();
       
       if (existingByPhone) existingUser = existingByPhone;
@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
     
     if (!existingUser && email) {
       const { data: existingByEmail } = await supabase
-        .from("user_profiles")
-        .select("id, phone, email")
+        .from("auth.users")
+        .select("id, email")
         .eq("email", email.toLowerCase())
         .maybeSingle();
       
@@ -136,11 +136,10 @@ Deno.serve(async (req) => {
             .from("user_profiles")
             .upsert({
               id: userId,
-              phone: phoneClean || null,
-              email: email?.toLowerCase() || null,
+              whatsapp_number: phoneClean || null,
               name: fullName || "Usuário",
               role: "client",
-              referral_token: referralToken,
+              activity_level: "moderate",
             });
 
           if (profileError) {
@@ -165,9 +164,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         ok: true, 
         userId, 
-        phone: phoneClean || null,
-        email: email?.toLowerCase() || null,
-        referralUrl 
+        whatsapp_number: phoneClean || null,
+        email: email?.toLowerCase() || null
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
