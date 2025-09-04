@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
               id: userId,
               phone: phoneClean || null,
               email: email?.toLowerCase() || null,
-              full_name: fullName || "Usuário",
+              name: fullName || "Usuário",
               role: "client",
               referral_token: referralToken,
             });

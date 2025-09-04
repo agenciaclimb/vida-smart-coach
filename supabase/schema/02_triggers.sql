@@ -6,7 +6,7 @@ BEGIN
     id,
     email,
     phone,
-    full_name,
+    name,
     role,
     referral_token,
     created_at,
@@ -25,7 +25,7 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     phone = EXCLUDED.phone,
-    full_name = EXCLUDED.full_name,
+    name = EXCLUDED.name,
     updated_at = NOW();
   
   RETURN NEW;
