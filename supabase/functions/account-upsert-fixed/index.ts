@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     if (phoneClean) {
       const { data: existingByPhone } = await supabase
         .from("user_profiles")
-        .select("id, whatsapp_number, name")
-        .eq("whatsapp_number", phoneClean)
+        .select("id, phone, email")
+        .eq("phone", phoneClean)
         .maybeSingle();
       
       if (existingByPhone) existingUser = existingByPhone;
@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
     
     if (!existingUser && email) {
       const { data: existingByEmail } = await supabase
-        .from("auth.users")
-        .select("id, email")
+        .from("user_profiles")
+        .select("id, phone, email")
         .eq("email", email.toLowerCase())
         .maybeSingle();
       
@@ -84,39 +84,20 @@ Deno.serve(async (req) => {
         password: "REDACTED"
       }));
 
-      try {
-        const { data: created, error: createError } = await supabase.auth.admin.createUser(authOptions);
+      const { data: created, error: createError } = await supabase.auth.admin.createUser(authOptions);
 
-        if (createError) {
-          console.error("User creation error:", createError);
-          return new Response(
-            JSON.stringify({ 
-              ok: false, 
-              error: createError.message,
-              code: createError.code || 'unknown'
-            }),
-            { 
-              status: typeof createError.status === 'number' ? createError.status : 500,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
-        }
-
-        userId = created?.user?.id;
-      } catch (error) {
-        console.error("Exception during user creation:", error);
+      if (createError) {
+        console.error("User creation error:", createError);
         return new Response(
-          JSON.stringify({ 
-            ok: false, 
-            error: error instanceof Error ? error.message : String(error),
-            type: error.constructor?.name || 'Error' 
-          }),
+          JSON.stringify({ ok: false, error: createError.message }),
           { 
-            status: 500,
+            status: createError.status || 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
+
+      userId = created?.user?.id;
       
       if (!userId) {
         throw new Error("Failed to create user");
@@ -131,22 +112,20 @@ Deno.serve(async (req) => {
       if (!profileExists) {
         console.log("Profile not created by trigger, creating manually");
         
-        try {
-          const { error: profileError } = await supabase
-            .from("user_profiles")
-            .upsert({
-              id: userId,
-              whatsapp_number: phoneClean || null,
-              name: fullName || "Usuário",
-              role: "client",
-              activity_level: "moderate",
-            });
+        const { error: profileError } = await supabase
+          .from("user_profiles")
+          .upsert({
+            id: userId,
+            phone: phoneClean || null,
+            email: email?.toLowerCase() || null,
+            full_name: fullName || "Usuário",
+            name: fullName || "Usuário",
+            role: "client",
+            activity_level: "moderate",
+          });
 
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-        } catch (profileException) {
-          console.error("Exception during profile creation:", profileException);
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
         }
       }
     }
@@ -164,14 +143,15 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         ok: true, 
         userId, 
-        whatsapp_number: phoneClean || null,
-        email: email?.toLowerCase() || null
+        phone: phoneClean || null,
+        email: email?.toLowerCase() || null,
+        referralUrl 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     const error = e instanceof Error ? e : new Error(String(e));
-    console.error("account-upsert-fixed ERROR:", error.message, error.stack);
+    console.error("account-upsert ERROR:", error.message, error.stack);
     
     return new Response(JSON.stringify({ 
       ok: false, 
