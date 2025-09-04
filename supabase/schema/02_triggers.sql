@@ -1,4 +1,47 @@
 
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.user_profiles (
+    id,
+    email,
+    phone,
+    full_name,
+    role,
+    referral_token,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.phone,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+    gen_random_uuid()::text,
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone,
+    full_name = EXCLUDED.full_name,
+    updated_at = NOW();
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+COMMENT ON FUNCTION public.handle_new_user() IS 'Automatically creates user profile when new user is created in auth.users';
+COMMENT ON TRIGGER on_auth_user_created ON auth.users IS 'Trigger to create user profile after auth user creation';
+
+
+
+
 CREATE TRIGGER update_user_profiles_updated_at 
     BEFORE UPDATE ON user_profiles 
     FOR EACH ROW 
