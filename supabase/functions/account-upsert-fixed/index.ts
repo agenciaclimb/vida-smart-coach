@@ -12,11 +12,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { phone, fullName, email, password } = await req.json().catch(() => ({}));
-    const phoneClean = String(phone ?? "").replace(/\D/g, "");
+    const { fullName, email, password } = await req.json().catch(() => ({}));
 
-    if (!phoneClean && !email) {
-      return new Response(JSON.stringify({ ok: false, error: "phone or email required" }), {
+    if (!email) {
+      return new Response(JSON.stringify({ ok: false, error: "email required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -29,111 +28,89 @@ Deno.serve(async (req) => {
       auth: { persistSession: false }
     });
 
-    let existingUser = null;
-    
-    if (!existingUser && email) {
-      const { data: existingByEmail } = await supabase
-        .from("user_profiles")
-        .select("id, email")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
-      
-      if (existingByEmail) existingUser = existingByEmail;
-    }
-
-    let userId = existingUser?.id;
-    const referralToken = crypto.randomUUID();
-
-    if (!userId) {
-      const randomPassword = password || Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-
-      const authOptions = {
-        user_metadata: {
-          full_name: fullName || "Usuário",
-          role: "client",
-        }
-      };
-
-      if (phoneClean) {
-        Object.assign(authOptions, {
-          phone: phoneClean,
-          phone_confirm: true,
-          password: randomPassword,
-        });
-      } else if (email) {
-        Object.assign(authOptions, {
-          email: email.toLowerCase(),
-          email_confirm: true,
-          password: randomPassword,
-        });
-      }
-
-      console.log("Creating user with options:", JSON.stringify({
-        ...authOptions,
-        password: "REDACTED"
-      }));
-
-      const { data: created, error: createError } = await supabase.auth.admin.createUser(authOptions);
-
-      if (createError) {
-        console.error("User creation error:", createError);
-        return new Response(
-          JSON.stringify({ ok: false, error: createError.message }),
-          { 
-            status: createError.status || 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      userId = created?.user?.id;
-      
-      if (!userId) {
-        throw new Error("Failed to create user");
-      }
-
-      const { data: profileExists } = await supabase
-        .from("user_profiles")
-        .select("id")
-        .eq("id", userId)
-        .maybeSingle();
-      
-      if (!profileExists) {
-        console.log("Profile not created by trigger, creating manually");
-        
-        const { error: profileError } = await supabase
-          .from("user_profiles")
-          .upsert({
-            id: userId,
-            email: email?.toLowerCase() || null,
-            name: fullName || "Usuário",
-            role: "client",
-            activity_level: "moderate",
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-        }
-      }
-    }
-
-    const { data: base } = await supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "app_base_url")
+    const { data: existingUser } = await supabase
+      .from("user_profiles")
+      .select("id, email")
+      .eq("email", email.toLowerCase())
       .maybeSingle();
 
-    const baseUrl = base?.value || Deno.env.get("APP_BASE_URL") || "";
-    const referralUrl = baseUrl ? `${baseUrl}/register?ref=${referralToken}` : null;
+    if (existingUser) {
+      return new Response(JSON.stringify({ 
+        ok: true, 
+        userId: existingUser.id, 
+        email: existingUser.email,
+        message: "User already exists"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const userPassword = password || Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    const authOptions = {
+      email: email.toLowerCase(),
+      password: userPassword,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName || "Usuário",
+        role: "client",
+      }
+    };
+
+    console.log("Creating user with email:", email.toLowerCase());
+
+    const { data: created, error: createError } = await supabase.auth.admin.createUser(authOptions);
+
+    if (createError) {
+      console.error("User creation error:", createError);
+      return new Response(
+        JSON.stringify({ ok: false, error: createError.message }),
+        { 
+          status: createError.status || 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = created?.user?.id;
+    
+    if (!userId) {
+      throw new Error("Failed to create user - no user ID returned");
+    }
+
+    const { data: profileExists } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+    
+    if (!profileExists) {
+      console.log("Profile not created by trigger, creating manually");
+      
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .upsert({
+          id: userId,
+          email: email.toLowerCase(),
+          name: fullName || "Usuário",
+          role: "client",
+          activity_level: "moderate",
+        });
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error(`Profile creation failed: ${profileError.message}`);
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
         ok: true, 
         userId, 
-        email: email?.toLowerCase() || null,
-        referralUrl 
+        email: email.toLowerCase(),
+        message: "User created successfully"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
