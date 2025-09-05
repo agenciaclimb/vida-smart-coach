@@ -14,15 +14,15 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
-    NEW.email,
+    COALESCE(NEW.email, 'user' || NEW.id || '@temp.local'),
     'moderate',
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
     NOW(),
     NOW()
   )
   ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    email = EXCLUDED.email,
+    name = COALESCE(EXCLUDED.name, user_profiles.name),
+    email = COALESCE(EXCLUDED.email, user_profiles.email),
     updated_at = NOW();
   
   RETURN NEW;

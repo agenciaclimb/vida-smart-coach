@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       
       const { data: profileExists } = await supabase
         .from("user_profiles")
-        .select("id, email")
+        .select("id")
         .eq("id", userId)
         .maybeSingle();
       
@@ -130,21 +130,28 @@ Deno.serve(async (req) => {
         console.log("Profile not created by trigger, creating manually");
         
         try {
+          const profileData: any = {
+            id: userId,
+            name: fullName || "Usuário",
+            activity_level: "moderate",
+            role: "client"
+          };
+
+          if (email) {
+            profileData.email = email.toLowerCase();
+          }
+
           const { error: profileError } = await supabase
             .from("user_profiles")
-            .upsert({
-              id: userId,
-              name: fullName || "Usuário",
-              email: email?.toLowerCase() || `user${userId}@temp.local`,
-              activity_level: "moderate",
-              role: "client"
-            });
+            .upsert(profileData);
 
           if (profileError) {
             console.error("Profile creation error:", profileError);
+            throw new Error(`Profile creation failed: ${profileError.message}`);
           }
         } catch (profileException) {
           console.error("Exception during profile creation:", profileException);
+          throw profileException;
         }
       }
     }
