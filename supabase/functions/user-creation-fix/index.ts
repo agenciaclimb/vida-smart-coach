@@ -30,15 +30,6 @@ Deno.serve(async (req) => {
     });
 
     let existingUser = null;
-    if (phoneClean) {
-      const { data: existingByPhone } = await supabase
-        .from("user_profiles")
-        .select("id, whatsapp_number")
-        .eq("whatsapp_number", phoneClean)
-        .maybeSingle();
-      
-      if (existingByPhone) existingUser = existingByPhone;
-    }
     
     if (!existingUser && email) {
       const { data: usersByEmail } = await supabase.auth.admin.listUsers({
@@ -70,16 +61,16 @@ Deno.serve(async (req) => {
         }
       };
 
-      if (phoneClean) {
-        Object.assign(authOptions, {
-          phone: phoneClean,
-          phone_confirm: true,
-          password: randomPassword,
-        });
-      } else if (email) {
+      if (email) {
         Object.assign(authOptions, {
           email: email.toLowerCase(),
           email_confirm: true,
+          password: randomPassword,
+        });
+      } else if (phoneClean) {
+        Object.assign(authOptions, {
+          phone: phoneClean,
+          phone_confirm: true,
           password: randomPassword,
         });
       }
@@ -131,7 +122,7 @@ Deno.serve(async (req) => {
       
       const { data: profileExists } = await supabase
         .from("user_profiles")
-        .select("id, whatsapp_number")
+        .select("id")
         .eq("id", userId)
         .maybeSingle();
       
@@ -139,26 +130,29 @@ Deno.serve(async (req) => {
         console.log("Profile not created by trigger, creating manually");
         
         try {
+          const profileData: any = {
+            id: userId,
+            name: fullName || "Usuário",
+            activity_level: "moderate",
+            role: "client"
+          };
+
+          if (email) {
+            profileData.email = email.toLowerCase();
+          }
+
           const { error: profileError } = await supabase
             .from("user_profiles")
-            .upsert({
-              id: userId,
-              whatsapp_number: phoneClean || null,
-              role: "client",
-              name: fullName || "Usuário"
-            });
+            .upsert(profileData);
 
           if (profileError) {
             console.error("Profile creation error:", profileError);
+            throw new Error(`Profile creation failed: ${profileError.message}`);
           }
         } catch (profileException) {
           console.error("Exception during profile creation:", profileException);
+          throw profileException;
         }
-      } else if (phoneClean && !profileExists.whatsapp_number) {
-        await supabase
-          .from("user_profiles")
-          .update({ whatsapp_number: phoneClean })
-          .eq("id", userId);
       }
     }
 

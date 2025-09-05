@@ -5,7 +5,8 @@ BEGIN
   INSERT INTO public.user_profiles (
     id,
     name,
-    whatsapp_number,
+    email,
+    activity_level,
     role,
     created_at,
     updated_at
@@ -13,14 +14,15 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
-    NEW.phone,
+    COALESCE(NEW.email, 'user' || NEW.id || '@temp.local'),
+    'moderate',
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
     NOW(),
     NOW()
   )
   ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    whatsapp_number = EXCLUDED.whatsapp_number,
+    name = COALESCE(EXCLUDED.name, user_profiles.name),
+    email = COALESCE(EXCLUDED.email, user_profiles.email),
     updated_at = NOW();
   
   RETURN NEW;
