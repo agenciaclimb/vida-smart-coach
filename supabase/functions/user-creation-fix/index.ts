@@ -61,16 +61,16 @@ Deno.serve(async (req) => {
         }
       };
 
-      if (phoneClean) {
-        Object.assign(authOptions, {
-          phone: phoneClean,
-          phone_confirm: true,
-          password: randomPassword,
-        });
-      } else if (email) {
+      if (email) {
         Object.assign(authOptions, {
           email: email.toLowerCase(),
           email_confirm: true,
+          password: randomPassword,
+        });
+      } else if (phoneClean) {
+        Object.assign(authOptions, {
+          phone: phoneClean,
+          phone_confirm: true,
           password: randomPassword,
         });
       }
