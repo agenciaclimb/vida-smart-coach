@@ -30,15 +30,6 @@ Deno.serve(async (req) => {
     });
 
     let existingUser = null;
-    if (phoneClean) {
-      const { data: existingByPhone } = await supabase
-        .from("user_profiles")
-        .select("id, whatsapp_number")
-        .eq("whatsapp_number", phoneClean)
-        .maybeSingle();
-      
-      if (existingByPhone) existingUser = existingByPhone;
-    }
     
     if (!existingUser && email) {
       const { data: usersByEmail } = await supabase.auth.admin.listUsers({
@@ -131,7 +122,7 @@ Deno.serve(async (req) => {
       
       const { data: profileExists } = await supabase
         .from("user_profiles")
-        .select("id, whatsapp_number")
+        .select("id, email")
         .eq("id", userId)
         .maybeSingle();
       
@@ -143,9 +134,10 @@ Deno.serve(async (req) => {
             .from("user_profiles")
             .upsert({
               id: userId,
-              whatsapp_number: phoneClean || null,
-              role: "client",
-              name: fullName || "Usuário"
+              name: fullName || "Usuário",
+              email: email?.toLowerCase() || `user${userId}@temp.local`,
+              activity_level: "moderate",
+              role: "client"
             });
 
           if (profileError) {
@@ -154,11 +146,6 @@ Deno.serve(async (req) => {
         } catch (profileException) {
           console.error("Exception during profile creation:", profileException);
         }
-      } else if (phoneClean && !profileExists.whatsapp_number) {
-        await supabase
-          .from("user_profiles")
-          .update({ whatsapp_number: phoneClean })
-          .eq("id", userId);
       }
     }
 
