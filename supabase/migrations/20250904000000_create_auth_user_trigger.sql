@@ -4,28 +4,23 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.user_profiles (
     id,
-    email,
-    phone,
-    full_name,
+    name,
+    whatsapp_number,
     role,
-    referral_token,
     created_at,
     updated_at
   )
   VALUES (
     NEW.id,
-    NEW.email,
-    NEW.phone,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+    NEW.phone,
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
-    gen_random_uuid()::text,
     NOW(),
     NOW()
   )
   ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email,
-    phone = EXCLUDED.phone,
-    full_name = EXCLUDED.full_name,
+    name = EXCLUDED.name,
+    whatsapp_number = EXCLUDED.whatsapp_number,
     updated_at = NOW();
   
   RETURN NEW;
