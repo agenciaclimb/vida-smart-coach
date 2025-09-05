@@ -1,9 +1,9 @@
 
-
 SELECT 
     tc.constraint_name, 
     tc.table_name, 
     kcu.column_name, 
+    ccu.table_schema AS foreign_table_schema,
     ccu.table_name AS foreign_table_name,
     ccu.column_name AS foreign_column_name 
 FROM 
@@ -29,6 +29,7 @@ SELECT
     tc.constraint_name, 
     tc.table_name, 
     kcu.column_name, 
+    ccu.table_schema AS foreign_table_schema,
     ccu.table_name AS foreign_table_name,
     ccu.column_name AS foreign_column_name 
 FROM 
@@ -43,5 +44,5 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 
 DO $$
 BEGIN
-    RAISE NOTICE 'FIXED: user_profiles foreign key constraint now references auth.users table correctly';
+    RAISE NOTICE 'FOREIGN KEY CONSTRAINT FIX COMPLETED: user_profiles.id now correctly references auth.users.id';
 END $$;
