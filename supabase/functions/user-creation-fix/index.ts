@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     let existingUser = null;
     if (phoneClean) {
       const { data: existingByPhone } = await supabase
-        .from("profiles")
+        .from("user_profiles")
         .select("id, phone, email")
         .eq("phone", phoneClean)
         .maybeSingle();
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const { data: profileExists } = await supabase
-        .from("profiles")
+        .from("user_profiles")
         .select("id, phone")
         .eq("id", userId)
         .maybeSingle();
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
         
         try {
           const { error: profileError } = await supabase
-            .from("profiles")
+            .from("user_profiles")
             .upsert({
               id: userId,
               phone: phoneClean || null,
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
         }
       } else if (phoneClean && !profileExists.phone) {
         await supabase
-          .from("profiles")
+          .from("user_profiles")
           .update({ phone: phoneClean })
           .eq("id", userId);
       }
