@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
     if (phoneClean) {
       const { data: existingByPhone } = await supabase
         .from("user_profiles")
-        .select("id, phone, email")
-        .eq("phone", phoneClean)
+        .select("id, whatsapp_number")
+        .eq("whatsapp_number", phoneClean)
         .maybeSingle();
       
       if (existingByPhone) existingUser = existingByPhone;
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       
       const { data: profileExists } = await supabase
         .from("user_profiles")
-        .select("id, phone")
+        .select("id, whatsapp_number")
         .eq("id", userId)
         .maybeSingle();
       
@@ -143,11 +143,9 @@ Deno.serve(async (req) => {
             .from("user_profiles")
             .upsert({
               id: userId,
-              phone: phoneClean || null,
+              whatsapp_number: phoneClean || null,
               role: "client",
-              full_name: fullName || "Usuário",
-              name: fullName || "Usuário",
-              referral_token: referralToken
+              name: fullName || "Usuário"
             });
 
           if (profileError) {
@@ -156,10 +154,10 @@ Deno.serve(async (req) => {
         } catch (profileException) {
           console.error("Exception during profile creation:", profileException);
         }
-      } else if (phoneClean && !profileExists.phone) {
+      } else if (phoneClean && !profileExists.whatsapp_number) {
         await supabase
           .from("user_profiles")
-          .update({ phone: phoneClean })
+          .update({ whatsapp_number: phoneClean })
           .eq("id", userId);
       }
     }
@@ -178,8 +176,7 @@ Deno.serve(async (req) => {
         ok: true, 
         userId, 
         phone: phoneClean || null,
-        email: email?.toLowerCase() || null,
-        referralUrl 
+        email: email?.toLowerCase() || null
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
