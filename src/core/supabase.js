@@ -5,7 +5,7 @@ const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Configuração do Supabase incompleta. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+  throw new Error('Configuração do Supabase incompleta. Verifique as variáveis NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -17,8 +17,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 export const invokeFn = async (functionName, body) => {
-  if (import.meta.env.VITE_FUNCTIONS_ENABLED !== 'true') {
-    const errorMessage = `A chamada da função '${functionName}' foi bloqueada porque VITE_FUNCTIONS_ENABLED não está definida como 'true'.`;
+  if (import.meta.env.NEXT_PUBLIC_FUNCTIONS_ENABLED !== 'true') {
+    const errorMessage = `A chamada da função '${functionName}' foi bloqueada porque NEXT_PUBLIC_FUNCTIONS_ENABLED não está definida como 'true'.`;
     console.warn(errorMessage);
     return Promise.reject(new Error(errorMessage));
   }
