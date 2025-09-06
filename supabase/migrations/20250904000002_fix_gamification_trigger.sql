@@ -18,9 +18,9 @@ BEGIN
 END
 $$;
 
-DROP FUNCTION IF EXISTS public.create_gamification_for_user();
+DROP FUNCTION IF EXISTS public.create_gamification_for_auth_user();
 
-CREATE OR REPLACE FUNCTION public.create_gamification_for_user()
+CREATE OR REPLACE FUNCTION public.create_gamification_for_auth_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.gamification (user_id, points, level, streak_days, total_checkins, badges)
@@ -43,7 +43,7 @@ BEGIN
   IF users_owner = current_user THEN
     CREATE TRIGGER on_auth_user_created_gamification
       AFTER INSERT ON auth.users
-      FOR EACH ROW EXECUTE FUNCTION public.create_gamification_for_user();
+      FOR EACH ROW EXECUTE FUNCTION public.create_gamification_for_auth_user();
     
     COMMENT ON TRIGGER on_auth_user_created_gamification ON auth.users IS 'Trigger to create gamification record after auth user creation';
     
@@ -54,6 +54,6 @@ BEGIN
 END
 $$;
 
-GRANT EXECUTE ON FUNCTION public.create_gamification_for_user() TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.create_gamification_for_auth_user() TO supabase_auth_admin;
 
-COMMENT ON FUNCTION public.create_gamification_for_user() IS 'Creates gamification record for new users with duplicate handling';
+COMMENT ON FUNCTION public.create_gamification_for_auth_user() IS 'Creates gamification record for new users with duplicate handling';
