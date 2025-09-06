@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
 import { Gift, PlusCircle, Loader2, Edit } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 import RewardEditModal from './RewardEditModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

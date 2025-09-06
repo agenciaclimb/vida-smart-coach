@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../../core/supabase';
 import { AlertCircle, CheckCircle, Loader2, QrCode, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useIntegrations } from '@/contexts/data/IntegrationsContext';
