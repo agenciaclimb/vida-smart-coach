@@ -36,8 +36,13 @@ serve(async (req) => {
     console.log("user-creation-fix received:", body);
 
     if (supabase && body?.user_id) {
-      const { error } = await supabase.from("profiles").insert({ id: body.user_id }).select("id");
-      if (error && !/duplicate key/i.test(error.message)) console.error("profiles insert error:", error.message);
+      const { error } = await supabase.from("user_profiles").insert({ 
+        id: body.user_id,
+        name: "Usuário",
+        email: `user${body.user_id.slice(0,8)}@temp.com`,
+        activity_level: "moderate"
+      }).select("id");
+      if (error && !/duplicate key/i.test(error.message)) console.error("user_profiles insert error:", error.message);
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json", ...cors(origin) } });

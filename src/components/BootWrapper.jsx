@@ -7,7 +7,7 @@ export default function BootWrapper({ children }) {
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), 3000);
 
     (async () => {
       try {
