@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }) => {
   
   const signUp = useCallback(async (email, password, metadata) => {
     try {
+      const origin = window.location.origin;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }) => {
             full_name: metadata?.full_name,
             whatsapp: metadata?.phone 
           },
-          emailRedirectTo: 'https://appvidasmart.com/auth/callback'
+          emailRedirectTo: `${origin}/`
         }
       });
 
