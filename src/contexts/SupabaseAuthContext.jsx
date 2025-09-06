@@ -96,39 +96,39 @@ export const AuthProvider = ({ children }) => {
   
   const signUp = useCallback(async (email, password, metadata) => {
     try {
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/user-creation-fix`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          fullName: metadata?.full_name,
-          phone: metadata?.phone,
-        }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { 
+            full_name: metadata?.full_name,
+            whatsapp: metadata?.phone 
+          },
+          emailRedirectTo: 'https://appvidasmart.com/auth/callback'
+        }
       });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.ok) {
+      if (error) {
         return { 
           user: null, 
           error: { 
-            message: result.error || 'Signup failed',
-            code: result.code || 'signup_error'
+            message: error.message,
+            code: error.status || 'signup_error'
           } 
         };
       }
 
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Session error after signup:', sessionError);
+      if (!data.session) {
+        return {
+          user: data.user,
+          error: null,
+          needsEmailConfirmation: true
+        };
       }
 
       return { 
-        user: { id: result.userId, email: result.email }, 
+        user: data.user, 
+        session: data.session,
         error: null 
       };
     } catch (error) {
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }) => {
       return { 
         user: null, 
         error: { 
-          message: error.message || 'Network error during signup',
+          message: error.message || 'Erro inesperado durante o cadastro',
           code: 'network_error'
         } 
       };
