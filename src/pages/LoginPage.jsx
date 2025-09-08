@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/core/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,7 @@ import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signUp, loading: authLoading } = useAuth();
+  // removed useAuth; using supabase directly for auth actions
   const [localLoading, setLocalLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);
@@ -49,63 +48,73 @@ const LoginPage = () => {
     e.preventDefault();
     setLocalLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: loginData.email,
         password: loginData.password,
       });
-      if (error) throw error;
-
-      if (data?.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
+      if (error) {
+        toast.error(error.message || 'Falha ao entrar. Tente novamente.');
+        return;
       }
-
-      navigate('/dashboard', { replace: true });
-      setLocalLoading(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const url = new URL(window.location.href);
+        const target = url.searchParams.get('redirect') || '/dashboard';
+        navigate(target, { replace: true });
+      }
     } catch (err) {
-      setLocalLoading(false);
       toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.');
+    } finally {
+      setLocalLoading(false);
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error("As senhas não coincidem");
+      toast.error('As senhas não coincidem');
       return;
     }
-    
+
     setLocalLoading(true);
     const toastId = toast.loading('Criando sua conta...');
 
     try {
-      const { error } = await signUp(
-        registerData.email, 
-        registerData.password,
-        {
-          full_name: registerData.full_name,
-          phone: registerData.phone,
-          role: registerData.role
-        }
-      );
-      
+      const { error } = await supabase.auth.signUp({
+        email: registerData.email,
+        password: registerData.password,
+        options: {
+          data: {
+            full_name: registerData.full_name,
+            whatsapp: registerData.phone,
+            role: registerData.role,
+          },
+        },
+      });
+
       if (error) {
         toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const url = new URL(window.location.href);
+        const target = url.searchParams.get('redirect') || '/dashboard';
+        navigate(target, { replace: true });
       } else {
-        toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.", { id: toastId, duration: 5000 });
+        toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.', { id: toastId, duration: 5000 });
         setActiveTab('login');
         setLoginData({ email: registerData.email, password: '' });
       }
     } catch (error) {
-      toast.error("Ocorreu um erro inesperado durante o cadastro.", { id: toastId });
+      toast.error('Ocorreu um erro inesperado durante o cadastro.', { id: toastId });
     } finally {
       setLocalLoading(false);
     }
   };
 
-  const isLoading = authLoading || localLoading;
+  const isLoading = localLoading;
 
   return (
     <>

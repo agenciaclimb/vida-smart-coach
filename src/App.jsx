@@ -3,8 +3,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster as ShadcnToaster } from '@/components/ui/toaster';
 import { Toaster as HotToaster } from 'react-hot-toast';
-import PrivateRoute from '@/components/auth/PrivateRoute';
-import AuthRedirector from '@/components/auth/AuthRedirector';
+import RequireAuth from '@/components/auth/RequireAuth';
+import AuthRedirection from './components/auth/AuthRedirection';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
@@ -42,7 +42,7 @@ function App() {
 
   return (
     <>
-      <AuthRedirector />
+      <AuthRedirection />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -55,29 +55,29 @@ function App() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
-            <PrivateRoute roles={['client']}>
+            <RequireAuth>
               <ClientDashboard />
-            </PrivateRoute>
-          } 
+            </RequireAuth>
+          }
         />
-        <Route 
-          path="/admin/*" 
+        <Route
+          path="/admin/*"
           element={
-            <PrivateRoute roles={['admin']}>
+            <RequireAuth>
               <AdminDashboard />
-            </PrivateRoute>
-          } 
+            </RequireAuth>
+          }
         />
-        <Route 
-          path="/painel-parceiro" 
+        <Route
+          path="/painel-parceiro"
           element={
-            <PrivateRoute roles={['partner']}>
+            <RequireAuth>
               <PartnerDashboard />
-            </PrivateRoute>
-          } 
+            </RequireAuth>
+          }
         />
         
         <Route path="*" element={<Navigate to="/" />} />
