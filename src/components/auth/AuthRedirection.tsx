@@ -8,13 +8,11 @@ export default function AuthRedirection() {
   const user = useUser();
   const supabase = useSupabaseClient();
 
-  // Se já está logado, não ficar em /login ou /register
   useEffect(() => {
-    const onLoginPages = location.pathname === '/login' || location.pathname === '/register';
-    if (user && onLoginPages) navigate('/dashboard', { replace: true });
+    const onAuthPages = ['/login', '/register'].includes(location.pathname);
+    if (user && onAuthPages) navigate('/dashboard', { replace: true });
   }, [user, location.pathname, navigate]);
 
-  // Reagir a mudanças de sessão (login/logout)
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') navigate('/dashboard', { replace: true });
