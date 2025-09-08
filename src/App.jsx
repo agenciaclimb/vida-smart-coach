@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster as ShadcnToaster } from '@/components/ui/toaster';
 import { Toaster as HotToaster } from 'react-hot-toast';
@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Loader2 } from 'lucide-react';
 import { DataProvider } from '@/contexts/DataContext';
 import { CartProvider } from '@/hooks/useCart';
+import { bootWithTimeout } from '@/services/boot';
 
 const LoadingScreen = () => (
   <div className="flex justify-center items-center h-screen bg-slate-50">
@@ -35,6 +36,10 @@ const LoadingScreen = () => (
 
 function App() {
   const { loading } = useAuth();
+
+  useEffect(() => {
+    bootWithTimeout(2500); // roda em background
+  }, []);
   
   if (loading) {
     return <LoadingScreen />;

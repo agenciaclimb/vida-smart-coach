@@ -10,22 +10,21 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
 import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react';
+import { supabase } from '@/core/supabase';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, loading: authLoading } = useAuth();
-  const [localLoading, setLocalLoading] = useState(false);
+  const { signUp, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);
   const roleFromQuery = params.get('role') || 'client';
   const tabFromQuery = params.get('tab') || 'login';
   const [activeTab, setActiveTab] = useState(tabFromQuery);
 
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const [registerData, setRegisterData] = useState({
     full_name: '',
@@ -44,29 +43,29 @@ const LoginPage = () => {
     setActiveTab(tabFromQuery);
   }, [tabFromQuery]);
 
-  const handleLogin = async (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
-    setLocalLoading(true);
-    const toastId = toast.loading('Entrando...');
-
+    setLoading(true);
     try {
-      const { error } = await signIn(loginData.email, loginData.password);
-      
-      if (error) {
-        if (error.message === 'Email not confirmed') {
-          toast.error('Seu e-mail ainda não foi confirmado. Por favor, verifique sua caixa de entrada.', { id: toastId, duration: 6000 });
-        } else {
-          toast.error('Credenciais inválidas. Verifique seu e-mail e senha.', { id: toastId });
-        }
-      } else {
-        toast.success("Login realizado com sucesso!", { id: toastId });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      if (data?.session) {
+        // reforço de persistência (opcional, mas ajuda)
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
-    } catch (error) {
-      toast.error("Ocorreu um erro inesperado durante o login.", { id: toastId });
+
+      // 🚀 Não espere boot/contexto: navegue já
+      window.location.replace("/dashboard"); // ajuste se sua rota pós-login for diferente
+    } catch (err) {
+      toast.error(err?.message ?? "Falha ao entrar. Tente novamente.");
     } finally {
-      setLocalLoading(false);
+      setLoading(false); // ✅ garanta que sai do "Aguarde..."
     }
-  };
+  }
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -74,13 +73,13 @@ const LoginPage = () => {
       toast.error("As senhas não coincidem");
       return;
     }
-    
-    setLocalLoading(true);
+
+    setLoading(true);
     const toastId = toast.loading('Criando sua conta...');
 
     try {
       const { error } = await signUp(
-        registerData.email, 
+        registerData.email,
         registerData.password,
         {
           full_name: registerData.full_name,
@@ -88,22 +87,23 @@ const LoginPage = () => {
           role: registerData.role
         }
       );
-      
+
       if (error) {
         toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
       } else {
         toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.", { id: toastId, duration: 5000 });
         setActiveTab('login');
-        setLoginData({ email: registerData.email, password: '' });
+        setEmail(registerData.email);
+        setPassword('');
       }
     } catch (error) {
       toast.error("Ocorreu um erro inesperado durante o cadastro.", { id: toastId });
     } finally {
-      setLocalLoading(false);
+      setLoading(false);
     }
   };
 
-  const isLoading = authLoading || localLoading;
+  const isLoading = authLoading || loading;
 
   return (
     <>
@@ -159,8 +159,8 @@ const LoginPage = () => {
                         type="email"
                         placeholder="seu@email.com"
                         className="pl-10"
-                        value={loginData.email}
-                        onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={isLoading}
                       />
@@ -176,8 +176,8 @@ const LoginPage = () => {
                         type="password"
                         placeholder="••••••••"
                         className="pl-10"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={isLoading}
                       />
