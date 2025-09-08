@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/core/supabase';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 const AuthContext = createContext(undefined);
 
@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
 
   const fetchUserProfile = useCallback(async (authUser) => {
     if (!authUser) return null;

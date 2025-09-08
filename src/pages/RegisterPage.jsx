@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { supabase } from '@/core/supabase';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const supabase = useSupabaseClient();
   
   const searchParams = new URLSearchParams(location.search);
   const initialReferralCode = searchParams.get('ref') || '';
@@ -57,9 +58,7 @@ const RegisterPage = () => {
     } else {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const url = new URL(window.location.href);
-        const target = url.searchParams.get('redirect') || '/dashboard';
-        navigate(target, { replace: true });
+        navigate('/dashboard', { replace: true });
       } else {
         toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
         navigate('/login?status=registered');

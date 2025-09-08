@@ -1,11 +1,12 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "@/core/supabase";
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 export default function RequireAuth({ children }: { children: JSX.Element }) {
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   const location = useLocation();
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     let mounted = true;
