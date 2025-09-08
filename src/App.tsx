@@ -61,7 +61,7 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       <ShadcnToaster />
       <HotToaster position="top-center" reverseOrder={false} />
