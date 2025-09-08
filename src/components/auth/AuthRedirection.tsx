@@ -14,9 +14,9 @@ export default function AuthRedirection() {
   }, [user, location.pathname, navigate]);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') navigate('/dashboard', { replace: true });
-      if (event === 'SIGNED_OUT') navigate('/login', { replace: true });
+    const { data: sub } = supabase.auth.onAuthStateChange((ev) => {
+      if (ev === 'SIGNED_IN') navigate('/dashboard', { replace: true });
+      if (ev === 'SIGNED_OUT') navigate('/login', { replace: true });
     });
     return () => sub.subscription.unsubscribe();
   }, [supabase, navigate]);
