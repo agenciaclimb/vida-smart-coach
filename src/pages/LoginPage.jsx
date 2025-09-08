@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/core/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, loading: authLoading } = useAuth();
+  const { signUp, loading: authLoading } = useAuth();
   const [localLoading, setLocalLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);
@@ -47,24 +48,25 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLocalLoading(true);
-    const toastId = toast.loading('Entrando...');
-
     try {
-      const { error } = await signIn(loginData.email, loginData.password);
-      
-      if (error) {
-        if (error.message === 'Email not confirmed') {
-          toast.error('Seu e-mail ainda não foi confirmado. Por favor, verifique sua caixa de entrada.', { id: toastId, duration: 6000 });
-        } else {
-          toast.error('Credenciais inválidas. Verifique seu e-mail e senha.', { id: toastId });
-        }
-      } else {
-        toast.success("Login realizado com sucesso!", { id: toastId });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password,
+      });
+      if (error) throw error;
+
+      if (data?.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
-    } catch (error) {
-      toast.error("Ocorreu um erro inesperado durante o login.", { id: toastId });
-    } finally {
+
+      navigate('/dashboard', { replace: true });
       setLocalLoading(false);
+    } catch (err) {
+      setLocalLoading(false);
+      toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.');
     }
   };
 
