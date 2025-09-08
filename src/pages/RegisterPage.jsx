@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,9 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const RegisterPage = () => {
-  const { signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const supabase = useSupabaseClient();
   
   const searchParams = new URLSearchParams(location.search);
   const initialReferralCode = searchParams.get('ref') || '';
@@ -40,20 +40,29 @@ const RegisterPage = () => {
       return;
     }
 
-    const metadata = {
-      full_name: fullName,
-      phone: phone,
-      role: 'client',
-      referral_code: referralCode || null,
-    };
-
-    const { error } = await signUp(email, password, metadata);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          phone,
+          role: 'client',
+          referral_code: referralCode || null,
+        },
+      },
+    });
 
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
-      navigate('/login?status=registered');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+        navigate('/login?status=registered');
+      }
     }
     setLoading(false);
   };
