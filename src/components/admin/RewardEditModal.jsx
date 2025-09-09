@@ -21,7 +21,7 @@ const RewardEditModal = ({ reward, isOpen, onClose, onRewardUpdate }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    points: '',
+    points_required: '',
     icon: '',
     is_active: true,
   });
@@ -31,7 +31,7 @@ const RewardEditModal = ({ reward, isOpen, onClose, onRewardUpdate }) => {
       setFormData({
         name: reward.name || '',
         description: reward.description || '',
-        points: reward.points || '',
+        points_required: reward.points_required || '',
         icon: reward.icon || '',
         is_active: reward.is_active,
       });
@@ -60,7 +60,7 @@ const RewardEditModal = ({ reward, isOpen, onClose, onRewardUpdate }) => {
         .update({
           name: formData.name,
           description: formData.description,
-          points: parseInt(formData.points, 10),
+          points_required: parseInt(formData.points_required, 10),
           icon: formData.icon,
           is_active: formData.is_active,
         })
@@ -106,10 +106,10 @@ const RewardEditModal = ({ reward, isOpen, onClose, onRewardUpdate }) => {
               <Input id="description" value={formData.description} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="points" className="text-right">
+              <Label htmlFor="points_required" className="text-right">
                 Pontos
               </Label>
-              <Input id="points" type="number" value={formData.points} onChange={handleChange} className="col-span-3" />
+              <Input id="points_required" type="number" value={formData.points_required} onChange={handleChange} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="icon" className="text-right">

@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useUser } from '@supabase/auth-helpers-react';
+import { supabase } from '@/core/supabase';
 
 export default function AuthRedirection() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useUser();
-  const supabase = useSupabaseClient();
 
   useEffect(() => {
     // Não redirecionar se estiver na página de callback ou verificação
@@ -50,7 +50,7 @@ export default function AuthRedirection() {
     });
     
     return () => sub.subscription.unsubscribe();
-  }, [supabase, navigate, location.pathname, location.search]);
+  }, [navigate, location.pathname, location.search]);
 
   return null;
 }

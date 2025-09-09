@@ -14,7 +14,10 @@ export const PlansRewardsProvider = ({ children }) => {
 
     const fetchPlans = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('plans').select('*').order('price', { ascending: true });
+            const { data, error } = await supabase
+              .from('plans')
+              .select('*')
+              .order('sort_order');
             if (error) throw error;
             setPlans(data || []);
         } catch (error) {
@@ -29,7 +32,10 @@ export const PlansRewardsProvider = ({ children }) => {
 
     const fetchRewards = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('rewards').select('*').order('points', { ascending: true });
+            const { data, error } = await supabase
+              .from('rewards')
+              .select('*')
+              .order('points_required');
             if (error) throw error;
             setRewards(data || []);
         } catch (error) {

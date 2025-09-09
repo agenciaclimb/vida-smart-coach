@@ -40,13 +40,13 @@ const RewardsTab = () => {
 
         if (!client || !reward) throw new Error("Cliente ou recompensa não encontrado.");
         
-        const newPoints = (client.points || 0) - reward.points;
+        const newPoints = (client.points || 0) - reward.points_required;
         if (newPoints < 0) throw new Error("Cliente não tem pontos suficientes.");
 
         const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update({ points: newPoints })
-            .eq('id', client.id);
+            .from('gamification')
+            .update({ total_points: newPoints })
+            .eq('user_id', client.user_id);
         if (updateError) throw updateError;
 
         const { error: logError } = await supabase
@@ -55,7 +55,7 @@ const RewardsTab = () => {
                 user_id: client.id,
                 reward_name: reward.name,
                 reward_icon: reward.icon,
-                points_spent: reward.points,
+                points_spent: reward.points_required,
             });
         if (logError) throw logError;
 
@@ -85,7 +85,7 @@ const RewardsTab = () => {
             .insert({
                 name: newRewardName,
                 description: newRewardDesc,
-                points: parseInt(newRewardPoints),
+                points_required: parseInt(newRewardPoints),
                 icon: newRewardIcon,
                 is_active: true,
             });
@@ -146,7 +146,7 @@ const RewardsTab = () => {
                         <span className="text-2xl">{reward.icon}</span>
                         <div>
                           <p className={`font-medium ${!reward.is_active ? 'text-gray-400 line-through' : ''}`}>{reward.name}</p>
-                          <p className="text-sm text-gray-600">{reward.points} pontos • {reward.description}</p>
+                          <p className="text-sm text-gray-600">{reward.points_required} pontos • {reward.description}</p>
                         </div>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleEditRewardClick(reward)}><Edit className="w-4 h-4" /></Button>
@@ -204,7 +204,7 @@ const RewardsTab = () => {
                       <SelectValue placeholder="Selecione a Recompensa" />
                     </SelectTrigger>
                     <SelectContent>
-                      {rewards.filter(r => r.is_active).map(r => <SelectItem key={r.id} value={String(r.id)}>{r.name} ({r.points} pts)</SelectItem>)}
+                      {rewards.filter(r => r.is_active).map(r => <SelectItem key={r.id} value={String(r.id)}>{r.name} ({r.points_required} pts)</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Button className="vida-smart-gradient text-white" onClick={handleManualRedeem} disabled={loadingClients || isSubmitting}>

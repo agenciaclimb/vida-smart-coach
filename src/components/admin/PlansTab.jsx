@@ -51,14 +51,7 @@ const PlansTab = () => {
     setSelectedPlan(null);
   };
 
-  const planOrder = ['Basic', 'Premium', 'VIP', 'trial'];
-  const sortedPlans = [...plans].sort((a, b) => {
-    const indexA = planOrder.indexOf(a.name);
-    const indexB = planOrder.indexOf(b.name);
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
+  const sortedPlans = [...plans].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   return (
     <>

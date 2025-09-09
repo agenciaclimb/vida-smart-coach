@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '@/core/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,6 @@ import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const supabase = useSupabaseClient();
   const [localLoading, setLocalLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);

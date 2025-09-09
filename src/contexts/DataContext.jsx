@@ -1,5 +1,12 @@
 
-import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { AdminProvider, useAdmin } from '@/contexts/data/AdminContext';
 import { ClientProvider, useClient } from '@/contexts/data/ClientContext';
@@ -27,12 +34,15 @@ const CombinedDataProvider = ({ children }) => {
   const isPartner = useMemo(() => user?.profile?.role === 'partner', [user?.profile?.role]);
   const isClient = useMemo(() => user?.profile?.role === 'client', [user?.profile?.role]);
 
+  const fetchedRef = useRef(false);
+
   useEffect(() => {
-    if (!authLoading && user) {
-      plansRewardsData.fetchData();
-      if (isAdmin) {
-        adminData.fetchData();
-      }
+    if (authLoading || !user) return;
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    plansRewardsData.fetchData();
+    if (isAdmin) {
+      adminData.fetchData();
     }
   }, [authLoading, user, isAdmin, plansRewardsData, adminData]);
 
