@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase, invokeFn } from '@/core/supabase';
 import { toast } from 'react-hot-toast';
 
@@ -10,6 +10,7 @@ export const useAdminClients = (
 ) => {
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(true);
+  const fetchedRef = useRef(false);
 
   const fetchClients = useCallback(async () => {
     setLoadingClients(true);
@@ -83,6 +84,12 @@ export const useAdminClients = (
       parentSetLoading(false);
     }
   }, [fetchClients, onDataChange, parentSetLoading]);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchClients();
+  }, [fetchClients]);
 
   return {
     clients,
