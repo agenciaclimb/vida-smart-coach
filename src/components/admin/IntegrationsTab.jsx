@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 import { Loader2, ExternalLink } from 'lucide-react';
 import IntegrationCard from './integrations/IntegrationCard';
 import EvolutionApiConfig from './integrations/EvolutionApiConfig';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/core/supabase';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 const AuthContext = createContext(undefined);
 
@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
 
   const fetchUserProfile = useCallback(async (authUser) => {
     if (!authUser) return null;
@@ -114,19 +115,23 @@ export const AuthProvider = ({ children }) => {
   const signUp = useCallback(async (email, password, metadata) => {
     try {
       const origin = window.location.origin;
+      console.log('SignUp attempt for:', email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { 
             full_name: metadata?.full_name,
-            whatsapp: metadata?.phone 
+            whatsapp: metadata?.phone || metadata?.whatsapp,
+            role: metadata?.role || 'client'
           },
-          emailRedirectTo: `${origin}/`
+          emailRedirectTo: `${origin}/auth/callback`
         }
       });
 
       if (error) {
+        console.error('Supabase signup error:', error);
         return { 
           user: null, 
           error: { 
@@ -136,7 +141,14 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      if (!data.session) {
+      console.log('SignUp result:', { 
+        user: data.user?.id, 
+        session: !!data.session,
+        confirmationSent: !data.session && data.user 
+      });
+
+      // Se não há sessão, significa que precisa confirmar email
+      if (!data.session && data.user) {
         return {
           user: data.user,
           error: null,
@@ -144,13 +156,22 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      return { 
-        user: data.user, 
+      // Se há sessão, login foi automático
+      if (data.session && data.user) {
+        return { 
+          user: data.user, 
+          session: data.session,
+          error: null 
+        };
+      }
+
+      return {
+        user: data.user,
         session: data.session,
-        error: null 
+        error: null
       };
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Signup network error:', error);
       return { 
         user: null, 
         error: { 
@@ -159,22 +180,52 @@ export const AuthProvider = ({ children }) => {
         } 
       };
     }
-  }, []);
+  }, [supabase]);
 
   const signIn = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { user: data.user, session: data.session, error };
-  }, []);
+    try {
+      console.log('SignIn attempt for:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('SignIn error:', error);
+      } else if (data.user) {
+        console.log('SignIn successful for user:', data.user.id);
+      }
+      
+      return { user: data.user, session: data.session, error };
+    } catch (error) {
+      console.error('SignIn network error:', error);
+      return { 
+        user: null, 
+        session: null, 
+        error: { 
+          message: error.message || 'Erro de conexão',
+          code: 'network_error'
+        }
+      };
+    }
+  }, [supabase]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    navigate('/login', { replace: true });
-  }, [navigate]);
+    try {
+      console.log('SignOut initiated');
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('SignOut error:', error);
+      // Mesmo com erro, limpar estado local
+      setUser(null);
+      setSession(null);
+      navigate('/login', { replace: true });
+    }
+  }, [navigate, supabase]);
 
   const clearAppDataAndReload = useCallback(async () => {
     try {

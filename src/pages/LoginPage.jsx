@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '@/core/supabase';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +14,7 @@ import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signUp, loading: authLoading } = useAuth();
+  const supabase = useSupabaseClient();
   const [localLoading, setLocalLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);
@@ -48,64 +47,95 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLocalLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginData.email,
         password: loginData.password,
       });
-      if (error) throw error;
-
-      if (data?.session) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
+      
+      if (error) {
+        console.error('Login error:', error);
+        toast.error(error.message || 'Falha ao entrar. Tente novamente.');
+        return;
       }
-
-      navigate('/dashboard', { replace: true });
-      setLocalLoading(false);
+      
+      if (data?.session) {
+        // Verificar se há URL de retorno
+        const returnUrl = params.get('returnUrl');
+        const targetUrl = returnUrl ? decodeURIComponent(returnUrl) : '/dashboard';
+        
+        console.log('Login successful, redirecting to:', targetUrl);
+        toast.success('Login realizado com sucesso!');
+        navigate(targetUrl, { replace: true });
+      }
     } catch (err) {
-      setLocalLoading(false);
+      console.error('Login network error:', err);
       toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.');
+    } finally {
+      setLocalLoading(false);
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error("As senhas não coincidem");
+      toast.error('As senhas não coincidem');
       return;
     }
-    
+
+    if (registerData.password.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
     setLocalLoading(true);
     const toastId = toast.loading('Criando sua conta...');
 
     try {
-      const { error } = await signUp(
-        registerData.email, 
-        registerData.password,
-        {
-          full_name: registerData.full_name,
-          phone: registerData.phone,
-          role: registerData.role
-        }
-      );
-      
-      if (error) {
-        toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
-      } else {
-        toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.", { id: toastId, duration: 5000 });
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: registerData.email,
+        password: registerData.password,
+        options: {
+          data: {
+            full_name: registerData.full_name,
+            whatsapp: registerData.phone,
+            role: registerData.role,
+          },
+        },
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast.error(authError.message || 'Não foi possível realizar o cadastro.', { id: toastId });
+        return;
+      }
+
+      // Se o usuário foi criado mas não há sessão (precisa confirmar email)
+      if (authData.user && !authData.session) {
+        toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.', { id: toastId, duration: 5000 });
         setActiveTab('login');
         setLoginData({ email: registerData.email, password: '' });
+        return;
+      }
+
+      // Se há sessão (confirmação automática), redirecionar para dashboard
+      if (authData.session) {
+        const returnUrl = params.get('returnUrl');
+        const targetUrl = returnUrl ? decodeURIComponent(returnUrl) : '/dashboard';
+        
+        toast.success('Cadastro realizado com sucesso!', { id: toastId });
+        navigate(targetUrl, { replace: true });
       }
     } catch (error) {
-      toast.error("Ocorreu um erro inesperado durante o cadastro.", { id: toastId });
+      console.error('Registration error:', error);
+      toast.error('Ocorreu um erro inesperado durante o cadastro.', { id: toastId });
     } finally {
       setLocalLoading(false);
     }
   };
 
-  const isLoading = authLoading || localLoading;
+  const isLoading = localLoading;
 
   return (
     <>
@@ -241,6 +271,7 @@ const LoginPage = () => {
                         id="register-phone"
                         type="tel"
                         placeholder="5511999999999"
+                        maxLength={15}
                         className="pl-10"
                         value={registerData.phone}
                         onChange={(e) => setRegisterData({...registerData, phone: e.target.value})}

@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const RewardEditModal = ({ reward, isOpen, onClose, onRewardUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);

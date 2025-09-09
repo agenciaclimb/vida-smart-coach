@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const PlansRewardsContext = createContext(undefined);
 
