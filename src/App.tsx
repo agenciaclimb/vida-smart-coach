@@ -4,6 +4,7 @@ import { Toaster as ShadcnToaster } from '@/components/ui/toaster';
 import { Toaster as HotToaster } from 'react-hot-toast';
 import RequireAuth from '@/components/auth/RequireAuth';
 import AuthRedirection from '@/components/auth/AuthRedirection';
+import EmailVerifyGuard from '@/components/auth/EmailVerifyGuard';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
@@ -25,6 +26,7 @@ import { CartProvider } from '@/hooks/useCart';
 function App() {
   return (
     <>
+      <EmailVerifyGuard />
       <AuthRedirection />
       <Routes>
         <Route path="/" element={<LandingPage />} />
