@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'react-hot-toast';
 import { Building, PlusCircle, Search, Edit, ToggleLeft, ToggleRight, Trash2, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 import AcademyEditModal from '@/components/admin/AcademyEditModal';
 
 const WhiteLabelTab = () => {

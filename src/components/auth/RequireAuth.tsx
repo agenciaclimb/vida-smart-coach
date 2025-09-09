@@ -1,13 +1,13 @@
 import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSessionContext, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSessionContext } from '@supabase/auth-helpers-react';
+import { supabase } from '@/core/supabase';
 import { Loader2 } from 'lucide-react';
 
 export default function RequireAuth({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoading, session } = useSessionContext();
-  const supabase = useSupabaseClient();
   const [ready, setReady] = useState(false);
   const [checkingSession, setCheckingSession] = useState(false);
   const askedRef = useRef(false);
@@ -42,7 +42,7 @@ export default function RequireAuth({ children }: PropsWithChildren) {
     }
     
     return () => clearTimeout(t);
-  }, [isLoading, supabase]);
+  }, [isLoading]);
 
   // Redireciona se não houver sessão quando já estiver pronto
   useEffect(() => {

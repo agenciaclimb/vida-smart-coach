@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '@/core/supabase';
 import { toast } from 'react-hot-toast';
 
 export default function EmailVerifyGuard() {
   const [params] = useSearchParams();
-  const supabase = useSupabaseClient();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,7 +49,7 @@ export default function EmailVerifyGuard() {
     };
 
     handleVerification();
-  }, [params, supabase, navigate]);
+  }, [params, navigate]);
 
   return null;
 }

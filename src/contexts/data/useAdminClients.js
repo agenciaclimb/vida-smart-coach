@@ -1,11 +1,16 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase, invokeFn } from '@/core/supabase';
 import { toast } from 'react-hot-toast';
 
-export const useAdminClients = (supabaseClient = supabase, parentSetLoading, onDataChange) => {
+export const useAdminClients = (
+  supabaseClient = supabase,
+  parentSetLoading,
+  onDataChange
+) => {
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(true);
+  const fetchedRef = useRef(false);
 
   const fetchClients = useCallback(async () => {
     setLoadingClients(true);
@@ -14,12 +19,14 @@ export const useAdminClients = (supabaseClient = supabase, parentSetLoading, onD
         .from('user_profiles')
         .select(`
           id,
-          full_name,
+          user_id,
+          name,
           email:users(email),
           phone,
           plan,
           created_at,
-          onboarding_stage
+          onboarding_stage,
+          gamification:gamification(total_points)
         `)
         .in('role', ['client']);
 
@@ -27,6 +34,9 @@ export const useAdminClients = (supabaseClient = supabase, parentSetLoading, onD
       
       const formattedData = data.map(c => ({
         ...c,
+        full_name: c.name,
+        points: c.gamification?.total_points || 0,
+        user_id: c.user_id,
         email: c.users?.email || 'N/A'
       }));
       setClients(formattedData || []);
@@ -74,6 +84,12 @@ export const useAdminClients = (supabaseClient = supabase, parentSetLoading, onD
       parentSetLoading(false);
     }
   }, [fetchClients, onDataChange, parentSetLoading]);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchClients();
+  }, [fetchClients]);
 
   return {
     clients,

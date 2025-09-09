@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const PlansRewardsContext = createContext(undefined);
 
@@ -11,10 +11,14 @@ export const PlansRewardsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [hasShownPlansError, setHasShownPlansError] = useState(false);
     const [hasShownRewardsError, setHasShownRewardsError] = useState(false);
+    const fetchedRef = useRef(false);
 
     const fetchPlans = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('plans').select('*').order('price', { ascending: true });
+            const { data, error } = await supabase
+              .from('plans')
+              .select('*')
+              .order('sort_order');
             if (error) throw error;
             setPlans(data || []);
         } catch (error) {
@@ -29,7 +33,10 @@ export const PlansRewardsProvider = ({ children }) => {
 
     const fetchRewards = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('rewards').select('*').order('points', { ascending: true });
+            const { data, error } = await supabase
+              .from('rewards')
+              .select('*')
+              .order('points_required');
             if (error) throw error;
             setRewards(data || []);
         } catch (error) {
@@ -47,6 +54,12 @@ export const PlansRewardsProvider = ({ children }) => {
         await Promise.all([fetchPlans(), fetchRewards()]);
         setLoading(false);
     }, [fetchPlans, fetchRewards]);
+
+    useEffect(() => {
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
+        fetchData();
+    }, [fetchData]);
 
     const value = useMemo(() => ({
         plans,

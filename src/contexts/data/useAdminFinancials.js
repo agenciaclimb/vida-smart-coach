@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 import { toast } from 'react-hot-toast';
 
 export const useAdminFinancials = () => {
