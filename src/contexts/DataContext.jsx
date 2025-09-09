@@ -8,7 +8,7 @@ import { CommunityProvider, useCommunity } from '@/contexts/data/CommunityContex
 import { IntegrationsProvider, useIntegrations } from '@/contexts/data/IntegrationsContext';
 import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
 import { ChatProvider, useChat } from '@/contexts/data/ChatContext';
-import { supabase } from '../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const DataContext = createContext(undefined);
 
