@@ -48,7 +48,7 @@ const LoginPage = () => {
     e.preventDefault();
     setLocalLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: loginData.email,
         password: loginData.password,
       });
@@ -56,7 +56,7 @@ const LoginPage = () => {
         toast.error(error.message || 'Falha ao entrar. Tente novamente.');
         return;
       }
-      navigate('/dashboard', { replace: true });
+      if (data?.session) navigate('/dashboard', { replace: true });
     } catch (err) {
       toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.');
     } finally {
