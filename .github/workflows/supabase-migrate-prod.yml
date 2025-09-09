@@ -13,10 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # >>> versão correta da action
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      # Instala a CLI diretamente pelo script oficial e exporta para o PATH
+      - name: Install Supabase CLI
+        shell: bash
+        run: |
+          curl -fsSL https://cli.supabase.com/install | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+          which supabase
+          supabase --version
 
       - name: Supabase login (non-interactive)
         run: supabase login --token "$SUPABASE_ACCESS_TOKEN"
