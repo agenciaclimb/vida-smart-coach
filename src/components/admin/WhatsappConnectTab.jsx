@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, AlertTriangle, QrCode, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 
 const WhatsappConnectTab = () => {
