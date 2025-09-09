@@ -47,17 +47,30 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLocalLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginData.email,
         password: loginData.password,
       });
+      
       if (error) {
+        console.error('Login error:', error);
         toast.error(error.message || 'Falha ao entrar. Tente novamente.');
         return;
       }
-      if (data?.session) navigate('/dashboard', { replace: true });
+      
+      if (data?.session) {
+        // Verificar se há URL de retorno
+        const returnUrl = params.get('returnUrl');
+        const targetUrl = returnUrl ? decodeURIComponent(returnUrl) : '/dashboard';
+        
+        console.log('Login successful, redirecting to:', targetUrl);
+        toast.success('Login realizado com sucesso!');
+        navigate(targetUrl, { replace: true });
+      }
     } catch (err) {
+      console.error('Login network error:', err);
       toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.');
     } finally {
       setLocalLoading(false);
@@ -71,11 +84,16 @@ const LoginPage = () => {
       return;
     }
 
+    if (registerData.password.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
     setLocalLoading(true);
     const toastId = toast.loading('Criando sua conta...');
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: registerData.email,
         password: registerData.password,
         options: {
@@ -87,20 +105,30 @@ const LoginPage = () => {
         },
       });
 
-      if (error) {
-        toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast.error(authError.message || 'Não foi possível realizar o cadastro.', { id: toastId });
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/dashboard', { replace: true });
-      } else {
+      // Se o usuário foi criado mas não há sessão (precisa confirmar email)
+      if (authData.user && !authData.session) {
         toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.', { id: toastId, duration: 5000 });
         setActiveTab('login');
         setLoginData({ email: registerData.email, password: '' });
+        return;
+      }
+
+      // Se há sessão (confirmação automática), redirecionar para dashboard
+      if (authData.session) {
+        const returnUrl = params.get('returnUrl');
+        const targetUrl = returnUrl ? decodeURIComponent(returnUrl) : '/dashboard';
+        
+        toast.success('Cadastro realizado com sucesso!', { id: toastId });
+        navigate(targetUrl, { replace: true });
       }
     } catch (error) {
+      console.error('Registration error:', error);
       toast.error('Ocorreu um erro inesperado durante o cadastro.', { id: toastId });
     } finally {
       setLocalLoading(false);
@@ -243,6 +271,7 @@ const LoginPage = () => {
                         id="register-phone"
                         type="tel"
                         placeholder="5511999999999"
+                        maxLength={15}
                         className="pl-10"
                         value={registerData.phone}
                         onChange={(e) => setRegisterData({...registerData, phone: e.target.value})}
