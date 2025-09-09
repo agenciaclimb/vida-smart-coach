@@ -31,15 +31,21 @@ export const useAdminClients = (
         .in('role', ['client']);
 
       if (error) throw error;
-      
-      const formattedData = data.map(c => ({
-        ...c,
-        full_name: c.name,
-        points: c.gamification?.total_points || 0,
-        user_id: c.user_id,
-        email: c.users?.email || 'N/A'
-      }));
-      setClients(formattedData || []);
+
+      const formattedData = (data || []).map(row => {
+        const name = row.name ?? 'Usuário';
+        const total_points = Number(row.gamification?.total_points ?? 0);
+        return {
+          ...row,
+          name,
+          total_points,
+          full_name: name,
+          points: total_points,
+          user_id: row.user_id,
+          email: row.users?.email || 'N/A'
+        };
+      });
+      setClients(formattedData);
 
     } catch (error) {
       toast.error('Falha ao carregar clientes.');
@@ -89,7 +95,7 @@ export const useAdminClients = (
     if (fetchedRef.current) return;
     fetchedRef.current = true;
     fetchClients();
-  }, [fetchClients]);
+  }, [supabaseClient]);
 
   return {
     clients,

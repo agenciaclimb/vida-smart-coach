@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
 import { supabase } from '@/core/supabase';
 
 const PlansRewardsContext = createContext(undefined);
@@ -9,48 +8,50 @@ export const PlansRewardsProvider = ({ children }) => {
     const [plans, setPlans] = useState([]);
     const [rewards, setRewards] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [hasShownPlansError, setHasShownPlansError] = useState(false);
-    const [hasShownRewardsError, setHasShownRewardsError] = useState(false);
+    const [error, setError] = useState(null);
     const fetchedRef = useRef(false);
 
     const fetchPlans = useCallback(async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: err } = await supabase
               .from('plans')
               .select('*')
               .order('sort_order');
-            if (error) throw error;
-            setPlans(data || []);
+            if (err) throw err;
+            const sanitized = (data || []).map(plan => ({
+                ...plan,
+                features: Array.isArray(plan.features) ? plan.features : [],
+            }));
+            setPlans(sanitized);
         } catch (error) {
             console.error("Plan fetch error:", error);
-            if (!hasShownPlansError) {
-                toast.error("Erro ao carregar os planos.");
-                setHasShownPlansError(true);
-            }
+            setError('Não consegui carregar planos e recompensas. Por favor, tente de novo.');
             setPlans([]);
         }
-    }, [hasShownPlansError]);
+    }, []);
 
     const fetchRewards = useCallback(async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: err } = await supabase
               .from('rewards')
               .select('*')
               .order('points_required');
-            if (error) throw error;
-            setRewards(data || []);
+            if (err) throw err;
+            const sanitized = (data || []).map(reward => ({
+                ...reward,
+                points_required: Number(reward.points_required ?? 0),
+            }));
+            setRewards(sanitized);
         } catch (error) {
             console.error("Rewards fetch error:", error);
-            if (!hasShownRewardsError) {
-                toast.error("Erro ao carregar as recompensas.");
-                setHasShownRewardsError(true);
-            }
+            setError('Não consegui carregar planos e recompensas. Por favor, tente de novo.');
             setRewards([]);
         }
-    }, [hasShownRewardsError]);
+    }, []);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
+        setError(null);
         await Promise.all([fetchPlans(), fetchRewards()]);
         setLoading(false);
     }, [fetchPlans, fetchRewards]);
@@ -59,16 +60,17 @@ export const PlansRewardsProvider = ({ children }) => {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
         fetchData();
-    }, [fetchData]);
+    }, []);
 
     const value = useMemo(() => ({
         plans,
         rewards,
         loading,
+        error,
         fetchPlans,
         fetchRewards,
         fetchData
-    }), [plans, rewards, loading, fetchPlans, fetchRewards, fetchData]);
+    }), [plans, rewards, loading, error, fetchPlans, fetchRewards, fetchData]);
     
     return <PlansRewardsContext.Provider value={value}>{children}</PlansRewardsContext.Provider>;
 };

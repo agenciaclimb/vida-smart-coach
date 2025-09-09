@@ -8,7 +8,6 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/core/supabase';
 
@@ -19,10 +18,12 @@ export const CommunityProvider = ({ children }) => {
     const [ranking, setRanking] = useState([]);
     const [communityPosts, setCommunityPosts] = useState([]);
     const [loadingCommunity, setLoadingCommunity] = useState(true);
+    const [error, setError] = useState(null);
 
     const fetchCommunityData = useCallback(async () => {
         if (!user) return;
         setLoadingCommunity(true);
+        setError(null);
         try {
             const [rankingRes, postsRes] = await Promise.all([
                 supabase.rpc('get_community_stats').order('total_points', { ascending: false }).limit(10),
@@ -47,18 +48,24 @@ export const CommunityProvider = ({ children }) => {
                 user_has_liked: post.user_has_liked[0]?.count > 0,
             }));
 
-            const rankingData = (rankingRes.data || []).map(r => ({
-                ...r,
-                full_name: r.name,
-                points: r.total_points,
-            }));
+            const rankingData = (rankingRes.data || []).map(r => {
+                const name = r.name ?? 'Usuário';
+                const total_points = Number(r.total_points ?? 0);
+                return {
+                    ...r,
+                    name,
+                    total_points,
+                    full_name: name,
+                    points: total_points,
+                };
+            });
 
             setRanking(rankingData);
             setCommunityPosts(processedPosts || []);
 
         } catch (error) {
-            toast.error("Erro ao carregar dados da comunidade.");
             console.error("Community data error:", error);
+            setError('Não consegui carregar a comunidade agora. Tente novamente em instantes.');
         } finally {
             setLoadingCommunity(false);
         }
@@ -71,19 +78,19 @@ export const CommunityProvider = ({ children }) => {
     const fetchedRef = useRef(false);
 
     useEffect(() => {
-      if (!user?.id) return;
-      if (fetchedRef.current) return;
+      if (!user?.id || fetchedRef.current) return;
       fetchedRef.current = true;
       fetchCommunityData();
-    }, [user, fetchCommunityData]);
+    }, [user?.id]);
 
     const value = useMemo(() => ({
         ranking,
         communityPosts,
         loadingCommunity,
+        error,
         refetchCommunityData,
         fetchCommunityData,
-    }), [ranking, communityPosts, loadingCommunity, refetchCommunityData, fetchCommunityData]);
+    }), [ranking, communityPosts, loadingCommunity, error, refetchCommunityData, fetchCommunityData]);
 
     return <CommunityContext.Provider value={value}>{children}</CommunityContext.Provider>;
 };
