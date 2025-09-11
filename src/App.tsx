@@ -22,6 +22,7 @@ import StorePage from '@/pages/StorePage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import StatusPage from '@/pages/StatusPage';
 import EmergencyDashboard from '@/pages/EmergencyDashboard';
+import ClientDashboardSafeGuard from '@/pages/ClientDashboard_SAFEGUARD';
 import TestPage from '@/pages/TestPage';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import { DataProvider } from '@/contexts/DataContext';
@@ -56,6 +57,14 @@ function App() {
         <Route
           path="/dashboard-emergency"
           element={<EmergencyDashboard />}
+        />
+        <Route
+          path="/dashboard-safeguard"
+          element={
+            <RequireAuth>
+              <ClientDashboardSafeGuard />
+            </RequireAuth>
+          }
         />
         <Route
           path="/admin/*"
