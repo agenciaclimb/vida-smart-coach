@@ -19,6 +19,7 @@ import IntegrationCallbackPage from '@/pages/IntegrationCallbackPage';
 import SuccessPage from '@/pages/SuccessPage';
 import StorePage from '@/pages/StorePage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
+import StatusPage from '@/pages/StatusPage';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import { DataProvider } from '@/contexts/DataContext';
 import { CartProvider } from '@/hooks/useCart';
@@ -37,6 +38,7 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/auth/integration-callback" element={<IntegrationCallbackPage />} />
         <Route path="/success" element={<SuccessPage />} />
+        <Route path="/status" element={<StatusPage />} />
         <Route path="/store" element={<StorePage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route
