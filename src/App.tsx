@@ -6,6 +6,7 @@ import RequireAuth from '@/components/auth/RequireAuth';
 import AuthRedirection from '@/components/auth/AuthRedirection';
 import EmailVerifyGuard from '@/components/auth/EmailVerifyGuard';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import SafeWrapper from '@/components/SafeWrapper';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -65,7 +66,20 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Página não encontrada</h1>
+              <p className="text-gray-600 mb-6">A página que você procura não existe.</p>
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
+              >
+                Voltar ao Início
+              </button>
+            </div>
+          </div>
+        } />
       </Routes>
       <ShadcnToaster />
       <HotToaster position="top-center" reverseOrder={false} />
@@ -74,15 +88,17 @@ function App() {
 }
 
 const AppWithProviders = () => (
-  <ErrorBoundary>
-    <AuthProvider>
-      <DataProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </DataProvider>
-    </AuthProvider>
-  </ErrorBoundary>
+  <SafeWrapper>
+    <ErrorBoundary>
+      <AuthProvider>
+        <DataProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </DataProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  </SafeWrapper>
 );
 
 export default AppWithProviders;
