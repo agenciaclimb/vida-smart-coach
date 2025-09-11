@@ -39,49 +39,64 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId;
+
     const getSessionAndProfile = async () => {
       try {
         console.log('Boot: session-start');
         
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('session timeout')), 6000)
-        );
+        // Timeout mais curto e com fallback
+        timeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.log('Boot: session-timeout, proceeding without session');
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+          }
+        }, 3000);
         
-        const { data: { session: currentSession }, error: sessionError } = await Promise.race([
-          sessionPromise, 
-          timeoutPromise
-        ]);
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
+        // Limpar timeout se chegou aqui
+        clearTimeout(timeoutId);
+        
+        if (sessionError) {
+          console.warn('Boot: session-error', sessionError.message);
+        }
 
         if (isMounted) {
           setSession(currentSession);
           if (currentSession?.user) {
             console.log('Boot: session-ok');
-            const profile = await fetchUserProfile(currentSession.user);
-            if (isMounted) {
-              setUser({ ...currentSession.user, profile, access_token: currentSession.access_token });
+            try {
+              const profile = await fetchUserProfile(currentSession.user);
+              if (isMounted) {
+                setUser({ ...currentSession.user, profile, access_token: currentSession.access_token });
+              }
+            } catch (profileError) {
+              console.warn('Boot: profile-fetch-error', profileError.message);
+              // Continue without profile
+              if (isMounted) {
+                setUser({ ...currentSession.user, profile: null, access_token: currentSession.access_token });
+              }
             }
           } else {
             console.log('Boot: session-none');
             setUser(null);
           }
+          setLoading(false);
         }
       } catch (e) {
-        console.warn("Boot: session-timeout/error", e.message);
+        console.warn("Boot: session-error", e.message);
+        clearTimeout(timeoutId);
         if (isMounted) {
           setSession(null);
           setUser(null);
-        }
-        if(e.message.includes('Failed to fetch')) {
-          toast.error("Não foi possível conectar ao servidor. Verifique sua conexão.", { id: 'initial-load-network-error' });
-        } else if (!e.message.includes('timeout')) {
-          toast.error("Erro ao carregar a sessão.", { id: 'initial-load-error' });
-        }
-      } finally {
-        if (isMounted) {
           setLoading(false);
+        }
+        // Não mostrar toast para timeouts simples
+        if (e.message.includes('Failed to fetch')) {
+          toast.error("Conexão instável. Tentando novamente...", { id: 'initial-load-network-error' });
         }
       }
     };

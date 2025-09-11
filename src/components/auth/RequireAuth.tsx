@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSessionContext, useSupabaseClient } from '@supabase/auth-helpers-react';
-import { Loader2 } from 'lucide-react';
+import LoadingFallback from '@/components/LoadingFallback';
 
 export default function RequireAuth({ children }: PropsWithChildren) {
   const navigate = useNavigate();
@@ -12,37 +12,25 @@ export default function RequireAuth({ children }: PropsWithChildren) {
   const [checkingSession, setCheckingSession] = useState(false);
   const askedRef = useRef(false);
 
-  // Se carregar demais, força checar a sessão
+  // Timeout forçado para evitar loading infinito
   useEffect(() => {
     let t: any;
-    if (isLoading && !askedRef.current) {
-      askedRef.current = true;
-      setCheckingSession(true);
-      
-      // Tenta resolver imediatamente
-      supabase.auth.getSession()
-        .then(({ data: { session: currentSession }, error }) => {
-          if (error) {
-            console.error('Error checking session:', error);
-          }
-          console.log('RequireAuth session check:', !!currentSession);
-        })
-        .finally(() => {
-          setReady(true);
-          setCheckingSession(false);
-        });
-      
-      // Fallback de 5s para não travar
-      t = setTimeout(() => {
+    
+    // Force ready after 3 seconds regardless
+    t = setTimeout(() => {
+      if (!ready) {
+        console.log('RequireAuth: Forcing ready state after timeout');
         setReady(true);
         setCheckingSession(false);
-      }, 5000);
-    } else if (!isLoading) {
+      }
+    }, 3000);
+    
+    if (!isLoading) {
       setReady(true);
     }
     
     return () => clearTimeout(t);
-  }, [isLoading, supabase]);
+  }, [isLoading, ready]);
 
   // Redireciona se não houver sessão quando já estiver pronto
   useEffect(() => {
@@ -57,12 +45,15 @@ export default function RequireAuth({ children }: PropsWithChildren) {
   // Loading state
   if ((isLoading || checkingSession) && !ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-          <p className="text-gray-600">Verificando autenticação...</p>
-        </div>
-      </div>
+      <LoadingFallback 
+        message="Verificando autenticação..."
+        timeout={5000}
+        onTimeout={() => {
+          console.log('RequireAuth: Authentication check timeout, redirecting to login');
+          const returnUrl = location.pathname + location.search;
+          navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
+        }}
+      />
     );
   }
 
