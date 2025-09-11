@@ -7,7 +7,7 @@ const StatusPage: React.FC = () => {
   };
 
   const getAppVersion = () => {
-    return '1.0.1-emergency';
+    return '1.0.2-fixed';
   };
 
   const performHealthCheck = () => {

@@ -47,15 +47,15 @@ function App() {
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route
           path="/dashboard"
-          element={<EmergencyDashboard />}
-        />
-        <Route
-          path="/dashboard-old"
           element={
             <RequireAuth>
               <ClientDashboard />
             </RequireAuth>
           }
+        />
+        <Route
+          path="/dashboard-emergency"
+          element={<EmergencyDashboard />}
         />
         <Route
           path="/admin/*"

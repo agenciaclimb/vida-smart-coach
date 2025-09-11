@@ -9,6 +9,13 @@ console.log('🔧 Supabase Config Check:', {
   url: supabaseUrl
 });
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase configuration!', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey
+  });
+}
+
 export const supabase =
   globalThis.__supabase_singleton ??
   (globalThis.__supabase_singleton = createClient(supabaseUrl, supabaseAnonKey, {
@@ -16,21 +23,15 @@ export const supabase =
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      storageKey: 'vida-smart-auth',
-      flowType: 'pkce'
+      storageKey: 'vida-smart-auth'
     },
     global: {
       headers: {
-        'X-Client-Info': 'vida-smart-coach@1.0.0'
+        'X-Client-Info': 'vida-smart-coach@1.0.1'
       }
     },
     db: {
       schema: 'public'
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
     }
   }));
 
