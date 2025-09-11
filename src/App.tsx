@@ -21,6 +21,8 @@ import SuccessPage from '@/pages/SuccessPage';
 import StorePage from '@/pages/StorePage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import StatusPage from '@/pages/StatusPage';
+import EmergencyDashboard from '@/pages/EmergencyDashboard';
+import TestPage from '@/pages/TestPage';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext';
 import { DataProvider } from '@/contexts/DataContext';
 import { CartProvider } from '@/hooks/useCart';
@@ -40,10 +42,15 @@ function App() {
         <Route path="/auth/integration-callback" element={<IntegrationCallbackPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/status" element={<StatusPage />} />
+        <Route path="/test" element={<TestPage />} />
         <Route path="/store" element={<StorePage />} />
         <Route path="/product/:id" element={<ProductDetailPage />} />
         <Route
           path="/dashboard"
+          element={<EmergencyDashboard />}
+        />
+        <Route
+          path="/dashboard-old"
           element={
             <RequireAuth>
               <ClientDashboard />

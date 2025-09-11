@@ -3,11 +3,11 @@ import React from 'react';
 const StatusPage: React.FC = () => {
   const getGitCommit = () => {
     // Placeholder - será substituído pelo commit real durante build
-    return process.env.VITE_GIT_COMMIT || 'unknown';
+    return process.env.VITE_GIT_COMMIT || 'latest';
   };
 
   const getAppVersion = () => {
-    return '1.0.0';
+    return '1.0.1-emergency';
   };
 
   const performHealthCheck = () => {
