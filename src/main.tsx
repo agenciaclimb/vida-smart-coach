@@ -5,6 +5,11 @@ import App from './App';
 import AppProviders from './AppProviders';
 import './index.css';
 
+// Debug import (apenas em desenvolvimento)
+if (import.meta.env.MODE === 'development') {
+  import('./debug.js');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
