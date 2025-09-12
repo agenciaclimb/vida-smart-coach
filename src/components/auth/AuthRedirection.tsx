@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 
 export default function AuthRedirection({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
