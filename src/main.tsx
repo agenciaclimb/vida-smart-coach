@@ -1,24 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import './utils/sw-cleanup-enhanced';
+import AuthProvider from './components/auth/AuthProvider';
+import AuthRedirection from './components/auth/AuthRedirection';
 import App from './App';
-import AppProviders from './AppProviders';
 import './index.css';
 
-// 🧹 Limpeza de SW e cache (sempre executar)
-import './utils/sw-cleanup-enhanced';
-
-// Debug import (apenas em desenvolvimento)
+// Debug import (apenas em desenvolvimento)  
 if (import.meta.env.MODE === 'development') {
   import('./debug.js');
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AppProviders>
-        <App />
-      </AppProviders>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AuthRedirection>
+          <App />
+        </AuthRedirection>
+      </BrowserRouter>
+    </AuthProvider>
   </React.StrictMode>
 );
