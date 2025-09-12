@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Bell, LogOut, UserCircle as CircleUser } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "react-hot-toast";
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 import { useNavigate } from 'react-router-dom';
 
 
