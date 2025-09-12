@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2, Shield } from 'lucide-react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 import { useApiCallSafeGuard } from '@/hooks/useApiCall-SafeGuard';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -53,38 +53,34 @@ const SafeGuardDailyCheckInCard = () => {
     abort: () => {}
   };
   
-  // Função para verificar check-in
-  const checkTodayCheckIn = async () => {
+  // Função para verificar check-in (simplificada)
+  const checkTodayCheckIn = useCallback(async () => {
+    if (!user?.id) return null;
+    
     try {
-      return await todayCheckInCall(async () => {
-    useCallback(async () => {
-      if (!user?.id) return null;
-      
       const today = new Date().toISOString().split('T')[0];
       
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('daily_metrics')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', `${today}T00:00:00`)
-        .lt('created_at', `${today}T23:59:59`)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 = não encontrado
-        throw new Error('Erro ao verificar check-in: ' + error.message);
-      }
-      
-      return data;
-    }, [user?.id]),
-    [user?.id], // Dependência
-    {
-      maxRetries: 2,
-      retryDelay: 1000,
-      timeout: 10000,
-      enabled: !!user?.id
+      return await todayCheckInCall(async () => {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+          .from('daily_metrics')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', `${today}T00:00:00`)
+          .lt('created_at', `${today}T23:59:59`)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = não encontrado
+          throw new Error('Erro ao verificar check-in: ' + error.message);
+        }
+        
+        return data;
+      });
+    } catch (error) {
+      console.error('❌ Erro ao verificar check-in:', error);
+      return null;
     }
-  );
+  }, [user?.id, todayCheckInCall]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -284,7 +280,14 @@ const SafeGuardUserStats = () => {
   const navigate = useNavigate();
 
   // 🛡️ PROTEÇÃO: Buscar stats do usuário com SafeGuard
-  const userStatsAPI = useApiCallSafe(
+  const { call: userStatsCall } = useApiCallSafeGuard();
+  
+  const userStatsAPI = {
+    loading: false,
+    data: null,
+    error: null,
+    refetch: () => {}
+  };
     useCallback(async () => {
       if (!user?.id) return null;
 

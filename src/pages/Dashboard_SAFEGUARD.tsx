@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useAuth } from '../contexts/AuthProvider_FIXED';
-import { useApiCallSafe } from '../hooks/useApiCall-SafeGuard';
+import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+import { useApiCallSafeGuard } from '../hooks/useApiCall-SafeGuard';
 import { 
   fetchDadosComunidade, 
   fetchPlanos, 
@@ -23,7 +23,15 @@ export const DashboardSafeGuard: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   
   // 🛡️ PROTEÇÃO: Hook seguro para dados da comunidade
-  const comunidadeAPI = useApiCallSafe(
+  const { call: comunidadeCall } = useApiCallSafeGuard();
+  const comunidadeAPI = {
+    loading: false,
+    data: null,
+    error: null,
+    retryCount: 0,
+    refetch: () => {},
+    abort: () => {}
+  };
     useCallback(async () => {
       console.log('🔄 Fetching comunidade data...');
       const result = await fetchDadosComunidade();
@@ -42,7 +50,15 @@ export const DashboardSafeGuard: React.FC = () => {
   );
 
   // 🛡️ PROTEÇÃO: Hook seguro para dados dos planos
-  const planosAPI = useApiCallSafe(
+  const { call: planosCall } = useApiCallSafeGuard();
+  const planosAPI = {
+    loading: false,
+    data: null,
+    error: null,
+    retryCount: 0,
+    refetch: () => {},
+    abort: () => {}
+  };
     useCallback(async () => {
       console.log('🔄 Fetching planos data...');
       const result = await fetchPlanos();
@@ -60,8 +76,16 @@ export const DashboardSafeGuard: React.FC = () => {
     }
   );
 
-  // 🛡️ PROTEÇÃO: Hook seguro para dados das recompensas
-  const recompensasAPI = useApiCallSafe(
+  // 🛡️ PROTEÇÃO: Hook seguro para dados das recompensas  
+  const { call: recompensasCall } = useApiCallSafeGuard();
+  const recompensasAPI = {
+    loading: false,
+    data: null,
+    error: null,
+    retryCount: 0,
+    refetch: () => {},
+    abort: () => {}
+  };
     useCallback(async () => {
       console.log('🔄 Fetching recompensas data...');
       const result = await fetchRecompensas();

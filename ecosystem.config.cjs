@@ -1,23 +1,24 @@
 module.exports = {
   apps: [
     {
-      name: 'vida-smart-coach-preview',
-      script: 'node_modules/.bin/pnpm',
-      args: 'run preview',
+      name: 'vida-smart-dev',
+      script: 'npm',
+      args: 'run dev',
       cwd: '/home/user/webapp',
+      interpreter: 'none',
       env: {
-        NODE_ENV: 'production',
-        PORT: 4173,
+        NODE_ENV: 'development',
+        PORT: 5173,
+        HOST: '0.0.0.0'
       },
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
+      log_file: '/home/user/webapp/logs/combined.log',
+      out_file: '/home/user/webapp/logs/out.log',
+      error_file: '/home/user/webapp/logs/error.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: './logs/pm2-error.log',
-      out_file: './logs/pm2-out.log',
-      pid_file: './logs/pm2.pid',
-    },
-  ],
+      merge_logs: true,
+      max_restarts: 3,
+      min_uptime: '10s',
+      restart_delay: 1000
+    }
+  ]
 };
