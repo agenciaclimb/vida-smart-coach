@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { useApiCallSafe } from '@/hooks/useApiCall-SafeGuard';
+import { useApiCallSafeGuard } from '@/hooks/useApiCall-SafeGuard';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ProgressChart from '@/components/client/ProgressChart';
@@ -42,7 +42,21 @@ const SafeGuardDailyCheckInCard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 🛡️ PROTEÇÃO: Verificar check-in do dia com SafeGuard
-  const todayCheckInAPI = useApiCallSafe(
+  const { call: todayCheckInCall } = useApiCallSafeGuard();
+  
+  const todayCheckInAPI = {
+    loading: false,
+    data: null,
+    error: null,
+    retryCount: 0,
+    refetch: () => {},
+    abort: () => {}
+  };
+  
+  // Função para verificar check-in
+  const checkTodayCheckIn = async () => {
+    try {
+      return await todayCheckInCall(async () => {
     useCallback(async () => {
       if (!user?.id) return null;
       

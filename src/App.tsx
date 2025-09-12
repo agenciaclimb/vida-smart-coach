@@ -25,6 +25,7 @@ import EmergencyDashboard from '@/pages/EmergencyDashboard';
 import ClientDashboardSafeGuard from '@/pages/ClientDashboard_SAFEGUARD';
 import { DashboardPatchFinal } from '@/pages/Dashboard_PATCH_FINAL';
 import RouteGuardEnhanced from '@/components/RouteGuard-Enhanced';
+import TestSimple from '@/pages/TestSimple';
 import TestPage from '@/pages/TestPage';
 import { AuthProvider } from '@/contexts/SupabaseAuthContext_FINAL';
 import { DataProvider } from '@/contexts/DataContext';
@@ -73,6 +74,14 @@ function App() {
           element={
             <RouteGuardEnhanced requireAuth={true}>
               <DashboardPatchFinal />
+            </RouteGuardEnhanced>
+          }
+        />
+        <Route
+          path="/test-simple"
+          element={
+            <RouteGuardEnhanced requireAuth={false}>
+              <TestSimple />
             </RouteGuardEnhanced>
           }
         />

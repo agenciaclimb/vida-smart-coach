@@ -8,7 +8,7 @@ import { useData } from '@/contexts/DataContext';
 import { Shield } from 'lucide-react';
 
 import ClientHeader from '@/components/client/ClientHeader';
-import DashboardTabSafeGuard from '@/components/client/DashboardTab_SAFEGUARD';
+import DashboardTabFixedSimple from '@/components/client/DashboardTab_FIXED_SIMPLE';
 import PlanTab from '@/components/client/PlanTab';
 import ChatTab from '@/components/client/ChatTab';
 import GamificationTab from '@/components/client/GamificationTab';
@@ -81,7 +81,7 @@ const ClientDashboardSafeGuard = ({ defaultTab = 'dashboard' }) => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardTabSafeGuard />;
+        return <DashboardTabFixedSimple />;
       case 'plan':
         return <PlanTab />;
       case 'chat':
@@ -99,7 +99,7 @@ const ClientDashboardSafeGuard = ({ defaultTab = 'dashboard' }) => {
       case 'settings':
         return <SettingsTab />;
       default:
-        return <DashboardTabSafeGuard />;
+        return <DashboardTabFixedSimple />;
     }
   };
 
