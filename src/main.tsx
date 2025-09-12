@@ -1,25 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import './utils/sw-cleanup-enhanced';
-import AuthProvider from './components/auth/AuthProvider';
-import AuthRedirection from './components/auth/AuthRedirection';
 import App from './App';
-import './index.css';
 
-// Debug import (apenas em desenvolvimento)  
-if (import.meta.env.MODE === 'development') {
-  import('./debug.js');
-}
+// IMPORTS EXATOS – use o caminho real encontrado
+import { AuthProvider } from '@/contexts/SupabaseAuthContext_FINAL';
+import { DataProvider } from '@/contexts/DataContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <AuthRedirection>
+    <BrowserRouter>
+      <AuthProvider>
+        <DataProvider>
           <App />
-        </AuthRedirection>
-      </BrowserRouter>
-    </AuthProvider>
+        </DataProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

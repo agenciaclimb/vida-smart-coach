@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 
 interface RouteGuardProps {
   children: React.ReactNode;

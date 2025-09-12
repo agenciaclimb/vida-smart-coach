@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { useChat } from '@/contexts/data/ChatContext';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 
 const ChatTab = () => {
     const { messages, sendMessage, loading: chatLoading } = useChat();
