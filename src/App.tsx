@@ -23,8 +23,10 @@ import ProductDetailPage from '@/pages/ProductDetailPage';
 import StatusPage from '@/pages/StatusPage';
 import EmergencyDashboard from '@/pages/EmergencyDashboard';
 import ClientDashboardSafeGuard from '@/pages/ClientDashboard_SAFEGUARD';
+import { DashboardPatchFinal } from '@/pages/Dashboard_PATCH_FINAL';
+import RouteGuardEnhanced from '@/components/RouteGuard-Enhanced';
 import TestPage from '@/pages/TestPage';
-import { AuthProvider } from '@/contexts/SupabaseAuthContext';
+import { AuthProvider } from '@/contexts/SupabaseAuthContext_FINAL';
 import { DataProvider } from '@/contexts/DataContext';
 import { CartProvider } from '@/hooks/useCart';
 
@@ -64,6 +66,14 @@ function App() {
             <RequireAuth>
               <ClientDashboardSafeGuard />
             </RequireAuth>
+          }
+        />
+        <Route
+          path="/dashboard-final"
+          element={
+            <RouteGuardEnhanced requireAuth={true}>
+              <DashboardPatchFinal />
+            </RouteGuardEnhanced>
           }
         />
         <Route

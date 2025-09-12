@@ -5,6 +5,9 @@ import App from './App';
 import AppProviders from './AppProviders';
 import './index.css';
 
+// 🧹 Limpeza de SW e cache (sempre executar)
+import './utils/sw-cleanup-enhanced';
+
 // Debug import (apenas em desenvolvimento)
 if (import.meta.env.MODE === 'development') {
   import('./debug.js');
