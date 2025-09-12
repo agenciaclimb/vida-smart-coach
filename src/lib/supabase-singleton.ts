@@ -1,14 +1,25 @@
-// src/lib/supabase-singleton.ts
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-let _client: SupabaseClient | null = null;
+let client: SupabaseClient | null = null
 
 export function getSupabase(): SupabaseClient {
-  if (_client) return _client;
-  const url = import.meta.env.VITE_SUPABASE_URL!;
-  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY!;
-  _client = createClient(url, anon, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
-  });
-  return _client;
+  if (client) return client
+
+  const url = import.meta.env.VITE_SUPABASE_URL
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+  if (!url || !anon) {
+    console.error('[Supabase] VITE_SUPABASE_URL/ANON_KEY ausentes')
+    // devolve um objeto falso pra evitar crash (o Provider já lida com isso)
+    // @ts-expect-error
+    return null
+  }
+  
+  client = createClient(url, anon, { 
+    auth: { 
+      persistSession: true, 
+      autoRefreshToken: true 
+    } 
+  })
+  return client
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 import { toast } from 'react-hot-toast';
 import { useAdminGeneral } from '@/contexts/data/useAdminGeneral';
 import { useAdminClients } from '@/contexts/data/useAdminClients';
