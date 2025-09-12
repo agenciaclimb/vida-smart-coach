@@ -26,8 +26,9 @@ import ClientDashboardSafeGuard from '@/pages/ClientDashboard_SAFEGUARD';
 import { DashboardPatchFinal } from '@/pages/Dashboard_PATCH_FINAL';
 import RouteGuardEnhanced from '@/components/RouteGuard-Enhanced';
 import TestSimple from '@/pages/TestSimple';
+import TestUltraSimple from '@/pages/TestUltraSimple';
 import TestPage from '@/pages/TestPage';
-import { AuthProvider } from '@/contexts/SupabaseAuthContext_FINAL';
+// AuthProvider agora está no AppProviders.tsx
 import { DataProvider } from '@/contexts/DataContext';
 import { CartProvider } from '@/hooks/useCart';
 
@@ -85,6 +86,7 @@ function App() {
             </RouteGuardEnhanced>
           }
         />
+        <Route path="/test-ultra" element={<TestUltraSimple />} />
         <Route
           path="/admin/*"
           element={
@@ -125,13 +127,11 @@ function App() {
 const AppWithProviders = () => (
   <SafeWrapper>
     <ErrorBoundary>
-      <AuthProvider>
-        <DataProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </DataProvider>
-      </AuthProvider>
+      <DataProvider>
+        <CartProvider>
+          <App />
+        </CartProvider>
+      </DataProvider>
     </ErrorBoundary>
   </SafeWrapper>
 );

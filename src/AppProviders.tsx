@@ -1,8 +1,7 @@
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { supabase } from '@/lib/supabaseClient';
+import { AuthProvider } from '@/contexts/SupabaseAuthContext_FINAL';
 
 type Props = { children: React.ReactNode };
 
 export default function AppProviders({ children }: Props) {
-  return <SessionContextProvider supabaseClient={supabase}>{children}</SessionContextProvider>;
+  return <AuthProvider>{children}</AuthProvider>;
 }
