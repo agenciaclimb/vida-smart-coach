@@ -3,12 +3,13 @@ import LoginPage from '@/pages/LoginPage';
 import ClientDashboard from '@/pages/ClientDashboard';
 import SafeStatus from '@/pages/SafeStatus';
 import AuthRedirection from '@/components/auth/AuthRedirection';
+import { DataProvider } from '@/contexts/DataContext';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/dashboard" element={<AuthRedirection><ClientDashboard /></AuthRedirection>} />
+      <Route path="/dashboard" element={<AuthRedirection><DataProvider><ClientDashboard /></DataProvider></AuthRedirection>} />
       <Route path="/safe" element={<SafeStatus />} />
       <Route path="*" element={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
