@@ -1,0 +1,5 @@
+Invoke-WebRequest: 
+Line |
+ 120 |    try { Invoke-WebRequest http://localhost:5174/login -UseBasicParsin …
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente.
