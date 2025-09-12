@@ -1,24 +1,17 @@
+import './sw-cleanup';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import AppProviders from './AppProviders';
 import './index.css';
 
-// 🧹 Limpeza de SW e cache (sempre executar)
-import './utils/sw-cleanup-enhanced';
-
-// Debug import (apenas em desenvolvimento)
-if (import.meta.env.MODE === 'development') {
-  import('./debug.js');
-}
+// Log de inicialização
+console.log('🚀 Vida Smart - Inicializando aplicação...');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AppProviders>
-        <App />
-      </AppProviders>
+      <App />
     </BrowserRouter>
   </React.StrictMode>
 );
