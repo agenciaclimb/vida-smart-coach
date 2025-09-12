@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { AdminProvider, useAdmin } from '@/contexts/data/AdminContext';
 import { ClientProvider, useClient } from '@/contexts/data/ClientContext';
 import { PartnerProvider, usePartner } from '@/contexts/data/PartnerContext';

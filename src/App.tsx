@@ -9,6 +9,7 @@ import ClientDashboard from '@/pages/ClientDashboard';
 import TestUltraSimple from '@/pages/TestUltraSimple';
 import ClientDashboardSafeGuard from '@/pages/ClientDashboard_SAFEGUARD';
 import SafeStatus from '@/pages/SafeStatus';
+import { DataProvider } from '@/contexts/DataContext';
 
 export default function App() {
   return (
@@ -17,9 +18,9 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/dashboard" element={<ClientDashboard />} />
+        <Route path="/dashboard" element={<DataProvider><ClientDashboard /></DataProvider>} />
         <Route path="/test-ultra" element={<TestUltraSimple />} />
-        <Route path="/dashboard-safeguard" element={<ClientDashboardSafeGuard />} />
+        <Route path="/dashboard-safeguard" element={<DataProvider><ClientDashboardSafeGuard /></DataProvider>} />
         <Route path="/safe" element={<SafeStatus />} />
         <Route path="*" element={
           <div className="min-h-screen flex items-center justify-center bg-gray-50">
