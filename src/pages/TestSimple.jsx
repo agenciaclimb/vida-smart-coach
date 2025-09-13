@@ -1,6 +1,6 @@
 // src/pages/TestSimple.jsx
 import React from 'react';
-import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 // ===============================================
 // 🧪 PÁGINA DE TESTE ULTRA SIMPLES

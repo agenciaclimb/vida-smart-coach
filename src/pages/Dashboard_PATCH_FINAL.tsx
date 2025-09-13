@@ -1,7 +1,7 @@
 // src/pages/Dashboard_PATCH_FINAL.tsx
 import React, { useState } from 'react';
 import { useApiCallSafeGuard } from '../hooks/useApiCall-SafeGuard';
-import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { getSupabase } from '../lib/supabase-singleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

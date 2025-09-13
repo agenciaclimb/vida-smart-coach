@@ -1,7 +1,7 @@
 // src/components/RouteGuard-Enhanced.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 // ===============================================
 // 🛡️ ROUTE GUARD - PROTEÇÃO CONTRA LOOPS

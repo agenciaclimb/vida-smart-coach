@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useApiCallSafeGuard } from '../hooks/useApiCall-SafeGuard';
 import { 
   fetchDadosComunidade, 

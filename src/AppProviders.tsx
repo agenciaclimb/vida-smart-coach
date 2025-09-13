@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/components/auth/AuthProvider';
+import AuthProvider from '@/components/auth/AuthProvider';
 
 type Props = { children: React.ReactNode };
 

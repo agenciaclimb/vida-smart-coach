@@ -1,0 +1,116 @@
+src/AppProviders.tsx:1:import { AuthProvider } from '@/components/auth/AuthProvider';
+src/AppProviders.tsx:6:  return <AuthProvider>{children}</AuthProvider>;
+src/App_UPDATED.tsx:3:import { AuthProvider } from './contexts/SupabaseAuthContext';
+src/App_UPDATED.tsx:12:    <AuthProvider>
+src/App_UPDATED.tsx:22:    </AuthProvider>
+src/components/AuthGuard_FIXED.tsx:3:import { useAuth } from '../contexts/AuthProvider_FIXED';
+src/components/AuthGuard_FIXED.tsx:16:  const { user, loading } = useAuth();
+src/components/RouteGuard-Enhanced.tsx:4:import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+src/components/RouteGuard-Enhanced.tsx:24:  const { user, loading } = useAuth();
+src/components/RouteGuard.tsx:3:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/RouteGuard.tsx:10:  const { user, loading } = useAuth();
+src/components/admin/AdminHeader.jsx:6:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/admin/AdminHeader.jsx:11:  const { user, signOut } = useAuth();
+src/components/admin/WhatsappConnectTab.jsx:10:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/admin/WhatsappConnectTab.jsx:13:  const { user } = useAuth();
+src/components/auth/AuthProvider.tsx:13:export default function AuthProvider({ children }: { children: React.ReactNode }) {
+src/components/auth/AuthProvider.tsx:38:export function useAuth() {
+src/components/auth/AuthRedirection.tsx:3:import { useAuth } from "@/components/auth/AuthProvider";
+src/components/auth/AuthRedirection.tsx:8:  const { user, loading } = useAuth();
+src/components/auth/RequireAuth.tsx:3:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/auth/RequireAuth.tsx:8:  const { user, loading } = useAuth();
+src/components/client/ChatTab.jsx:11:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/ChatTab.jsx:15:    const { user } = useAuth();
+src/components/client/CommunityTab.jsx:7:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/CommunityTab.jsx:13:    const { user } = useAuth();
+src/components/client/DashboardTab.jsx:6:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/DashboardTab.jsx:34:  const { user } = useAuth();
+src/components/client/DashboardTab.jsx:120:  const { user, loading } = useAuth();
+src/components/client/DashboardTab_FIXED_SIMPLE.jsx:5:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/DashboardTab_FIXED_SIMPLE.jsx:15:  const { user, loading: authLoading } = useAuth();
+src/components/client/DashboardTab_SAFEGUARD.jsx:5:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/DashboardTab_SAFEGUARD.jsx:38:  const { user } = useAuth();
+src/components/client/DashboardTab_SAFEGUARD.jsx:279:  const { user } = useAuth();
+src/components/client/DashboardTab_SAFEGUARD.jsx:388:  const { user, loading } = useAuth();
+src/components/client/GamificationTab.jsx:10:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/GamificationTab.jsx:17:    const { user } = useAuth();
+src/components/client/IntegrationsTab.jsx:7:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/IntegrationsTab.jsx:13:    const { supabase } = useAuth();
+src/components/client/ProfileTab.jsx:8:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/ProfileTab.jsx:28:    const { user, updateUserProfile, loading: authLoading } = useAuth();
+src/components/client/ReferralTab.jsx:12:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/ReferralTab.jsx:15:  const { user } = useAuth();
+src/components/client/SettingsTab.jsx:11:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/client/SettingsTab.jsx:29:  const { user, updateUserProfile, loading: authLoading } = useAuth();
+src/components/landing/Header.jsx:6:import { useAuth } from '@/components/auth/AuthProvider';
+src/components/landing/Header.jsx:13:    const { user } = useAuth();
+src/contexts/AuthContext.jsx:5:export const useAuth = () => {
+src/contexts/AuthContext.jsx:8:    throw new Error('useAuth must be used within an AuthProvider');
+src/contexts/AuthContext.jsx:13:export const AuthProvider = ({ children }) => {
+src/contexts/AuthProvider_FIXED.tsx:15:export const useAuth = () => {
+src/contexts/AuthProvider_FIXED.tsx:18:    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+src/contexts/AuthProvider_FIXED.tsx:23:export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+src/contexts/AuthProvider_MINIMAL.tsx:3:// AuthProvider mínimo para evitar loops infinitos
+src/contexts/AuthProvider_MINIMAL.tsx:13:export const useAuth = () => {
+src/contexts/AuthProvider_MINIMAL.tsx:16:    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+src/contexts/AuthProvider_MINIMAL.tsx:21:export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+src/contexts/DataContext.jsx:3:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/DataContext.jsx:16:  const { user, loading: authLoading } = useAuth();
+src/contexts/SupabaseAuthContext-FINAL.jsx:11:export const useAuth = () => {
+src/contexts/SupabaseAuthContext-FINAL.jsx:14:    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+src/contexts/SupabaseAuthContext-FINAL.jsx:19:export const AuthProvider = ({ children }) => {
+src/contexts/SupabaseAuthContext-FINAL.jsx:156:      console.log('🧹 Cleanup do AuthProvider...');
+src/contexts/SupabaseAuthContext.jsx:8:export const AuthProvider = ({ children }) => {
+src/contexts/SupabaseAuthContext.jsx:319:export const useAuth = () => {
+src/contexts/SupabaseAuthContext.jsx:322:    throw new Error('useAuth must be used within an AuthProvider');
+src/contexts/SupabaseAuthContext_FINAL.jsx:6:export function AuthProvider({ children }) {
+src/contexts/SupabaseAuthContext_FINAL.jsx:54:export const useAuth = () => {
+src/contexts/SupabaseAuthContext_FINAL.jsx:56:  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
+src/contexts/SupabaseAuthContext_FIXED.jsx:6:export const useAuth = () => {
+src/contexts/SupabaseAuthContext_FIXED.jsx:9:    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+src/contexts/SupabaseAuthContext_FIXED.jsx:14:export const AuthProvider = ({ children }) => {
+src/contexts/data/AdminContext.jsx:2:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/AdminContext.jsx:15:  const { supabase, user } = useAuth();
+src/contexts/data/ChatContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/ChatContext.jsx:10:    const { user } = useAuth();
+src/contexts/data/ClientContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/ClientContext.jsx:10:    const { user } = useAuth();
+src/contexts/data/CommunityContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/CommunityContext.jsx:10:    const { user } = useAuth();
+src/contexts/data/IntegrationsContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/IntegrationsContext.jsx:10:    const { user } = useAuth();
+src/contexts/data/PartnerContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/PartnerContext.jsx:10:    const { user } = useAuth();
+src/contexts/data/ProfileContext.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/contexts/data/ProfileContext.jsx:10:  const { user, loading: authLoading } = useAuth();
+src/main.tsx:4:import AuthProvider from '@/components/auth/AuthProvider';
+src/main.tsx:10:    <AuthProvider>
+src/main.tsx:14:    </AuthProvider>
+src/pages/AdminDashboard.jsx:7:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/AdminDashboard.jsx:49:  const { loading: authLoading } = useAuth();
+src/pages/CheckoutPage.jsx:8:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/CheckoutPage.jsx:13:  const { user, loading: loadingAuth, refetchUser } = useAuth();
+src/pages/ClientDashboard.jsx:7:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/ClientDashboard.jsx:32:  const { user, signOut, loading: authLoading } = useAuth();
+src/pages/ClientDashboard_SAFEGUARD.jsx:6:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/ClientDashboard_SAFEGUARD.jsx:41:  const { user, signOut, loading: authLoading } = useAuth();
+src/pages/Dashboard_FIXED.tsx:2:import { useAuth } from '../contexts/AuthProvider_FIXED';
+src/pages/Dashboard_FIXED.tsx:31:  const { user, loading: authLoading } = useAuth();
+src/pages/Dashboard_PATCH_FINAL.tsx:4:import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+src/pages/Dashboard_PATCH_FINAL.tsx:24:  const { user, loading: authLoading } = useAuth();
+src/pages/Dashboard_SAFEGUARD.tsx:2:import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+src/pages/Dashboard_SAFEGUARD.tsx:22:  const { user, loading: authLoading } = useAuth();
+src/pages/IntegrationCallbackPage.jsx:7:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/IntegrationCallbackPage.jsx:13:    const { supabase, user } = useAuth();
+src/pages/LoginPage.jsx:6:import { useAuth } from '@/contexts/SupabaseAuthContext';
+src/pages/LoginPage.jsx:18:  const { signUp, loading: authLoading } = useAuth();
+src/pages/Login_FIXED.tsx:3:import { useAuth } from '../contexts/AuthProvider_FIXED';
+src/pages/Login_FIXED.tsx:12:  const { signIn, user } = useAuth();
+src/pages/Login_MINIMAL.tsx:3:import { useAuth } from '../contexts/AuthProvider_MINIMAL';
+src/pages/Login_MINIMAL.tsx:10:  const { signIn } = useAuth();
+src/pages/PartnerDashboard.jsx:5:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/PartnerDashboard.jsx:17:  const { user, signOut } = useAuth();
+src/pages/SuccessPage.jsx:4:import { useAuth } from '@/components/auth/AuthProvider';
+src/pages/SuccessPage.jsx:9:  const { user, refetchUser } = useAuth();
+src/pages/TestSimple.jsx:3:import { useAuth } from '../contexts/SupabaseAuthContext_FINAL';
+src/pages/TestSimple.jsx:10:  const { user, loading } = useAuth();
