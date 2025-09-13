@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '../../core/supabase';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/core/supabase';
 
 const IntegrationsContext = createContext(undefined);
 

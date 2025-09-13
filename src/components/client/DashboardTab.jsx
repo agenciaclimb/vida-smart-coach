@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useData } from '@/contexts/DataContext';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';

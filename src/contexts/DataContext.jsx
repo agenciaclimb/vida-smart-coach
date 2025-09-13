@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { AdminProvider, useAdmin } from '@/contexts/data/AdminContext';
 import { ClientProvider, useClient } from '@/contexts/data/ClientContext';
 import { PartnerProvider, usePartner } from '@/contexts/data/PartnerContext';
@@ -8,7 +8,7 @@ import { CommunityProvider, useCommunity } from '@/contexts/data/CommunityContex
 import { IntegrationsProvider, useIntegrations } from '@/contexts/data/IntegrationsContext';
 import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
 import { ChatProvider, useChat } from '@/contexts/data/ChatContext';
-import { supabase } from '../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const DataContext = createContext(undefined);
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/core/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function BootWrapper({ children }) {
   const [ready, setReady] = useState(false);

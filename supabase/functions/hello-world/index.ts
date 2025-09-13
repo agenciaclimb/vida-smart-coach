@@ -1,14 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://appvidasmart.com.br, https://cliente.appvidasmart.com.br, https://parceiro.appvidasmart.com.br, https://admin.appvidasmart.com.br',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
-}
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  const headers = cors(req.headers.get('origin'))
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers })
   }
 
   try {
@@ -23,7 +19,7 @@ serve(async (req) => {
       JSON.stringify(data),
       { 
         headers: { 
-          ...corsHeaders,
+          ...headers,
           'Content-Type': 'application/json' 
         } 
       },
@@ -33,7 +29,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         headers: { 
-          ...corsHeaders,
+          ...headers,
           'Content-Type': 'application/json' 
         }, 
         status: 400 

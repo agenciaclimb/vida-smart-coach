@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,9 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const RegisterPage = () => {
-  const { signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const supabase = useSupabaseClient();
   
   const searchParams = new URLSearchParams(location.search);
   const initialReferralCode = searchParams.get('ref') || '';
@@ -40,22 +40,51 @@ const RegisterPage = () => {
       return;
     }
 
-    const metadata = {
-      full_name: fullName,
-      phone: phone,
-      role: 'client',
-      referral_code: referralCode || null,
-    };
+    try {
+      // Primeiro, registrar o usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            whatsapp: phone,
+            role: 'client',
+            referral_code: referralCode || null,
+          },
+        },
+      });
 
-    const { error } = await signUp(email, password, metadata);
+      if (authError) {
+        console.error('Auth error:', authError);
+        toast.error(authError.message);
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
-      navigate('/login?status=registered');
+      // Se o usuário foi criado mas não há sessão (precisa confirmar email)
+      if (authData.user && !authData.session) {
+        toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+        navigate('/login?status=registered');
+        setLoading(false);
+        return;
+      }
+
+      // Se há sessão (confirmação automática), redirecionar para dashboard ou URL de retorno
+      if (authData.session) {
+        const searchParams = new URLSearchParams(location.search);
+        const returnUrl = searchParams.get('returnUrl');
+        const targetUrl = returnUrl ? decodeURIComponent(returnUrl) : '/dashboard';
+        
+        toast.success('Cadastro realizado com sucesso!');
+        navigate(targetUrl, { replace: true });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Erro inesperado durante o cadastro. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -113,6 +142,7 @@ const RegisterPage = () => {
                   required
                   className="mt-1"
                   placeholder="5511999998888"
+                  maxLength={15}
                 />
               </div>
               <div>

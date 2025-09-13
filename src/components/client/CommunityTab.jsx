@@ -4,10 +4,10 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Users, Award, Heart, MessageSquare, Loader2 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 
 const CommunityTab = () => {
     const { user } = useAuth();

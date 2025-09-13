@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useData } from '@/contexts/DataContext';
 
 import ClientHeader from '@/components/client/ClientHeader';
@@ -41,8 +41,31 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
     navigate(`/dashboard?tab=${tab}`);
   };
 
+  // Sempre mostrar loading se necessário
   if (authLoading || dataLoading) {
     return <LoadingScreen />;
+  }
+
+  // Se não há usuário, mostrar mensagem de erro em vez de nada
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-slate-50">
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Sessão não encontrada
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Você precisa fazer login para acessar o dashboard.
+          </p>
+          <button 
+            onClick={() => navigate('/login')}
+            className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90"
+          >
+            Fazer Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const renderTabContent = () => {

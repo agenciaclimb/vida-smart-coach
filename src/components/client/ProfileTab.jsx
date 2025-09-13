@@ -5,7 +5,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

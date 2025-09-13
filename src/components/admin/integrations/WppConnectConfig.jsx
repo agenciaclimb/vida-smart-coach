@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
-import { supabase } from '../../../core/supabase';
+import { supabase } from '@/core/supabase';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useIntegrations } from '@/contexts/data/IntegrationsContext';
 

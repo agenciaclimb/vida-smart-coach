@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/core/supabase';
 import { toast } from 'react-hot-toast';
 import { Loader2, DollarSign, Send, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
