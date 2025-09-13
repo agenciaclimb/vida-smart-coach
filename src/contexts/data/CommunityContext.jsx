@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 
 const CommunityContext = createContext(undefined);
 
@@ -17,10 +17,10 @@ export const CommunityProvider = ({ children }) => {
         setLoadingCommunity(true);
         try {
             const [rankingRes, postsRes] = await Promise.all([
-                supabase.from('profiles').select('id, full_name, points').order('points', { ascending: false }).limit(10),
+                supabase.from('user_profiles').select('id, full_name, points').order('points', { ascending: false }).limit(10),
                 supabase.from('community_posts').select(`
                     id, content, created_at, likes, user_id,
-                    profile:profiles!community_posts_user_id_fkey(full_name),
+                    profile:user_profiles!community_posts_user_id_fkey(full_name),
                     user_has_liked:post_likes(count)
                 `)
                 .eq('post_likes.user_id', user.id)

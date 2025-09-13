@@ -1,8 +1,138 @@
-# Supabase
+# =====================================================
+# VIDA SMART V3.0 - SUPABASE GITIGNORE
+# Files and directories to exclude from version control
+# =====================================================
+
+# =====================================================
+# ENVIRONMENT AND SECRETS
+# =====================================================
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+secrets.json
+config.json
+
+# =====================================================
+# SUPABASE LOCAL DEVELOPMENT
+# =====================================================
+.supabase/
+supabase/.supabase/
+volumes/
+docker-compose.override.yml
+
+# =====================================================
+# LOGS AND TEMPORARY FILES
+# =====================================================
+*.log
+logs/
+temp/
+tmp/
+.temp/
+.tmp/
+
+# =====================================================
+# DATABASE DUMPS AND BACKUPS
+# =====================================================
+*.sql.backup
+*.dump
+*.backup
+backups/
+dumps/
+
+# =====================================================
+# IDE AND EDITOR FILES
+# =====================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =====================================================
+# NODE.JS (IF USING LOCAL SCRIPTS)
+# =====================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# =====================================================
+# PYTHON (IF USING PYTHON SCRIPTS)
+# =====================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# =====================================================
+# CERTIFICATES AND KEYS
+# =====================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+ssl/
+certs/
+
+# =====================================================
+# TESTING AND COVERAGE
+# =====================================================
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =====================================================
+# BUILD ARTIFACTS
+# =====================================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# =====================================================
+# MIGRATION ARTIFACTS
+# =====================================================
+*.migration.tmp
+migration-*.backup
+
+# =====================================================
+# FUNCTION ARTIFACTS
+# =====================================================
+functions/**/.build/
+functions/**/dist/
+functions/**/node_modules/
+
+# =====================================================
+# MONITORING AND ANALYTICS
+# =====================================================
+.sentry/
+analytics/
+metrics/
+
+# =====================================================
+# CUSTOM EXCLUSIONS
+# =====================================================
+local-config/
+dev-scripts/
+test-data/
+
+# =====================================================
+# ORIGINAL SUPABASE ENTRIES
+# =====================================================
 .branches
 .temp
-
-# dotenvx
 .env.keys
-.env.local
 .env.*.local

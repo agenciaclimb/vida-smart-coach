@@ -54,10 +54,10 @@ schema_paths = []
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.
-enabled = true
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -344,6 +344,21 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-google-calendar-credentials]
+verify_jwt = false
+
+[functions.account-upsert]
+verify_jwt = false
+
+[functions.account-upsert-fixed]
+verify_jwt = false
+
+[functions.account-upsert-fixed-corrected]
+verify_jwt = false
+
+[functions.user-creation-fix]
+verify_jwt = false
+
+[functions.evolution-webhook]
 verify_jwt = false
 
 # Experimental features may be deprecated any time

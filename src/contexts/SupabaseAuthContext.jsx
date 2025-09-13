@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     if (!authUser) return null;
     try {
       const { data: profile, error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -40,25 +40,42 @@ export const AuthProvider = ({ children }) => {
     let isMounted = true;
     const getSessionAndProfile = async () => {
       try {
-        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Boot: session-start');
+        
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('session timeout')), 6000)
+        );
+        
+        const { data: { session: currentSession }, error: sessionError } = await Promise.race([
+          sessionPromise, 
+          timeoutPromise
+        ]);
+        
         if (sessionError) throw sessionError;
 
         if (isMounted) {
           setSession(currentSession);
           if (currentSession?.user) {
+            console.log('Boot: session-ok');
             const profile = await fetchUserProfile(currentSession.user);
             if (isMounted) {
               setUser({ ...currentSession.user, profile, access_token: currentSession.access_token });
             }
           } else {
+            console.log('Boot: session-none');
             setUser(null);
           }
         }
       } catch (e) {
-        console.error("Error in initial session/profile fetch:", e);
+        console.warn("Boot: session-timeout/error", e.message);
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+        }
         if(e.message.includes('Failed to fetch')) {
           toast.error("Não foi possível conectar ao servidor. Verifique sua conexão.", { id: 'initial-load-network-error' });
-        } else {
+        } else if (!e.message.includes('timeout')) {
           toast.error("Erro ao carregar a sessão.", { id: 'initial-load-error' });
         }
       } finally {
@@ -95,15 +112,53 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUserProfile]);
   
   const signUp = useCallback(async (email, password, metadata) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { user: data.user, error };
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { 
+            full_name: metadata?.full_name,
+            whatsapp: metadata?.phone 
+          },
+          emailRedirectTo: `${origin}/`
+        }
+      });
+
+      if (error) {
+        return { 
+          user: null, 
+          error: { 
+            message: error.message,
+            code: error.status || 'signup_error'
+          } 
+        };
+      }
+
+      if (!data.session) {
+        return {
+          user: data.user,
+          error: null,
+          needsEmailConfirmation: true
+        };
+      }
+
+      return { 
+        user: data.user, 
+        session: data.session,
+        error: null 
+      };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { 
+        user: null, 
+        error: { 
+          message: error.message || 'Erro inesperado durante o cadastro',
+          code: 'network_error'
+        } 
+      };
+    }
   }, []);
 
   const signIn = useCallback(async (email, password) => {
@@ -121,11 +176,44 @@ export const AuthProvider = ({ children }) => {
     navigate('/login', { replace: true });
   }, [navigate]);
 
+  const clearAppDataAndReload = useCallback(async () => {
+    try {
+      console.log('Boot: clearing-app-data');
+      
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+        console.log('Boot: caches-cleared');
+      }
+      
+      Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => {
+        localStorage.removeItem(k);
+        console.log('Boot: localStorage-cleared', k);
+      });
+      
+      sessionStorage.clear();
+      console.log('Boot: sessionStorage-cleared');
+      
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        console.log('Boot: sw-unregistered');
+      }
+      
+      toast.success('Dados locais limpos. Recarregando...', { id: 'clear-data-success' });
+    } catch (e) {
+      console.error('Boot: clear-data-error', e);
+      toast.error('Erro ao limpar dados. Tentando recarregar...', { id: 'clear-data-error' });
+    } finally {
+      setTimeout(() => window.location.reload(), 1000);
+    }
+  }, []);
+
   const updateUserProfile = useCallback(async (profileData) => {
     if (!user) return;
     
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .update(profileData)
       .eq('id', user.id)
       .select()
@@ -155,8 +243,9 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut,
     updateUserProfile,
+    clearAppDataAndReload,
     supabase
-  }), [user, session, loading, refetchUser, signUp, signIn, signOut, updateUserProfile]);
+  }), [user, session, loading, refetchUser, signUp, signIn, signOut, updateUserProfile, clearAppDataAndReload]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

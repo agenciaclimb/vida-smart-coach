@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, PackagePlus, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useData } from '@/contexts/DataContext';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 import PlanEditModal from '@/components/admin/PlanEditModal';
 
 const PlansTab = () => {

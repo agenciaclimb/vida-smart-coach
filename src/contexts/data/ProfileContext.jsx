@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ export const ProfileProvider = ({ children }) => {
     setLoadingProfile(true);
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('*')
         .eq('id', user.id)
         .single();

@@ -1,31 +1,28 @@
-
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/core/supabase';
 
 const AuthRedirector = () => {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (loading) {
-      return; 
-    }
-
-    if (user && user.profile && (location.pathname === '/login' || location.pathname === '/register')) {
-      const userRole = user.profile.role;
-      let targetPath = '/dashboard'; // Default for client
-
-      if (userRole === 'admin') {
-        targetPath = '/admin';
-      } else if (userRole === 'partner') {
-        targetPath = '/painel-parceiro';
+    let isMounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!isMounted) return;
+      const hasSession = !!data?.session;
+      if (hasSession && (location.pathname === '/login' || location.pathname === '/register')) {
+        navigate('/dashboard', { replace: true });
       }
-      
-      navigate(targetPath, { replace: true });
-    }
-  }, [user, loading, navigate, location.pathname]);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
+      if (sess) navigate('/dashboard', { replace: true });
+    });
+    return () => {
+      isMounted = false;
+      sub?.subscription?.unsubscribe();
+    };
+  }, [location.pathname, navigate]);
 
   return null;
 };

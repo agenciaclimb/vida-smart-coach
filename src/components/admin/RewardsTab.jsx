@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
 import { Gift, PlusCircle, Loader2, Edit } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 import RewardEditModal from './RewardEditModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -44,7 +44,7 @@ const RewardsTab = () => {
         if (newPoints < 0) throw new Error("Cliente não tem pontos suficientes.");
 
         const { error: updateError } = await supabase
-            .from('profiles')
+            .from('user_profiles')
             .update({ points: newPoints })
             .eq('id', client.id);
         if (updateError) throw updateError;

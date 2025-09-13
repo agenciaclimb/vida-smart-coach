@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'react-hot-toast';
-import { supabase } from '@/lib/customSupabaseClient';
+import { supabase } from '../../core/supabase';
 import { useData } from '@/contexts/DataContext';
 import { User, TrendingUp, Smile, Award, Sparkles } from 'lucide-react';
 
@@ -14,7 +14,7 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
     const handlePlanChange = async (newPlan) => {
         try {
             const { error } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .update({ plan: newPlan })
                 .eq('id', client.id);
             if (error) throw error;
