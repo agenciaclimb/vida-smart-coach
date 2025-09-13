@@ -1,15 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key, x-webhook-secret',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  const headers = cors(req.headers.get('origin'))
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers })
   }
 
   try {
@@ -17,7 +13,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ ok: false, error: 'Method not allowed' }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          headers: { ...headers, 'Content-Type': 'application/json' }, 
           status: 405 
         }
       )
@@ -48,7 +44,7 @@ serve(async (req) => {
           message: "Webhook received but not a processable message event" 
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          headers: { ...headers, 'Content-Type': 'application/json' }, 
           status: 200 
         }
       )
@@ -69,7 +65,7 @@ serve(async (req) => {
           message: "Message from bot itself, skipped" 
         }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          headers: { ...headers, 'Content-Type': 'application/json' }, 
           status: 200 
         }
       )
@@ -172,7 +168,7 @@ serve(async (req) => {
         processed_message: messageContent
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        headers: { ...headers, 'Content-Type': 'application/json' }, 
         status: 200 
       }
     )
@@ -185,7 +181,7 @@ serve(async (req) => {
         error: error.message || "Internal server error" 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        headers: { ...headers, 'Content-Type': 'application/json' }, 
         status: 500 
       }
     )

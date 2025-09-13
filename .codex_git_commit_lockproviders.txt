@@ -1,0 +1,9 @@
+[stabilize/lock-providers 58b648c] fix(stabilize): AuthProvider na raiz, guard est├ível e DataProvider apenas no /dashboard/*
+ 10 files changed, 91 insertions(+), 52 deletions(-)
+ create mode 100644 .codex_build_lockproviders.txt
+ create mode 100644 .codex_git_checkout_main_reset.txt
+ create mode 100644 .codex_git_new_branch.txt
+ create mode 100644 .codex_git_reset_main.txt
+ create mode 100644 .codex_http_login.txt
+ create mode 100644 .codex_http_safe.txt
+ create mode 100644 .codex_install_lockproviders.txt

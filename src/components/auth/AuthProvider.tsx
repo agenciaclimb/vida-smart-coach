@@ -1,52 +1,40 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { getSupabase } from '@/lib/supabase-singleton';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import type { Session, User } from '@supabase/supabase-js';
 
-const AuthCtx = createContext<any>(null);
-export function useAuth() { return useContext(AuthCtx); }
+type AuthCtx = {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+};
+
+const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true });
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+    let unsub = () => {};
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session ?? null);
+      setLoading(false);
 
-    const safety = setTimeout(() => {
-      if (mounted) {
-        console.log('⏰ Auth boot timeout — seguindo sem sessão');
-        setUser(null);
-        setLoading(false);
-      }
-    }, 8000);
-
-    getSupabase().auth.getSession()
-      .then(({ data: { session } }) => {
-        if (!mounted) return;
-        clearTimeout(safety);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        clearTimeout(safety);
-        setUser(null);
-        setLoading(false);
+      const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+        setSession(s ?? null);
       });
-
-    const { data: sub } = getSupabase().auth.onAuthStateChange((_ev, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      mounted = false;
-      clearTimeout(safety);
-      sub.subscription.unsubscribe();
-    };
+      unsub = () => sub.subscription.unsubscribe();
+    })();
+    return () => unsub();
   }, []);
 
-  return (
-    <AuthCtx.Provider value={{ user, loading }}>
-      {children}
-    </AuthCtx.Provider>
-  );
+  const user = session?.user ?? null;
+  const value = useMemo(() => ({ session, user, loading }), [session, user, loading]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useAuth() {
+  return useContext(Ctx);
 }

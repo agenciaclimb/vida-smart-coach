@@ -16,10 +16,10 @@ export default function AuthRedirection({ children }: { children: React.ReactNod
   if (loading) return <>{children}</>;
 
   useEffect(() => {
-    if (inSafe) return;
+    if (loading || inSafe) return;
     if (user && onLogin) navigate("/dashboard", { replace: true });
     if (!user && !onLogin) navigate("/login", { replace: true });
-  }, [user, onLogin, inSafe, navigate]);
+  }, [user, onLogin, inSafe, loading, navigate]);
 
   return <>{children}</>;
 }
