@@ -1,4 +1,4 @@
-﻿name: supabase-migrate-prod-cli
+name: supabase-migrate-prod-cli
 on:
   push: { branches: ["main"] }
   workflow_dispatch: {}
@@ -28,7 +28,7 @@ jobs:
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Apply migrations
-        run: supabase db push
+        run: supabase --debug db push
 
       - name: Show status
-        run: supabase db status
+        run: supabase --debug db status
