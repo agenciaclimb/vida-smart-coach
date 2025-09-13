@@ -38,5 +38,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
 export function useAuth() {
   console.log('[useAuth module]', import.meta.url);
-  return useContext(Ctx);
+  const ctx = useContext(Ctx);
+  if (!ctx) {
+    console.error('[useAuth] chamado fora do Provider — stack:');
+    console.trace();
+    // fallback temporário para diagnóstico (evitar quebra na /login)
+    return { user: null, session: null, loading: true } as any;
+  }
+  return ctx;
 }

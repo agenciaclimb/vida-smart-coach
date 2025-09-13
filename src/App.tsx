@@ -13,16 +13,16 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
 
       {/* protegidas */}
-      <Route
-        path="/dashboard/*"
-        element={
-          <RequireAuth>
+      <Route element={<RequireAuth />}>
+        <Route
+          path="/dashboard/*"
+          element={
             <DataProvider>
               <ClientDashboard />
             </DataProvider>
-          </RequireAuth>
-        }
-      />
+          }
+        />
+      </Route>
       <Route path="/safe" element={<SafeStatus />} />
       <Route path="*" element={<div className="p-8">404</div>} />
     </Routes>
