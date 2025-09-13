@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import AdminHeader from '@/components/admin/AdminHeader';
 import OverviewTab from '@/components/admin/OverviewTab';
 import ClientsTab from '@/components/admin/ClientsTab';
