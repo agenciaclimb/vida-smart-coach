@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Bot, Bell, User, Save, Smile, Zap, BrainCircuit, VenetianMask, Sparkles, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import toast from 'react-hot-toast';
 
 const SettingsCard = ({ icon, title, children, delay }) => (

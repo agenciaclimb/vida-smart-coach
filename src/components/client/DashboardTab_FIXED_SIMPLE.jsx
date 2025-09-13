@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useApiCallSafeGuard } from '@/hooks/useApiCall-SafeGuard';
 import { getSupabase } from '@/lib/supabase-singleton';
 import { Shield, Activity, Loader2, AlertTriangle } from 'lucide-react';

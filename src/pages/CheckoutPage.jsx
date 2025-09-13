@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import { toast } from 'react-hot-toast';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 

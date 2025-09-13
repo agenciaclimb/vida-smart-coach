@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { useAuth } from '@/contexts/SupabaseAuthContext_FINAL';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 
