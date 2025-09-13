@@ -9,6 +9,7 @@ type AuthCtx = {
 };
 
 const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true });
+console.log('[AuthProvider module]', import.meta.url);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,5 +37,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 }
 
 export function useAuth() {
+  console.log('[useAuth module]', import.meta.url);
   return useContext(Ctx);
 }
