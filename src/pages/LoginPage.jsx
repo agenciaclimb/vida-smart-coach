@@ -83,22 +83,32 @@ const LoginPage = () => {
     const toastId = toast.loading('Criando sua conta...');
 
     try {
-      const { error } = await signUp(
-        registerData.email, 
-        registerData.password,
-        {
-          full_name: registerData.full_name,
-          phone: registerData.phone,
-          role: registerData.role
-        }
-      );
-      
+      const origin = window.location.origin;
+      const { data, error } = await supabase.auth.signUp({
+        email: registerData.email,
+        password: registerData.password,
+        options: {
+          data: {
+            full_name: registerData.full_name,
+            whatsapp: registerData.phone,
+            role: registerData.role,
+          },
+          emailRedirectTo: `${origin}/auth/callback`,
+        },
+      });
+
       if (error) {
         toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
       } else {
-        toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.", { id: toastId, duration: 5000 });
-        setActiveTab('login');
-        setLoginData({ email: registerData.email, password: '' });
+        // Se não criou sessão, precisa confirmar email
+        if (!data.session) {
+          toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.', { id: toastId, duration: 5000 });
+          setActiveTab('login');
+          setLoginData({ email: registerData.email, password: '' });
+        } else {
+          toast.success('Cadastro realizado com sucesso!', { id: toastId });
+          navigate('/dashboard', { replace: true });
+        }
       }
     } catch (error) {
       toast.error("Ocorreu um erro inesperado durante o cadastro.", { id: toastId });
@@ -106,8 +116,8 @@ const LoginPage = () => {
       setLocalLoading(false);
     }
   };
-
-  const isLoading = authLoading || localLoading;
+  
+  const isLoading = localLoading;
 
   return (
     <>
