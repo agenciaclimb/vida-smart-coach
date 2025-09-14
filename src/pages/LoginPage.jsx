@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +14,6 @@ import { supabase } from '@/core/supabase';
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signUp, loading: authLoading } = useAuth();
   const [localLoading, setLocalLoading] = useState(false);
 
   const params = new URLSearchParams(location.search);
