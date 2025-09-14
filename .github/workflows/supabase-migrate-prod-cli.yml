@@ -28,7 +28,9 @@ jobs:
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Apply migrations
+        working-directory: supabase
         run: supabase --debug db push
 
       - name: Show status
+        working-directory: supabase
         run: supabase --debug db status
