@@ -1,36 +1,45 @@
 name: supabase-migrate-prod-cli
+
 on:
-  push: { branches: ["main"] }
   workflow_dispatch: {}
+  push:
+    branches: [ main ]
+    paths:
+      - 'supabase/migrations/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-migrate-prod@${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-
+    defaults:
+      run:
+        working-directory: supabase
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Supabase CLI
-        shell: bash
-        run: |
-          curl -fsSL https://cli.supabase.com/install | sh
-          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
-          which supabase
-          supabase --version
-
-      - name: Supabase login (non-interactive)
-        run: supabase login --token "$SUPABASE_ACCESS_TOKEN"
-
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
       - name: Link project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-
-      - name: Apply migrations
-        working-directory: supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase link --project-ref "$PROJECT_REF" --workdir .
+      - name: Configure remote DB
+        env:
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db remote set "postgres://postgres:${DB_PASSWORD}@db.${PROJECT_REF}.supabase.co:5432/postgres" --workdir .
+      - name: Apply schema (db push)
         run: supabase --debug db push
-
       - name: Show status
-        working-directory: supabase
         run: supabase --debug db status
