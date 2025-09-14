@@ -1,3 +1,6 @@
+// Limpa quaisquer Service Workers/caches antigos que possam interferir nas requisições
+// e causar pendências de rede (especialmente após migrações de build/host).
+import './sw-cleanup';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

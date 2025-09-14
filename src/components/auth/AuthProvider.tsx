@@ -2,19 +2,24 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
 
+type EnrichedUser = User & { profile?: any };
+
 type AuthCtx = {
   session: Session | null;
-  user: User | null;
+  user: EnrichedUser | null;
   loading: boolean;
+  supabase: typeof supabase;
+  signOut: () => Promise<void>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true });
-console.log('[AuthProvider module]', import.meta.url);
+const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true, supabase, signOut: async () => {} });
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<EnrichedUser | null>(null);
 
+  // Sessão + listener
   useEffect(() => {
     let unsub = () => {};
     (async () => {
@@ -30,20 +35,53 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     return () => unsub();
   }, []);
 
-  const user = session?.user ?? null;
-  const value = useMemo(() => ({ session, user, loading }), [session, user, loading]);
+  // Enriquecer com profile
+  useEffect(() => {
+    const u = session?.user ?? null;
+    if (!u) {
+      setUser(null);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', u.id)
+          .maybeSingle();
+        if (cancelled) return;
+        const enriched: EnrichedUser = { ...(u as any) };
+        if (data) enriched.profile = data;
+        setUser(enriched);
+        if (error) {
+          // Mantém user básico mesmo sem profile
+          setUser(enriched);
+        }
+      } catch {
+        if (!cancelled) setUser(u as any);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session?.user?.id]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+  };
+
+  const value = useMemo(() => ({ session, user, loading, supabase, signOut }), [session, user, loading]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {
-  console.log('[useAuth module]', import.meta.url);
   const ctx = useContext(Ctx);
   if (!ctx) {
-    console.error('[useAuth] chamado fora do Provider — stack:');
-    console.trace();
-    // fallback temporário para diagnóstico (evitar quebra na /login)
-    return { user: null, session: null, loading: true } as any;
+    // fallback defensivo
+    return { user: null, session: null, loading: true, supabase, signOut: async () => {} } as any;
   }
   return ctx;
 }

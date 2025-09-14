@@ -4,6 +4,7 @@ import ClientDashboard from "@/pages/ClientDashboard";
 import SafeStatus from "@/pages/SafeStatus";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { DataProvider } from "@/contexts/DataContext";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       {/* pública */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* protegidas */}
       <Route element={<RequireAuth />}>
