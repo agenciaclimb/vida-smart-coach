@@ -319,7 +319,8 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    console.warn('[legacy SupabaseAuthContext] useAuth fora do provider — fallback ativo');
+    return { user: null, session: null, loading: true };
   }
   return context;
 };
