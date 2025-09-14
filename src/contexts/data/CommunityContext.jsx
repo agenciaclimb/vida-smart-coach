@@ -16,49 +16,39 @@ export const CommunityProvider = ({ children }) => {
         if (!user) return;
         setLoadingCommunity(true);
         try {
+            // Versão mínima e robusta: evita JOINs/aggregates que podem não existir no schema atual
             const [rankingRes, postsRes] = await Promise.all([
-                // Sem coluna points no schema atual; retornamos nome e id sem ordenar
                 supabase.from('user_profiles').select('id, name').limit(10),
-                supabase.from('community_posts').select(`
-                    id, content, created_at, likes, user_id,
-                    profile:user_profiles!community_posts_user_id_fkey(full_name:name),
-                    user_has_liked:post_likes(count)
-                `)
-                .eq('post_likes.user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(20)
+                supabase.from('community_posts')
+                  .select('id, content, created_at, likes, user_id')
+                  .order('created_at', { ascending: false })
+                  .limit(20)
             ]);
 
-            if (rankingRes.error) throw rankingRes.error;
-            if (postsRes.error) throw postsRes.error;
-            
-            const processedPosts = postsRes.data.map(post => ({
-                ...post,
-                user_has_liked: post.user_has_liked[0]?.count > 0,
-            }));
-
-            // Normaliza ranking para manter compatibilidade
-            const ranking = (rankingRes.data || []).map(r => ({ id: r.id, full_name: r.name, points: 0 }));
+            const ranking = (rankingRes.data || []).map(r => ({ id: r.id, full_name: r.name || 'Usuário', points: 0 }));
             setRanking(ranking);
-            setCommunityPosts(processedPosts || []);
+            setCommunityPosts(postsRes.data || []);
 
+            if (rankingRes.error) console.warn('community ranking error:', rankingRes.error.message);
+            if (postsRes.error) console.warn('community posts error:', postsRes.error.message);
         } catch (error) {
-            toast.error("Erro ao carregar dados da comunidade.");
             console.error("Community data error:", error);
         } finally {
             setLoadingCommunity(false);
         }
-    }, [user]);
+    }, [user?.id]);
 
     const refetchCommunityData = useCallback(() => {
         fetchCommunityData();
     }, [fetchCommunityData]);
     
     useEffect(() => {
-      if(user?.id) {
-          fetchCommunityData();
+      if (user?.id) {
+        fetchCommunityData();
       }
-    }, [user, fetchCommunityData]);
+      // Chamar apenas quando o id mudar
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
 
     const value = useMemo(() => ({
         ranking,
