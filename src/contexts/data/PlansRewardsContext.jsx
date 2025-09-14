@@ -31,7 +31,12 @@ export const PlansRewardsProvider = ({ children }) => {
 
     const fetchRewards = useCallback(async () => {
         try {
-            const { data, error } = await supabase.from('rewards').select('*').order('points', { ascending: true });
+            // Mapear colunas do schema para o formato esperado no frontend
+            // points <- points_required, is_active <- is_available
+            const { data, error } = await supabase
+              .from('rewards')
+              .select('id, title, description, points:points_required, is_active:is_available, image_url, created_at, updated_at')
+              .order('points_required', { ascending: true });
             if (error) throw error;
             setRewards(data || []);
         } catch (error) {

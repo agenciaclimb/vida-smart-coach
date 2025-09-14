@@ -17,10 +17,11 @@ export const CommunityProvider = ({ children }) => {
         setLoadingCommunity(true);
         try {
             const [rankingRes, postsRes] = await Promise.all([
-                supabase.from('user_profiles').select('id, full_name, points').order('points', { ascending: false }).limit(10),
+                // Sem coluna points no schema atual; retornamos nome e id sem ordenar
+                supabase.from('user_profiles').select('id, name').limit(10),
                 supabase.from('community_posts').select(`
                     id, content, created_at, likes, user_id,
-                    profile:user_profiles!community_posts_user_id_fkey(full_name),
+                    profile:user_profiles!community_posts_user_id_fkey(full_name:name),
                     user_has_liked:post_likes(count)
                 `)
                 .eq('post_likes.user_id', user.id)
@@ -36,7 +37,9 @@ export const CommunityProvider = ({ children }) => {
                 user_has_liked: post.user_has_liked[0]?.count > 0,
             }));
 
-            setRanking(rankingRes.data || []);
+            // Normaliza ranking para manter compatibilidade
+            const ranking = (rankingRes.data || []).map(r => ({ id: r.id, full_name: r.name, points: 0 }));
+            setRanking(ranking);
             setCommunityPosts(processedPosts || []);
 
         } catch (error) {
