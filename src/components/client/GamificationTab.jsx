@@ -76,7 +76,7 @@ const GamificationTab = () => {
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-3">
                                         <span className="text-2xl">{reward.icon || '🎁'}</span>
-                                        {reward.name}
+                                        {reward.title}
                                     </CardTitle>
                                     <CardDescription>{reward.description}</CardDescription>
                                 </CardHeader>

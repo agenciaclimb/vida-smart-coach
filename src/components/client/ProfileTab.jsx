@@ -57,7 +57,31 @@ const ProfileTab = () => {
         });
     };
     
-    if (!user?.profile) return null;
+    if (!user?.id) {
+        return (
+            <TabsContent value="profile" className="mt-6">
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </TabsContent>
+        );
+    }
+
+    if (!user?.profile) {
+        return (
+            <TabsContent value="profile" className="mt-6">
+                <Card className="shadow-lg">
+                    <CardHeader>
+                        <CardTitle>Carregando Perfil...</CardTitle>
+                        <CardDescription>Aguarde enquanto carregamos seus dados.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        );
+    }
 
     return (
         <TabsContent value="profile" className="mt-6">
