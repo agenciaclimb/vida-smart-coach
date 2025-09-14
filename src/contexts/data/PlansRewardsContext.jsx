@@ -11,6 +11,8 @@ export const PlansRewardsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [hasShownPlansError, setHasShownPlansError] = useState(false);
     const [hasShownRewardsError, setHasShownRewardsError] = useState(false);
+    const inFlightRef = React.useRef(false);
+    const lastFetchRef = React.useRef(0);
 
     const fetchPlans = useCallback(async () => {
         try {
@@ -43,9 +45,19 @@ export const PlansRewardsProvider = ({ children }) => {
     }, [hasShownRewardsError]);
 
     const fetchData = useCallback(async () => {
-        setLoading(true);
-        await Promise.all([fetchPlans(), fetchRewards()]);
-        setLoading(false);
+        // Evita tempestade de requisições: dedupe em memória + debounce simples.
+        if (inFlightRef.current) return;
+        const now = Date.now();
+        if (now - lastFetchRef.current < 3000) return; // no mínimo 3s entre rodadas
+        inFlightRef.current = true;
+        lastFetchRef.current = now;
+        try {
+            setLoading(true);
+            await Promise.all([fetchPlans(), fetchRewards()]);
+        } finally {
+            setLoading(false);
+            inFlightRef.current = false;
+        }
     }, [fetchPlans, fetchRewards]);
 
     const value = useMemo(() => ({
