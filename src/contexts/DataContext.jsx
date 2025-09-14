@@ -27,14 +27,16 @@ const CombinedDataProvider = ({ children }) => {
   const isPartner = useMemo(() => user?.profile?.role === 'partner', [user?.profile?.role]);
   const isClient = useMemo(() => user?.profile?.role === 'client', [user?.profile?.role]);
 
+  // Carrega dados somente quando a sessão estiver pronta e o usuário mudar.
+  // Evita loops ao NÃO dependermos dos objetos de contexto (que mudam por referência).
   useEffect(() => {
-    if (!authLoading && user) {
-      plansRewardsData.fetchData();
-      if (isAdmin) {
-        adminData.fetchData();
-      }
-    }
-  }, [authLoading, user, isAdmin, plansRewardsData, adminData]);
+    if (authLoading) return;
+    if (!user) return;
+
+    // fetch estáveis por chamada
+    plansRewardsData.fetchData && plansRewardsData.fetchData();
+    if (isAdmin && adminData.fetchData) adminData.fetchData();
+  }, [authLoading, isAdmin, user?.id]);
 
   const loading = useMemo(() => {
     if (authLoading) return true;
