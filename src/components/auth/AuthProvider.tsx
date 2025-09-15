@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
+import { normalizeActivityLevel } from '@/domain/profile/activityLevels';
+import { normalizeGoalType } from '@/domain/profile/goalTypes';
 
 // Demo mode for testing - set to true to enable
 const DEMO_MODE = false; // Disabled to test real database
@@ -132,73 +134,93 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return updatedProfile;
       }
       
-      // Map incoming data to EXISTING columns (will work until migration is applied)
-      const allowedData = {
-        id: user.id,
-        full_name: profileData.full_name || profileData.name || null,
-        name: profileData.name || profileData.full_name || null,
-        email: user.email || profileData.email || null,
-        height: profileData.height || null,
-        age: profileData.age || null,
-        activity_level: profileData.activity_level || null,
-        updated_at: new Date().toISOString()
+      // Use the new safe upsert function to prevent type mismatch errors
+      console.log('Using safe_upsert_user_profile function with validated data');
+      
+      // BLINDAGEM CRÍTICA: Normalizar e validar antes de enviar ao banco
+      const activityLevel = normalizeActivityLevel(profileData.activity_level);
+      const goalType = normalizeGoalType(profileData.goal_type);
+      
+      // Validar que temos slugs válidos ou rejeitar
+      if (profileData.activity_level && !activityLevel) {
+        throw new Error('Nível de atividade inválido. Recarregue a página e tente novamente.');
+      }
+      
+      if (profileData.goal_type && !goalType) {
+        throw new Error('Objetivo inválido. Recarregue a página e tente novamente.');
+      }
+      
+      const validatedData = {
+        p_user_id: user.id,
+        p_full_name: profileData.full_name?.toString().trim() || null,
+        p_name: profileData.name?.toString().trim() || profileData.full_name?.toString().trim() || null,
+        p_email: user.email || profileData.email?.toString().trim() || null,
+        p_phone: profileData.phone?.toString().trim() || null,
+        p_age: profileData.age ? parseInt(profileData.age.toString()) : null,
+        p_height: profileData.height ? parseInt(profileData.height.toString()) : null,
+        p_current_weight: profileData.current_weight ? parseFloat(profileData.current_weight.toString()) : null,
+        p_target_weight: profileData.target_weight ? parseFloat(profileData.target_weight.toString()) : null,
+        p_gender: profileData.gender?.toString() || null,
+        p_activity_level: activityLevel, // SEMPRE slug válido ou null
+        p_goal_type: goalType // SEMPRE slug válido ou null
       };
 
-      // If migration was applied, try to include the new fields
-      try {
-        // Test if new columns exist by including them
-        const extendedData = {
-          ...allowedData,
-          phone: profileData.phone || null,
-          current_weight: profileData.current_weight || null,
-          target_weight: profileData.target_weight || null,
-          gender: profileData.gender || null,
-          goal_type: profileData.goal_type || null
-        };
-        
-        console.log('Trying with extended profile data:', extendedData);
-        
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .upsert(extendedData)
-          .select()
-          .single();
+      console.log('Validated profile data:', validatedData);
+      
+      // Call the safe upsert function
+      const { data, error } = await supabase.rpc('safe_upsert_user_profile', validatedData);
 
-        if (error) {
-          if (error.message.includes('does not exist')) {
-            // Columns don't exist yet, fall back to basic fields
-            console.log('Extended fields not available, using basic fields');
-            throw new Error('FALLBACK_TO_BASIC');
-          }
-          throw error;
-        } else {
-          console.log("Profile updated successfully with extended fields:", data);
-          setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
-          return data;
-        }
-      } catch (extError) {
-        if (extError.message === 'FALLBACK_TO_BASIC') {
-          // Fall back to basic fields
-          console.log('Falling back to basic fields only');
-          const { data, error } = await supabase
+      if (error) {
+        console.error('Safe upsert function error:', error);
+        // Fallback to traditional upsert if function doesn't exist yet
+        if (error.message.includes('function') && error.message.includes('does not exist')) {
+          console.log('Function not available, falling back to direct upsert');
+          
+          const fallbackData = {
+            id: user.id,
+            full_name: validatedData.p_full_name,
+            name: validatedData.p_name,
+            email: validatedData.p_email,
+            phone: validatedData.p_phone,
+            age: validatedData.p_age,
+            height: validatedData.p_height,
+            current_weight: validatedData.p_current_weight,
+            target_weight: validatedData.p_target_weight,
+            gender: validatedData.p_gender,
+            activity_level: activityLevel, // JÁ normalizado e validado acima
+            goal_type: goalType, // JÁ normalizado e validado acima
+            updated_at: new Date().toISOString()
+          };
+          
+          // LOG para debug - verificar payload final
+          console.log('🔍 Fallback payload:', {
+            activity_level: fallbackData.activity_level,
+            goal_type: fallbackData.goal_type
+          });
+          
+          const { data: fallbackResult, error: fallbackError } = await supabase
             .from('user_profiles')
-            .upsert(allowedData)
+            .upsert(fallbackData)
             .select()
             .single();
-
-          if (error) {
-            console.error("Profile upsert error:", error);
-            throw error;
-          } else {
-            console.log("Profile updated successfully with basic fields:", data);
-            setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
-            return data;
+            
+          if (fallbackError) {
+            throw fallbackError;
           }
+          
+          console.log('Profile updated successfully with fallback method:', fallbackResult);
+          setUser(prevUser => prevUser ? { ...prevUser, profile: fallbackResult } : prevUser);
+          return fallbackResult;
         }
-        throw extError;
+        throw error;
       }
+      
+      console.log('Profile updated successfully with safe function:', data);
+      setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
+      return data;
+      
     } catch (error) {
-      console.error("Profile update error:", error);
+      console.error('Profile update error:', error);
       throw error;
     }
   };

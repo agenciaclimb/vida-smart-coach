@@ -10,6 +10,8 @@ import { toast } from 'react-hot-toast';
 import { Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
+import { ACTIVITY_LEVEL_OPTIONS, normalizeActivityLevel } from '@/domain/profile/activityLevels';
+import { GOAL_TYPE_OPTIONS, normalizeGoalType } from '@/domain/profile/goalTypes';
 
 const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) => (
     <div className="space-y-2">
@@ -34,7 +36,15 @@ const ProfileTab = () => {
     useEffect(() => {
         // Sempre inicializa o formulário, mesmo se o perfil estiver vazio
         const profileData = user?.profile || {};
-        setFormData(profileData);
+        
+        // Normalizar os campos de select para usar slugs corretos - OBRIGATÓRIO
+        const normalizedData = {
+            ...profileData,
+            activity_level: normalizeActivityLevel(profileData.activity_level) ?? 'sedentary',
+            goal_type: normalizeGoalType(profileData.goal_type) ?? 'general_health'
+        };
+        
+        setFormData(normalizedData);
     }, [user]);
 
     const handleChange = (e) => {
@@ -57,6 +67,24 @@ const ProfileTab = () => {
                 gender, activity_level, goal_type 
             } = formData;
             
+            // BLINDAGEM CRÍTICA: Normalizar e validar slugs antes de enviar
+            const rawLevel = formData.activity_level ?? (formData.activityLevel ?? user?.profile?.activity_level);
+            const rawGoal = formData.goal_type ?? (formData.goalType ?? user?.profile?.goal_type);
+            
+            const activityLevel = normalizeActivityLevel(rawLevel);
+            const goalType = normalizeGoalType(rawGoal);
+
+            // Bloquear submit se valores inválidos
+            if (!activityLevel) {
+                toast.error('Selecione um nível de atividade válido.');
+                return;
+            }
+
+            if (!goalType) {
+                toast.error('Selecione um objetivo válido.');
+                return;
+            }
+
             const profileData = {
                 full_name: full_name?.trim() || '',
                 name: full_name?.trim() || '', // Garante compatibilidade com diferentes campos de nome
@@ -66,9 +94,15 @@ const ProfileTab = () => {
                 current_weight: current_weight ? parseFloat(current_weight) : null,
                 target_weight: target_weight ? parseFloat(target_weight) : null,
                 gender: gender || null,
-                activity_level: activity_level || null,
-                goal_type: goal_type || null
+                activity_level: activityLevel, // SEMPRE slug válido
+                goal_type: goalType // SEMPRE slug válido
             };
+            
+            // LOG para debug - verificar que está enviando slugs
+            console.log('🔍 Payload antes do upsert:', {
+                activity_level: profileData.activity_level,
+                goal_type: profileData.goal_type
+            });
             
             // Enhanced validation
             const validation = validateProfileData(profileData);
@@ -222,34 +256,50 @@ const ProfileTab = () => {
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <Label htmlFor="activity_level">Nível de Atividade</Label>
-                                    <Select onValueChange={(value) => setFormData(prev => ({...prev, activity_level: value}))} value={formData.activity_level || ''}>
+                                    <Label htmlFor="activity_level">Nível de Atividade *</Label>
+                                    <Select 
+                                        onValueChange={(value) => {
+                                            // GARANTIR que apenas slugs entram no estado
+                                            const normalizedValue = normalizeActivityLevel(value);
+                                            setFormData(prev => ({...prev, activity_level: normalizedValue || 'sedentary'}));
+                                        }} 
+                                        value={formData.activity_level || ''}
+                                        required
+                                    >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione seu nível" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="sedentario">Sedentário</SelectItem>
-                                            <SelectItem value="leve">Levemente Ativo</SelectItem>
-                                            <SelectItem value="moderado">Moderadamente Ativo</SelectItem>
-                                            <SelectItem value="intenso">Muito Ativo</SelectItem>
-                                            <SelectItem value="extremo">Extremamente Ativo</SelectItem>
+                                            {ACTIVITY_LEVEL_OPTIONS.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
                             
                             <div className="space-y-2">
-                                <Label htmlFor="goal_type">Objetivo Principal</Label>
-                                <Select onValueChange={(value) => setFormData(prev => ({...prev, goal_type: value}))} value={formData.goal_type || ''}>
+                                <Label htmlFor="goal_type">Objetivo Principal *</Label>
+                                <Select 
+                                    onValueChange={(value) => {
+                                        // GARANTIR que apenas slugs entram no estado
+                                        const normalizedValue = normalizeGoalType(value);
+                                        setFormData(prev => ({...prev, goal_type: normalizedValue || 'general_health'}));
+                                    }} 
+                                    value={formData.goal_type || ''}
+                                    required
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Qual seu objetivo principal?" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="perder_peso">Perder Peso</SelectItem>
-                                        <SelectItem value="ganhar_massa">Ganhar Massa Muscular</SelectItem>
-                                        <SelectItem value="manter_peso">Manter Peso Atual</SelectItem>
-                                        <SelectItem value="melhorar_condicionamento">Melhorar Condicionamento</SelectItem>
-                                        <SelectItem value="saude_geral">Saúde Geral</SelectItem>
+                                        {GOAL_TYPE_OPTIONS.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
