@@ -8,6 +8,7 @@ import { CommunityProvider, useCommunity } from '@/contexts/data/CommunityContex
 import { IntegrationsProvider, useIntegrations } from '@/contexts/data/IntegrationsContext';
 import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
 import { ChatProvider, useChat } from '@/contexts/data/ChatContext';
+import { CheckinsProvider, useCheckins } from '@/contexts/data/CheckinsContext';
 import { supabase } from '@/core/supabase';
 
 const DataContext = createContext(undefined);
@@ -22,6 +23,7 @@ const CombinedDataProvider = ({ children }) => {
   const integrationsData = useIntegrations();
   const plansRewardsData = usePlansRewards();
   const chatData = useChat();
+  const checkinsData = useCheckins();
 
   const isAdmin = useMemo(() => user?.profile?.role === 'admin', [user?.profile?.role]);
   const isPartner = useMemo(() => user?.profile?.role === 'partner', [user?.profile?.role]);
@@ -49,7 +51,7 @@ const CombinedDataProvider = ({ children }) => {
       return partnerData.loading || plansRewardsData.loading;
     }
     if (isClient) {
-      return clientData.loading || communityData.loadingCommunity || integrationsData.loading || chatData.loading || plansRewardsData.loading;
+      return clientData.loading || communityData.loadingCommunity || integrationsData.loading || chatData.loading || plansRewardsData.loading || checkinsData.loadingCheckin;
     }
     
     return plansRewardsData.loading;
@@ -57,7 +59,7 @@ const CombinedDataProvider = ({ children }) => {
     authLoading, user, isAdmin, isPartner, isClient,
     adminData.loading, clientData.loading, partnerData.loading,
     communityData.loadingCommunity, integrationsData.loading,
-    plansRewardsData.loading, chatData.loading
+    plansRewardsData.loading, chatData.loading, checkinsData.loadingCheckin
   ]);
 
   const refetchData = useCallback(() => {
@@ -93,7 +95,7 @@ const CombinedDataProvider = ({ children }) => {
       Object.assign(baseValue, adminData);
     }
     if (isClient) {
-      Object.assign(baseValue, clientData, communityData, integrationsData, chatData);
+      Object.assign(baseValue, clientData, communityData, integrationsData, chatData, checkinsData);
     }
     if (isPartner) {
       Object.assign(baseValue, partnerData);
@@ -122,9 +124,11 @@ export const DataProvider = ({ children }) => (
           <CommunityProvider>
             <IntegrationsProvider>
               <ChatProvider>
-                <CombinedDataProvider>
-                  {children}
-                </CombinedDataProvider>
+                <CheckinsProvider>
+                  <CombinedDataProvider>
+                    {children}
+                  </CombinedDataProvider>
+                </CheckinsProvider>
               </ChatProvider>
             </IntegrationsProvider>
           </CommunityProvider>
