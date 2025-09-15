@@ -120,7 +120,9 @@ const DashboardTab = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  if (loading || !user?.profile) {
+  // Exibe loading apenas enquanto a autenticação está carregando.
+  // Se o perfil ainda não existir no banco, seguimos com valores padrão.
+  if (loading) {
     return (
         <div className="flex justify-center items-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -128,7 +130,7 @@ const DashboardTab = () => {
     );
   }
   
-  const { profile } = user;
+  const profile = user?.profile || {};
 
   return (
     <motion.div
