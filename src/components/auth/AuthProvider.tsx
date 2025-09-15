@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
 
+// Demo mode for testing - set to true to enable
+const DEMO_MODE = false; // Disabled to test real database
+
 type EnrichedUser = User & { profile?: any };
 
 type AuthCtx = {
@@ -10,17 +13,42 @@ type AuthCtx = {
   loading: boolean;
   supabase: typeof supabase;
   signOut: () => Promise<void>;
+  updateUserProfile: (profileData: any) => Promise<any>;
 };
 
-const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true, supabase, signOut: async () => {} });
+const Ctx = createContext<AuthCtx>({ session: null, user: null, loading: true, supabase, signOut: async () => {}, updateUserProfile: async () => {} });
+
+// Demo user for testing - define outside component to avoid recreating
+const demoUser = DEMO_MODE ? {
+  id: '00000000-0000-0000-0000-000000000001', // Valid UUID format
+  email: 'demo@vidasmart.com',
+  aud: 'authenticated',
+  role: 'authenticated',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  profile: {
+    id: '00000000-0000-0000-0000-000000000001', // Valid UUID format
+    full_name: 'Usuário Demo',
+    name: 'Demo',
+    email: 'demo@vidasmart.com',
+    height: 175,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+} as EnrichedUser : null;
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<EnrichedUser | null>(null);
+  const [loading, setLoading] = useState(!DEMO_MODE); // If demo mode, start not loading
+  const [user, setUser] = useState<EnrichedUser | null>(DEMO_MODE ? demoUser : null); // Initialize with demo user if demo mode
 
   // Sessão + listener
   useEffect(() => {
+    if (DEMO_MODE) {
+      console.log('🧪 DEMO MODE: Demo user already initialized');
+      return; // Demo user already set in initial state
+    }
+
     let unsub = () => {};
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -37,6 +65,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   // Enriquecer com profile
   useEffect(() => {
+    if (DEMO_MODE) {
+      // Demo mode já tem usuário configurado
+      return;
+    }
+
     const u = session?.user ?? null;
     if (!u) {
       setUser(null);
@@ -67,21 +100,119 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [session?.user?.id]);
 
   const signOut = async () => {
+    if (DEMO_MODE) {
+      console.log('🧪 DEMO MODE: Sign out simulated');
+      setUser(null);
+      return;
+    }
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
   };
 
-  const value = useMemo(() => ({ session, user, loading, supabase, signOut }), [session, user, loading]);
+  const updateUserProfile = async (profileData: any) => {
+    if (!user) {
+      throw new Error('Usuário não autenticado');
+    }
+    
+    try {
+      console.log('Updating profile for user:', user.id, profileData);
+      
+      if (DEMO_MODE) {
+        // Demo mode: simulate profile update
+        console.log('🧪 DEMO MODE: Simulating profile update');
+        const updatedProfile = {
+          ...user.profile,
+          ...profileData,
+          updated_at: new Date().toISOString()
+        };
+        
+        setUser(prevUser => prevUser ? { ...prevUser, profile: updatedProfile } : prevUser);
+        console.log('✅ DEMO: Profile updated successfully');
+        return updatedProfile;
+      }
+      
+      // Map incoming data to EXISTING columns (will work until migration is applied)
+      const allowedData = {
+        id: user.id,
+        full_name: profileData.full_name || profileData.name || null,
+        name: profileData.name || profileData.full_name || null,
+        email: user.email || profileData.email || null,
+        height: profileData.height || null,
+        age: profileData.age || null,
+        activity_level: profileData.activity_level || null,
+        updated_at: new Date().toISOString()
+      };
+
+      // If migration was applied, try to include the new fields
+      try {
+        // Test if new columns exist by including them
+        const extendedData = {
+          ...allowedData,
+          phone: profileData.phone || null,
+          current_weight: profileData.current_weight || null,
+          target_weight: profileData.target_weight || null,
+          gender: profileData.gender || null,
+          goal_type: profileData.goal_type || null
+        };
+        
+        console.log('Trying with extended profile data:', extendedData);
+        
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .upsert(extendedData)
+          .select()
+          .single();
+
+        if (error) {
+          if (error.message.includes('does not exist')) {
+            // Columns don't exist yet, fall back to basic fields
+            console.log('Extended fields not available, using basic fields');
+            throw new Error('FALLBACK_TO_BASIC');
+          }
+          throw error;
+        } else {
+          console.log("Profile updated successfully with extended fields:", data);
+          setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
+          return data;
+        }
+      } catch (extError) {
+        if (extError.message === 'FALLBACK_TO_BASIC') {
+          // Fall back to basic fields
+          console.log('Falling back to basic fields only');
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .upsert(allowedData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error("Profile upsert error:", error);
+            throw error;
+          } else {
+            console.log("Profile updated successfully with basic fields:", data);
+            setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
+            return data;
+          }
+        }
+        throw extError;
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      throw error;
+    }
+  };
+
+  const value = useMemo(() => ({ session, user, loading, supabase, signOut, updateUserProfile }), [session, user, loading]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const ctx = useContext(Ctx);
   if (!ctx) {
     // fallback defensivo
-    return { user: null, session: null, loading: true, supabase, signOut: async () => {} } as any;
+    return { user: null, session: null, loading: true, supabase, signOut: async () => {}, updateUserProfile: async () => {} } as any;
   }
   return ctx;
 }

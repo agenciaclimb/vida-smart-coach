@@ -1,83 +1,204 @@
-import React, { createContext, useContext, useMemo, useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { supabase } from '@/core/supabase';
+/** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
+
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/components/auth/AuthProvider';
+
+// Demo mode flag - should match AuthProvider
+const DEMO_MODE = false; // Disabled to test real database
 
 const CheckinsContext = createContext(undefined);
 
 export const CheckinsProvider = ({ children }) => {
-  const { user } = useAuth();
-  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
-  const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+    const [loadingCheckin, setLoadingCheckin] = useState(false);
+    const [checkinHistory, setCheckinHistory] = useState([]);
 
-  const todayStr = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    // Verifica se já fez check-in hoje
+    const checkTodaysStatus = useCallback(async () => {
+        if (!user?.id) return false;
+        
+        if (DEMO_MODE) {
+            console.log('🧪 DEMO MODE: Checking today status');
+            // Demo: start with no check-in
+            return false;
+        }
+        
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            
+            const { data, error } = await supabase
+                .from('daily_checkins')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('date', today)
+                .limit(1);
+                
+            if (error && error.code !== 'PGRST116') throw error;
+            
+            const hasChecked = data && data.length > 0;
+            setHasCheckedInToday(hasChecked);
+            return hasChecked;
+        } catch (error) {
+            console.error('Check today status error:', error);
+            return false;
+        }
+    }, [user?.id]);
 
-  const refreshStatus = useCallback(async () => {
-    if (!user?.id) { setHasCheckedInToday(false); setLoading(false); return; }
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('daily_checkins')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('date', todayStr())
-        .limit(1);
-      if (error) throw error;
-      setHasCheckedInToday((data?.length ?? 0) > 0);
-    } catch (e) {
-      console.warn('checkin status error:', e.message);
-      setHasCheckedInToday(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
+    // Busca histórico de check-ins
+    const fetchHistory = useCallback(async () => {
+        if (!user?.id) return;
+        
+        if (DEMO_MODE) {
+            console.log('🧪 DEMO MODE: Fetching history');
+            // Demo: provide sample history
+            const sampleHistory = [
+                {
+                    id: 'demo-1',
+                    user_id: user.id,
+                    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+                    mood: 4,
+                    energy_level: 4,
+                    sleep_hours: 7.5
+                }
+            ];
+            setCheckinHistory(sampleHistory);
+            return;
+        }
+        
+        try {
+            const { data, error } = await supabase
+                .from('daily_checkins')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('date', { ascending: false })
+                .limit(30);
+                
+            if (error) throw error;
+            
+            setCheckinHistory(data || []);
+        } catch (error) {
+            console.error('Fetch history error:', error);
+        }
+    }, [user?.id]);
 
-  useEffect(() => { refreshStatus(); }, [refreshStatus]);
+    // Adiciona métrica diária (check-in reativo)
+    const addDailyMetric = useCallback(async (metric) => {
+        if (!user?.id) {
+            toast.error('Usuário não autenticado');
+            return { success: false };
+        }
 
-  const addDailyMetric = useCallback(async (metric) => {
-    if (!user?.id) throw new Error('Usuário não autenticado');
-    // Normaliza campos vindos do formulário do Dashboard
-    const mood = Number(metric.mood_score ?? metric.mood ?? 3);
-    const sleep_hours = Number(metric.sleep_hours ?? metric.sleep ?? 0);
-    const energy_level = Number(metric.energy_level ?? metric.mood_score ?? 3);
-    const water_intake = Number(metric.water_intake ?? 0);
-    const exercise_minutes = Number(metric.exercise_minutes ?? 0);
+        setLoadingCheckin(true);
+        
+        try {
+            if (DEMO_MODE) {
+                // Demo mode: simulate checkin creation
+                console.log('🧪 DEMO MODE: Simulating checkin creation');
+                console.log('Checkin data:', metric);
+                
+                // Simulate a small delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Check for duplicate (demo logic)
+                if (hasCheckedInToday) {
+                    toast.error('Você já fez seu check-in hoje!');
+                    return { success: false, isDuplicate: true };
+                }
+                
+                // Simulate success
+                setHasCheckedInToday(true);
+                toast.success('Check-in registrado com sucesso! 🎉 (DEMO)');
+                return { success: true, data: { id: 'demo-checkin-123', ...metric } };
+            }
 
-    try {
-      const payload = {
-        user_id: user.id,
-        date: todayStr(),
-        mood,
-        energy_level,
-        sleep_hours,
-        water_intake,
-        exercise_minutes,
-        notes: metric.notes ?? null,
-      };
-      const { error } = await supabase.from('daily_checkins').insert(payload);
-      if (error) throw error;
-      setHasCheckedInToday(true);
-      toast.success('Check-in registrado!');
-    } catch (e) {
-      // Política UNIQUE(user_id, date) pode disparar; tratar de forma amigável
-      if (String(e?.message || '').includes('duplicate')) {
-        setHasCheckedInToday(true);
-        toast.success('Você já registrou o check-in de hoje.');
-        return;
-      }
-      console.error('addDailyMetric error:', e);
-      throw e;
-    }
-  }, [user?.id]);
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Try to include weight field if it exists after migration
+            const basePayload = {
+                user_id: user.id,
+                date: today,
+                mood: metric.mood_score || null,
+                energy_level: metric.mood_score || null, 
+                sleep_hours: metric.sleep_hours || null,
+                created_at: new Date().toISOString()
+            };
+            
+            // Try with weight field first (if migration was applied)
+            let payload = { ...basePayload };
+            if (metric.weight) {
+                payload.weight = parseFloat(metric.weight);
+                payload.mood_score = metric.mood_score; // Also try the mood_score field
+            }
 
-  const value = useMemo(() => ({ hasCheckedInToday, loadingCheckin: loading, refreshStatus, addDailyMetric }), [hasCheckedInToday, loading]);
+            const { data, error } = await supabase
+                .from('daily_checkins')
+                .insert([payload])
+                .select();
+                
+            if (error) {
+                // Verifica se é erro de duplicata (constraint UNIQUE)
+                if (error.code === '23505' || error.message.includes('duplicate') || error.message.includes('already exists')) {
+                    toast.error('Você já fez seu check-in hoje!');
+                    setHasCheckedInToday(true);
+                    return { success: false, isDuplicate: true };
+                }
+                throw error;
+            }
+            
+            // Sucesso - atualiza estado imediatamente
+            setHasCheckedInToday(true);
+            await fetchHistory(); // Atualiza histórico
+            
+            toast.success('Check-in registrado com sucesso! 🎉');
+            return { success: true, data };
+            
+        } catch (error) {
+            console.error('Add daily metric error:', error);
+            toast.error(`Erro ao registrar check-in: ${error.message}`);
+            return { success: false, error };
+        } finally {
+            setLoadingCheckin(false);
+        }
+    }, [user?.id, fetchHistory, hasCheckedInToday]);
 
-  return <CheckinsContext.Provider value={value}>{children}</CheckinsContext.Provider>;
+    // Refresh status
+    const refreshStatus = useCallback(async () => {
+        await Promise.all([checkTodaysStatus(), fetchHistory()]);
+    }, [checkTodaysStatus, fetchHistory]);
+
+    // Effect para carregar dados iniciais
+    useEffect(() => {
+        if (user?.id) {
+            refreshStatus();
+        }
+    }, [user?.id, refreshStatus]);
+
+    const value = useMemo(() => ({
+        hasCheckedInToday,
+        loadingCheckin,
+        checkinHistory,
+        addDailyMetric,
+        refreshStatus,
+        checkTodaysStatus
+    }), [
+        hasCheckedInToday,
+        loadingCheckin,
+        checkinHistory,
+        addDailyMetric,
+        refreshStatus,
+        checkTodaysStatus
+    ]);
+    
+    return <CheckinsContext.Provider value={value}>{children}</CheckinsContext.Provider>;
 };
 
-export const useCheckins = () => {
-  const ctx = useContext(CheckinsContext);
-  if (ctx === undefined) throw new Error('useCheckins must be used within a CheckinsProvider');
-  return ctx;
-};
-
+export function useCheckins() {
+    const context = useContext(CheckinsContext);
+    if (context === undefined) {
+        throw new Error('useCheckins must be used within a CheckinsProvider');
+    }
+    return context;
+}

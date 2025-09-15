@@ -1,21 +1,23 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
 
-const ProfileInput = ({ id, label, type, value, onChange, placeholder }) => (
+const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) => (
     <div className="space-y-2">
         <Label htmlFor={id}>{label}</Label>
         <Input
             id={id}
             type={type}
+            step={step}
             value={value || ''}
             onChange={onChange}
             placeholder={placeholder}
@@ -27,11 +29,12 @@ const ProfileInput = ({ id, label, type, value, onChange, placeholder }) => (
 const ProfileTab = () => {
     const { user, updateUserProfile, loading: authLoading } = useAuth();
     const [formData, setFormData] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (user?.profile) {
-            setFormData(user.profile);
-        }
+        // Sempre inicializa o formulário, mesmo se o perfil estiver vazio
+        const profileData = user?.profile || {};
+        setFormData(profileData);
     }, [user]);
 
     const handleChange = (e) => {
@@ -45,18 +48,60 @@ const ProfileTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const { full_name, phone, current_weight, target_weight, height } = formData;
+        setIsSaving(true);
         
-        await updateUserProfile({
-            full_name,
-            name: full_name,
-            phone,
-            current_weight,
-            target_weight,
-            height,
-        });
+        try {
+            // Validate required fields
+            const { 
+                full_name, phone, age, height, current_weight, target_weight, 
+                gender, activity_level, goal_type 
+            } = formData;
+            
+            const profileData = {
+                full_name: full_name?.trim() || '',
+                name: full_name?.trim() || '', // Garante compatibilidade com diferentes campos de nome
+                phone: phone?.trim() || null,
+                age: age ? parseInt(age) : null,
+                height: height ? parseInt(height) : null,
+                current_weight: current_weight ? parseFloat(current_weight) : null,
+                target_weight: target_weight ? parseFloat(target_weight) : null,
+                gender: gender || null,
+                activity_level: activity_level || null,
+                goal_type: goal_type || null
+            };
+            
+            // Enhanced validation
+            const validation = validateProfileData(profileData);
+            if (!validation.isValid) {
+                validation.errors.forEach(error => toast.error(error));
+                debugLog('Profile Validation Failed', { formData, profileData, errors: validation.errors });
+                return;
+            }
+            
+            debugLog('Profile Save Started', { user: user?.id, profileData });
+            
+            const result = await updateUserProfile(profileData);
+            
+            if (result) {
+                toast.success('Perfil atualizado com sucesso!');
+                debugLog('Profile Save Success', { result });
+            } else {
+                throw new Error('Nenhum dado foi retornado do servidor');
+            }
+            
+        } catch (error) {
+            debugLog('Profile Save Error', { user: user?.id, formData }, error);
+            trackError('ProfileTab.handleSubmit', error, { 
+                userId: user?.id, 
+                formData: Object.keys(formData) 
+            });
+            toast.error('Erro ao atualizar perfil: ' + error.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
     
+    // Se não tem usuário autenticado
     if (!user?.id) {
         return (
             <TabsContent value="profile" className="mt-6">
@@ -67,7 +112,8 @@ const ProfileTab = () => {
         );
     }
 
-    if (!user?.profile) {
+    // Se ainda está carregando autenticação
+    if (authLoading) {
         return (
             <TabsContent value="profile" className="mt-6">
                 <Card className="shadow-lg">
@@ -83,6 +129,9 @@ const ProfileTab = () => {
         );
     }
 
+    // Se não tem perfil, inicializa com dados vazios para permitir criação
+    const profileExists = user?.profile && Object.keys(user.profile).length > 0;
+
     return (
         <TabsContent value="profile" className="mt-6">
             <motion.div
@@ -92,15 +141,22 @@ const ProfileTab = () => {
             >
                 <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
                     <CardHeader>
-                        <CardTitle>Meu Perfil</CardTitle>
-                        <CardDescription>Mantenha seus dados sempre atualizados para uma experiência personalizada.</CardDescription>
+                        <CardTitle>
+                            {profileExists ? 'Meu Perfil' : 'Complete seu Perfil'}
+                        </CardTitle>
+                        <CardDescription>
+                            {profileExists 
+                                ? 'Mantenha seus dados sempre atualizados para uma experiência personalizada.'
+                                : 'Adicione suas informações para personalizar sua experiência no Vida Smart.'
+                            }
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <ProfileInput
                                     id="full_name"
-                                    label="Nome Completo"
+                                    label="Nome Completo *"
                                     type="text"
                                     value={formData.full_name}
                                     onChange={handleChange}
@@ -112,41 +168,120 @@ const ProfileTab = () => {
                                     type="tel"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    placeholder="5511999998888"
+                                    placeholder="11999998888"
                                 />
-                                 <ProfileInput
-                                    id="current_weight"
-                                    label="Peso Atual (kg)"
+                                <ProfileInput
+                                    id="age"
+                                    label="Idade"
                                     type="number"
-                                    value={formData.current_weight}
+                                    value={formData.age}
                                     onChange={handleChange}
-                                    placeholder="Ex: 75.5"
+                                    placeholder="Ex: 30"
                                 />
-                                 <ProfileInput
-                                    id="target_weight"
-                                    label="Peso Meta (kg)"
-                                    type="number"
-                                    value={formData.target_weight}
-                                    onChange={handleChange}
-                                    placeholder="Ex: 70"
-                                />
-                                 <ProfileInput
+                                <ProfileInput
                                     id="height"
-                                    label="Altura (cm)"
+                                    label="Altura (cm) *"
                                     type="number"
                                     value={formData.height}
                                     onChange={handleChange}
                                     placeholder="Ex: 175"
                                 />
+                                <ProfileInput
+                                    id="current_weight"
+                                    label="Peso Atual (kg) *"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.current_weight}
+                                    onChange={handleChange}
+                                    placeholder="Ex: 75.5"
+                                />
+                                <ProfileInput
+                                    id="target_weight"
+                                    label="Peso Meta (kg)"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.target_weight}
+                                    onChange={handleChange}
+                                    placeholder="Ex: 70.0"
+                                />
                             </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="gender">Gênero</Label>
+                                    <Select onValueChange={(value) => setFormData(prev => ({...prev, gender: value}))} value={formData.gender || ''}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione seu gênero" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="masculino">Masculino</SelectItem>
+                                            <SelectItem value="feminino">Feminino</SelectItem>
+                                            <SelectItem value="outro">Outro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="activity_level">Nível de Atividade</Label>
+                                    <Select onValueChange={(value) => setFormData(prev => ({...prev, activity_level: value}))} value={formData.activity_level || ''}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione seu nível" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sedentario">Sedentário</SelectItem>
+                                            <SelectItem value="leve">Levemente Ativo</SelectItem>
+                                            <SelectItem value="moderado">Moderadamente Ativo</SelectItem>
+                                            <SelectItem value="intenso">Muito Ativo</SelectItem>
+                                            <SelectItem value="extremo">Extremamente Ativo</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="goal_type">Objetivo Principal</Label>
+                                <Select onValueChange={(value) => setFormData(prev => ({...prev, goal_type: value}))} value={formData.goal_type || ''}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Qual seu objetivo principal?" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="perder_peso">Perder Peso</SelectItem>
+                                        <SelectItem value="ganhar_massa">Ganhar Massa Muscular</SelectItem>
+                                        <SelectItem value="manter_peso">Manter Peso Atual</SelectItem>
+                                        <SelectItem value="melhorar_condicionamento">Melhorar Condicionamento</SelectItem>
+                                        <SelectItem value="saude_geral">Saúde Geral</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p className="text-blue-800 text-sm">
+                                    💡 <strong>Importante:</strong> Essas informações são essenciais para criar seu plano personalizado 
+                                    e acompanhar sua evolução. Campos marcados com * são obrigatórios.
+                                </p>
+                            </div>
+                            
+                            {!profileExists && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-blue-800 text-sm">
+                                        💡 <strong>Dica:</strong> Complete seu perfil para desbloquear todas as funcionalidades do Vida Smart, 
+                                        incluindo planos personalizados e sistema de pontuação!
+                                    </p>
+                                </div>
+                            )}
+                            
                             <div className="flex justify-end pt-4">
-                                <Button type="submit" disabled={authLoading} className="vida-smart-gradient text-white">
-                                    {authLoading ? (
+                                <Button 
+                                    type="submit" 
+                                    disabled={isSaving} 
+                                    className="vida-smart-gradient text-white"
+                                >
+                                    {isSaving ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
                                         <Save className="mr-2 h-4 w-4" />
                                     )}
-                                    Salvar Alterações
+                                    {profileExists ? 'Salvar Alterações' : 'Criar Perfil'}
                                 </Button>
                             </div>
                         </form>
