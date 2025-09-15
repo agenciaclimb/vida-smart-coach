@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { buildDailyCheckinPayload, validateCheckinInput } from '@/utils/checkinHelpers';
 
 // Demo mode flag - should match AuthProvider
 const DEMO_MODE = false; // Disabled to test real database
@@ -114,28 +115,30 @@ export const CheckinsProvider = ({ children }) => {
                 return { success: true, data: { id: 'demo-checkin-123', ...metric } };
             }
 
-            const today = new Date().toISOString().split('T')[0];
+            // USAR HELPER COM FALLBACK WATER_INTAKE = 0
+            console.log('🔍 Dados de entrada do check-in:', metric);
             
-            // Try to include weight field if it exists after migration
-            const basePayload = {
-                user_id: user.id,
-                date: today,
-                mood: metric.mood_score || null,
-                energy_level: metric.mood_score || null, 
-                sleep_hours: metric.sleep_hours || null,
-                created_at: new Date().toISOString()
-            };
-            
-            // Try with weight field first (if migration was applied)
-            let payload = { ...basePayload };
-            if (metric.weight) {
-                payload.weight = parseFloat(metric.weight);
-                payload.mood_score = metric.mood_score; // Also try the mood_score field
+            // Validar entrada
+            const validation = validateCheckinInput(metric);
+            if (!validation.isValid) {
+                toast.error(`Dados inválidos: ${validation.errors.join(', ')}`);
+                return { success: false, errors: validation.errors };
             }
+            
+            // Construir payload com fallbacks seguros
+            const payload = buildDailyCheckinPayload(user.id, metric);
+            
+            // LOG CRÍTICO: verificar que water_intake tem valor
+            console.log('🔍 Payload final para insert:', {
+                water_intake: payload.water_intake,
+                weight: payload.weight,
+                mood: payload.mood,
+                sleep_hours: payload.sleep_hours
+            });
 
             const { data, error } = await supabase
                 .from('daily_checkins')
-                .insert([payload])
+                .insert(payload) // JÁ é objeto único, não array
                 .select();
                 
             if (error) {
