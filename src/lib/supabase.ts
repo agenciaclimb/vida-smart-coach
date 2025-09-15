@@ -1,3 +1,5 @@
+/** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
+
 import { createClient } from '@supabase/supabase-js';
 
 let _client = null as any;

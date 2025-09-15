@@ -1,3 +1,5 @@
+/** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "@/pages/LoginPage";
 import ClientDashboard from "@/pages/ClientDashboard";

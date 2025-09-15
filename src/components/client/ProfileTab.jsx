@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TabsContent } from '@/components/ui/tabs';
@@ -27,11 +26,12 @@ const ProfileInput = ({ id, label, type, value, onChange, placeholder }) => (
 const ProfileTab = () => {
     const { user, updateUserProfile, loading: authLoading } = useAuth();
     const [formData, setFormData] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (user?.profile) {
-            setFormData(user.profile);
-        }
+        // Sempre inicializa o formulário, mesmo se o perfil estiver vazio
+        const profileData = user?.profile || {};
+        setFormData(profileData);
     }, [user]);
 
     const handleChange = (e) => {
@@ -45,18 +45,26 @@ const ProfileTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const { full_name, phone, current_weight, target_weight, height } = formData;
+        setIsSaving(true);
         
-        await updateUserProfile({
-            full_name,
-            name: full_name,
-            phone,
-            current_weight,
-            target_weight,
-            height,
-        });
+        try {
+            const { full_name, height } = formData;
+            
+            await updateUserProfile({
+                full_name,
+                name: full_name, // Garante compatibilidade com diferentes campos de nome
+                height,
+            });
+            
+            toast.success('Perfil atualizado com sucesso!');
+        } catch (error) {
+            toast.error('Erro ao atualizar perfil: ' + error.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
     
+    // Se não tem usuário autenticado
     if (!user?.id) {
         return (
             <TabsContent value="profile" className="mt-6">
@@ -67,7 +75,8 @@ const ProfileTab = () => {
         );
     }
 
-    if (!user?.profile) {
+    // Se ainda está carregando autenticação
+    if (authLoading) {
         return (
             <TabsContent value="profile" className="mt-6">
                 <Card className="shadow-lg">
@@ -83,6 +92,9 @@ const ProfileTab = () => {
         );
     }
 
+    // Se não tem perfil, inicializa com dados vazios para permitir criação
+    const profileExists = user?.profile && Object.keys(user.profile).length > 0;
+
     return (
         <TabsContent value="profile" className="mt-6">
             <motion.div
@@ -92,8 +104,15 @@ const ProfileTab = () => {
             >
                 <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
                     <CardHeader>
-                        <CardTitle>Meu Perfil</CardTitle>
-                        <CardDescription>Mantenha seus dados sempre atualizados para uma experiência personalizada.</CardDescription>
+                        <CardTitle>
+                            {profileExists ? 'Meu Perfil' : 'Complete seu Perfil'}
+                        </CardTitle>
+                        <CardDescription>
+                            {profileExists 
+                                ? 'Mantenha seus dados sempre atualizados para uma experiência personalizada.'
+                                : 'Adicione suas informações para personalizar sua experiência no Vida Smart.'
+                            }
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -107,30 +126,6 @@ const ProfileTab = () => {
                                     placeholder="Seu nome completo"
                                 />
                                 <ProfileInput
-                                    id="phone"
-                                    label="WhatsApp"
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="5511999998888"
-                                />
-                                 <ProfileInput
-                                    id="current_weight"
-                                    label="Peso Atual (kg)"
-                                    type="number"
-                                    value={formData.current_weight}
-                                    onChange={handleChange}
-                                    placeholder="Ex: 75.5"
-                                />
-                                 <ProfileInput
-                                    id="target_weight"
-                                    label="Peso Meta (kg)"
-                                    type="number"
-                                    value={formData.target_weight}
-                                    onChange={handleChange}
-                                    placeholder="Ex: 70"
-                                />
-                                 <ProfileInput
                                     id="height"
                                     label="Altura (cm)"
                                     type="number"
@@ -139,14 +134,35 @@ const ProfileTab = () => {
                                     placeholder="Ex: 175"
                                 />
                             </div>
+                            
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <p className="text-yellow-800 text-sm">
+                                    ⚠️ <strong>Versão Simplificada:</strong> Apenas nome e altura estão disponíveis no momento. 
+                                    Novos campos serão adicionados em atualizações futuras.
+                                </p>
+                            </div>
+                            
+                            {!profileExists && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-blue-800 text-sm">
+                                        💡 <strong>Dica:</strong> Complete seu perfil para desbloquear todas as funcionalidades do Vida Smart, 
+                                        incluindo planos personalizados e sistema de pontuação!
+                                    </p>
+                                </div>
+                            )}
+                            
                             <div className="flex justify-end pt-4">
-                                <Button type="submit" disabled={authLoading} className="vida-smart-gradient text-white">
-                                    {authLoading ? (
+                                <Button 
+                                    type="submit" 
+                                    disabled={isSaving} 
+                                    className="vida-smart-gradient text-white"
+                                >
+                                    {isSaving ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
                                         <Save className="mr-2 h-4 w-4" />
                                     )}
-                                    Salvar Alterações
+                                    {profileExists ? 'Salvar Alterações' : 'Criar Perfil'}
                                 </Button>
                             </div>
                         </form>

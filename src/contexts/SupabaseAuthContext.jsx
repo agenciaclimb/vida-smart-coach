@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { supabase } from '@/lib/supabaseClient';
 
 const AuthContext = createContext(undefined);
 
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
+  // const supabase = useSupabaseClient(); // Now imported directly
 
   const fetchUserProfile = useCallback(async (authUser) => {
     if (!authUser) return null;
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
         .from('user_profiles')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no results
 
       if (error && error.code !== 'PGRST116') {
         throw error;
@@ -31,11 +31,11 @@ export const AuthProvider = ({ children }) => {
         toast.error("Falha de conexão ao buscar perfil.", { id: 'fetch-profile-network-error' });
       } else {
         console.error("Exception while fetching profile:", e);
-        toast.error(`Ocorreu um erro ao buscar seu perfil: ${e.message}`, { id: 'profile-fetch-error' });
+        // Don't show error toast for missing profiles - it's normal for new users
       }
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
               }
             } catch (profileError) {
               console.warn('Boot: profile-fetch-error', profileError.message);
-              // Continue without profile
+              // Continue without profile - it's ok for new users
               if (isMounted) {
                 setUser({ ...currentSession.user, profile: null, access_token: currentSession.access_token });
               }
@@ -124,8 +124,9 @@ export const AuthProvider = ({ children }) => {
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeoutId);
     };
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, supabase.auth]);
   
   const signUp = useCallback(async (email, password, metadata) => {
     try {
@@ -276,23 +277,40 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const updateUserProfile = useCallback(async (profileData) => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update(profileData)
-      .eq('id', user.id)
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Falha ao atualizar o perfil.");
-      console.error("Profile update error:", error);
-    } else {
-      toast.success("Perfil atualizado com sucesso!");
-      setUser(prevUser => ({ ...prevUser, profile: data }));
+    if (!user) {
+      throw new Error('Usuário não autenticado');
     }
-  }, [user]);
+    
+    try {
+      console.log('Updating profile for user:', user.id, profileData);
+      
+      // Tenta fazer upsert (INSERT ou UPDATE)
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          ...profileData,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Profile upsert error:", error);
+        toast.error("Falha ao atualizar o perfil: " + error.message);
+        throw error;
+      } else {
+        console.log("Profile updated successfully:", data);
+        toast.success("Perfil atualizado com sucesso!");
+        setUser(prevUser => ({ ...prevUser, profile: data }));
+        return data;
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error("Erro ao salvar perfil: " + error.message);
+      throw error;
+    }
+  }, [user, supabase]);
   
   const refetchUser = useCallback(async () => {
     if (!user) return;
@@ -311,7 +329,7 @@ export const AuthProvider = ({ children }) => {
     updateUserProfile,
     clearAppDataAndReload,
     supabase
-  }), [user, session, loading, refetchUser, signUp, signIn, signOut, updateUserProfile, clearAppDataAndReload]);
+  }), [user, session, loading, refetchUser, signUp, signIn, signOut, updateUserProfile, clearAppDataAndReload, supabase]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -319,7 +337,7 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    console.warn('[legacy SupabaseAuthContext] useAuth fora do provider — fallback ativo');
+    console.warn('[SupabaseAuthContext] useAuth fora do provider — fallback ativo');
     return { user: null, session: null, loading: true };
   }
   return context;

@@ -1,16 +1,16 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useData } from '@/contexts/DataContext';
+import { useCheckins } from '@/contexts/data/CheckinsContext';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ProgressChart from '@/components/client/ProgressChart';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import toast from 'react-hot-toast';
+import WelcomeCard from '@/components/client/WelcomeCard';
 
 const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -32,8 +32,7 @@ const StatCard = ({ icon, title, value, gradient, onClick }) => (
 
 const DailyCheckInCard = () => {
   const { user } = useAuth();
-  const { addDailyMetric, hasCheckedInToday } = useData();
-  const [weight, setWeight] = useState(user?.profile?.current_weight || '');
+  const { addDailyMetric, hasCheckedInToday, loadingCheckin } = useCheckins();
   const [mood, setMood] = useState('');
   const [sleep, setSleep] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,13 +46,17 @@ const DailyCheckInCard = () => {
     setIsSubmitting(true);
     try {
       const metric = {
-        weight: parseFloat(weight) || null,
         mood_score: parseInt(mood),
         sleep_hours: parseFloat(sleep)
       };
-      await addDailyMetric(metric);
-      toast.success("Check-in registrado com sucesso!");
+      const result = await addDailyMetric(metric);
+      if (result?.success) {
+        // Clear form on success
+        setMood('');
+        setSleep('');
+      }
     } catch (error) {
+      console.error('Check-in error:', error);
       toast.error(`Erro ao registrar check-in: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -81,11 +84,7 @@ const DailyCheckInCard = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="weight" className="text-sm font-medium text-gray-700 mb-1 block">Peso (kg)</label>
-              <Input id="weight" type="number" step="0.1" placeholder="Ex: 75.5" value={weight} onChange={(e) => setWeight(e.target.value)} />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="mood" className="text-sm font-medium text-gray-700 mb-1 block">Humor hoje</label>
               <Select onValueChange={setMood} value={mood}>
@@ -106,8 +105,15 @@ const DailyCheckInCard = () => {
               <Input id="sleep" type="number" step="0.5" placeholder="Ex: 8" value={sleep} onChange={(e) => setSleep(e.target.value)} />
             </div>
           </div>
-          <Button type="submit" className="w-full vida-smart-gradient" disabled={isSubmitting}>
-            {isSubmitting ? 'Registrando...' : 'Registrar Check-in'}
+          <Button type="submit" className="w-full vida-smart-gradient" disabled={isSubmitting || loadingCheckin}>
+            {isSubmitting || loadingCheckin ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Registrando...
+              </>
+            ) : (
+              'Registrar Check-in'
+            )}
           </Button>
         </form>
       </CardContent>
@@ -131,6 +137,9 @@ const DashboardTab = () => {
   }
   
   const profile = user?.profile || {};
+  
+  // Check if profile is complete for conditional WelcomeCard display
+  const hasCompleteProfile = profile?.name || profile?.full_name;
 
   return (
     <motion.div
@@ -140,24 +149,37 @@ const DashboardTab = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Olá, {profile.name || 'Cliente'}!</h1>
-          <p className="text-gray-500 mt-1">Bem-vindo(a) de volta. Pronto para evoluir hoje?</p>
+      {/* Show WelcomeCard if profile is incomplete */}
+      {!hasCompleteProfile && <WelcomeCard />}
+      
+      {/* Show greeting if profile is complete */}
+      {hasCompleteProfile && (
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Olá, {profile.name || profile.full_name || 'Cliente'}!</h1>
+            <p className="text-gray-500 mt-1">Bem-vindo(a) de volta. Pronto para evoluir hoje?</p>
+          </div>
+          <Button onClick={() => navigate('/dashboard?tab=profile')}>
+            <Edit className="w-4 h-4 mr-2" />
+            Editar Perfil
+          </Button>
         </div>
-        <Button onClick={() => navigate('/dashboard?tab=profile')}>
-          <Edit className="w-4 h-4 mr-2" />
-          Editar Perfil
-        </Button>
-      </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<Dumbbell className="text-white" />} title="Plano Atual" value={profile.plan || 'N/A'} gradient="bg-gradient-to-tr from-blue-500 to-blue-400" onClick={() => navigate('/dashboard?tab=plan')} />
+        <StatCard 
+          icon={<Dumbbell className="text-white" />} 
+          title="Plano Atual" 
+          value={hasCompleteProfile ? (profile.plan || 'N/A') : 'Pendente'} 
+          gradient={hasCompleteProfile ? "bg-gradient-to-tr from-blue-500 to-blue-400" : "bg-gradient-to-tr from-gray-400 to-gray-300"} 
+          onClick={() => navigate('/dashboard?tab=plan')} 
+        />
         <StatCard icon={<Award className="text-white" />} title="Nível" value={profile.level || '1'} gradient="bg-gradient-to-tr from-amber-500 to-amber-400" />
         <StatCard icon={<Zap className="text-white" />} title="Pontos" value={profile.points || '0'} gradient="bg-gradient-to-tr from-lime-500 to-lime-400" onClick={() => navigate('/dashboard?tab=gamification')} />
-        <StatCard icon={<BarChart3 className="text-white" />} title="Peso Atual" value={`${profile.current_weight || '--'} kg`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
+        <StatCard icon={<BarChart3 className="text-white" />} title="Altura" value={`${profile.height || '--'} cm`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
       </div>
 
+      {/* Always show DailyCheckInCard */}
       <DailyCheckInCard />
 
       <div>

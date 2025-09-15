@@ -1,3 +1,5 @@
+/** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
+
 // Limpa quaisquer Service Workers/caches antigos que possam interferir nas requisições
 // e causar pendências de rede (especialmente após migrações de build/host).
 import './sw-cleanup';

@@ -67,3 +67,80 @@
 2025-09-12 18:25:57 +00:00: 
 2025-09-12 18:25:57 +00:00:   ➜  Local:   http://localhost:5173/
 2025-09-12 18:25:57 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:37:54 +00:00: 
+2025-09-15 14:37:54 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:37:54 +00:00: > vite
+2025-09-15 14:37:54 +00:00: 
+2025-09-15 14:37:55 +00:00: 
+2025-09-15 14:37:55 +00:00:   VITE v5.4.20  ready in 909 ms
+2025-09-15 14:37:55 +00:00: 
+2025-09-15 14:37:55 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:37:55 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:42:24 +00:00: 
+2025-09-15 14:42:24 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:42:24 +00:00: > vite
+2025-09-15 14:42:24 +00:00: 
+2025-09-15 14:42:26 +00:00: 
+2025-09-15 14:42:26 +00:00:   VITE v5.4.20  ready in 1450 ms
+2025-09-15 14:42:26 +00:00: 
+2025-09-15 14:42:26 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:42:26 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:48:18 +00:00: 2:48:18 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:48:18 +00:00: 2:48:18 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:48:19 +00:00: 2:48:19 PM [vite] hmr invalidate /src/contexts/data/CheckinsContext.jsx Could not Fast Refresh ("useCheckins" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 14:48:19 +00:00: 2:48:19 PM [vite] hmr update /src/contexts/DataContext.jsx, /src/index.css, /src/components/client/DashboardTab.jsx
+2025-09-15 14:48:20 +00:00: 2:48:20 PM [vite] hmr invalidate /src/contexts/DataContext.jsx Could not Fast Refresh ("useData" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 14:48:20 +00:00: 2:48:20 PM [vite] hmr update /src/App.tsx, /src/pages/ClientDashboard.jsx, /src/index.css, /src/components/client/PlanTab.jsx, /src/components/client/GamificationTab.jsx, /src/components/client/ReferralTab.jsx, /src/components/client/CommunityTab.jsx, /src/components/client/ProgressChart.jsx
+2025-09-15 14:49:22 +00:00: 2:49:22 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:49:33 +00:00: 2:49:33 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 14:49:46 +00:00: 2:49:46 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 14:50:03 +00:00: 2:50:03 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 14:50:18 +00:00: 2:50:18 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 14:50:34 +00:00: 2:50:34 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 14:50:41 +00:00: 2:50:41 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:51:08 +00:00: 
+2025-09-15 14:51:08 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:51:08 +00:00: > vite
+2025-09-15 14:51:08 +00:00: 
+2025-09-15 14:51:09 +00:00: 
+2025-09-15 14:51:09 +00:00:   VITE v5.4.20  ready in 979 ms
+2025-09-15 14:51:09 +00:00: 
+2025-09-15 14:51:09 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:51:09 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:53:09 +00:00: 2:53:09 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:53:20 +00:00: 2:53:20 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:53:31 +00:00: 2:53:31 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:53:44 +00:00: 2:53:44 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:53:50 +00:00: 2:53:50 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:54:07 +00:00: 2:54:07 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:54:21 +00:00: 2:54:21 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 14:54:44 +00:00: 
+2025-09-15 14:54:44 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:54:44 +00:00: > vite
+2025-09-15 14:54:44 +00:00: 
+2025-09-15 14:54:45 +00:00: 
+2025-09-15 14:54:45 +00:00:   VITE v5.4.20  ready in 865 ms
+2025-09-15 14:54:45 +00:00: 
+2025-09-15 14:54:45 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:54:45 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:55:27 +00:00: 2:55:27 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:55:35 +00:00: 2:55:35 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:56:02 +00:00: 
+2025-09-15 14:56:02 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:56:02 +00:00: > vite
+2025-09-15 14:56:02 +00:00: 
+2025-09-15 14:56:02 +00:00: 
+2025-09-15 14:56:02 +00:00:   VITE v5.4.20  ready in 851 ms
+2025-09-15 14:56:02 +00:00: 
+2025-09-15 14:56:02 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:56:02 +00:00:   ➜  Network: use --host to expose
+2025-09-15 14:57:25 +00:00: 2:57:25 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 14:57:48 +00:00: 
+2025-09-15 14:57:48 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 14:57:48 +00:00: > vite
+2025-09-15 14:57:48 +00:00: 
+2025-09-15 14:57:49 +00:00: 
+2025-09-15 14:57:49 +00:00:   VITE v5.4.20  ready in 1027 ms
+2025-09-15 14:57:49 +00:00: 
+2025-09-15 14:57:49 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 14:57:49 +00:00:   ➜  Network: use --host to expose
