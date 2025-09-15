@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
 
 const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) => (
     <div className="space-y-2">
@@ -50,26 +51,50 @@ const ProfileTab = () => {
         setIsSaving(true);
         
         try {
+            // Validate required fields
             const { 
                 full_name, phone, age, height, current_weight, target_weight, 
                 gender, activity_level, goal_type 
             } = formData;
             
-            await updateUserProfile({
-                full_name,
-                name: full_name, // Garante compatibilidade com diferentes campos de nome
-                phone,
+            const profileData = {
+                full_name: full_name?.trim() || '',
+                name: full_name?.trim() || '', // Garante compatibilidade com diferentes campos de nome
+                phone: phone?.trim() || null,
                 age: age ? parseInt(age) : null,
                 height: height ? parseInt(height) : null,
                 current_weight: current_weight ? parseFloat(current_weight) : null,
                 target_weight: target_weight ? parseFloat(target_weight) : null,
-                gender,
-                activity_level,
-                goal_type
-            });
+                gender: gender || null,
+                activity_level: activity_level || null,
+                goal_type: goal_type || null
+            };
             
-            toast.success('Perfil atualizado com sucesso!');
+            // Enhanced validation
+            const validation = validateProfileData(profileData);
+            if (!validation.isValid) {
+                validation.errors.forEach(error => toast.error(error));
+                debugLog('Profile Validation Failed', { formData, profileData, errors: validation.errors });
+                return;
+            }
+            
+            debugLog('Profile Save Started', { user: user?.id, profileData });
+            
+            const result = await updateUserProfile(profileData);
+            
+            if (result) {
+                toast.success('Perfil atualizado com sucesso!');
+                debugLog('Profile Save Success', { result });
+            } else {
+                throw new Error('Nenhum dado foi retornado do servidor');
+            }
+            
         } catch (error) {
+            debugLog('Profile Save Error', { user: user?.id, formData }, error);
+            trackError('ProfileTab.handleSubmit', error, { 
+                userId: user?.id, 
+                formData: Object.keys(formData) 
+            });
             toast.error('Erro ao atualizar perfil: ' + error.message);
         } finally {
             setIsSaving(false);

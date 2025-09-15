@@ -208,7 +208,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const ctx = useContext(Ctx);
   if (!ctx) {
     // fallback defensivo

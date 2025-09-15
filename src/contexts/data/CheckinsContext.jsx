@@ -195,10 +195,10 @@ export const CheckinsProvider = ({ children }) => {
     return <CheckinsContext.Provider value={value}>{children}</CheckinsContext.Provider>;
 };
 
-export const useCheckins = () => {
+export function useCheckins() {
     const context = useContext(CheckinsContext);
     if (context === undefined) {
         throw new Error('useCheckins must be used within a CheckinsProvider');
     }
     return context;
-};
+}

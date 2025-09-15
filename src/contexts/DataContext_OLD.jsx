@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { AdminProvider, useAdmin } from '@/contexts/data/AdminContext';
@@ -138,10 +139,10 @@ export const DataProvider = ({ children }) => (
   </PlansRewardsProvider>
 );
 
-export function useData() {
+export const useData = () => {
   const context = useContext(DataContext);
   if (context === undefined) {
     throw new Error('useData deve ser usado dentro de um DataProvider');
   }
   return context;
-}
+};

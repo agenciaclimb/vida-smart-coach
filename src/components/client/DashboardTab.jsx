@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import toast from 'react-hot-toast';
 import WelcomeCard from '@/components/client/WelcomeCard';
+import { debugLog, validateCheckinData, trackError } from '@/utils/debugHelpers';
 
 const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -40,26 +41,49 @@ const DailyCheckInCard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!mood || !sleep) {
-      toast.error("Por favor, preencha seu humor e sono.");
-      return;
-    }
+    
     setIsSubmitting(true);
+    
     try {
       const metric = {
-        weight: weight ? parseFloat(weight) : null,
-        mood_score: parseInt(mood),
-        sleep_hours: parseFloat(sleep)
+        weight: weight && parseFloat(weight) > 0 ? parseFloat(weight) : null,
+        mood_score: mood ? parseInt(mood) : null,
+        sleep_hours: sleep ? parseFloat(sleep) : null
       };
+      
+      // Enhanced validation
+      const validation = validateCheckinData(metric);
+      if (!validation.isValid) {
+        validation.errors.forEach(error => toast.error(error));
+        debugLog('Check-in Validation Failed', { metric, errors: validation.errors });
+        return;
+      }
+      
+      debugLog('Check-in Submission Started', { user: user?.id, metric });
+      
       const result = await addDailyMetric(metric);
+      
       if (result?.success) {
+        debugLog('Check-in Success', { result });
+        toast.success('Check-in registrado com sucesso! 🎉');
+        
         // Clear form on success
         setMood('');
         setSleep('');
         // Keep weight as it doesn't change daily
+      } else if (result?.isDuplicate) {
+        debugLog('Check-in Duplicate Detected', { result });
+        // Toast already shown by addDailyMetric
+      } else {
+        debugLog('Check-in Failed', { result });
+        throw new Error(result?.error?.message || 'Falha desconhecida no check-in');
       }
     } catch (error) {
-      console.error('Check-in error:', error);
+      debugLog('Check-in Error', { user: user?.id, formData: { mood, sleep, weight } }, error);
+      trackError('DashboardTab.handleSubmit', error, { 
+        userId: user?.id, 
+        formData: { mood, sleep, weight } 
+      });
       toast.error(`Erro ao registrar check-in: ${error.message}`);
     } finally {
       setIsSubmitting(false);
