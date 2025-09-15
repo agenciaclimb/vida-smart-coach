@@ -31,14 +31,30 @@ export const PlansRewardsProvider = ({ children }) => {
 
     const fetchRewards = useCallback(async () => {
         try {
-            // Mapear colunas do schema para o formato esperado no frontend
-            // points <- points_required, is_active <- is_available
+            // Seleciona tudo e normaliza em memória para suportar ambos os esquemas:
+            // - name/points/icon/is_active
+            // - title/points_required/image_url/is_available
             const { data, error } = await supabase
               .from('rewards')
-              .select('id, title, description, points:points_required, is_active:is_available, image_url, created_at, updated_at')
-              .order('points_required', { ascending: true });
+              .select('*');
             if (error) throw error;
-            setRewards(data || []);
+
+            const normalized = (data || []).map((r) => ({
+                id: r.id,
+                // manter ambos para compatibilidade com telas administrativas e cliente
+                name: r.name ?? r.title ?? 'Recompensa',
+                title: r.title ?? r.name ?? null,
+                description: r.description ?? r.descricao ?? '',
+                points: r.points ?? r.points_required ?? 0,
+                is_active: r.is_active ?? r.is_available ?? true,
+                image_url: r.image_url ?? r.icon ?? null,
+                created_at: r.created_at,
+                updated_at: r.updated_at,
+            }));
+
+            // ordenar por pontos ascendente (client-side para evitar erro por coluna ausente)
+            normalized.sort((a, b) => (a.points || 0) - (b.points || 0));
+            setRewards(normalized);
         } catch (error) {
             console.error("Rewards fetch error:", error);
             if (!hasShownRewardsError) {
