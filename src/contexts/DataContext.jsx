@@ -72,13 +72,14 @@ const CombinedDataProvider = ({ children }) => {
       clientData.refetchData(user.id);
       communityData.refetchCommunityData();
       integrationsData.refetchIntegrations();
+      checkinsData.refreshStatus();
     }
     if (isPartner && user?.id) {
       partnerData.refetchPartnerData(user.id);
     }
   }, [
     user, isAdmin, isClient, isPartner,
-    adminData, clientData, partnerData, communityData, integrationsData, plansRewardsData
+    adminData, clientData, partnerData, communityData, integrationsData, plansRewardsData, checkinsData
   ]);
   
   const value = useMemo(() => {
@@ -105,7 +106,7 @@ const CombinedDataProvider = ({ children }) => {
   }, [
     loading, refetchData, plansRewardsData, user,
     isAdmin, adminData,
-    isClient, clientData, communityData, integrationsData, chatData,
+    isClient, clientData, communityData, integrationsData, chatData, checkinsData,
     isPartner, partnerData
   ]);
 
