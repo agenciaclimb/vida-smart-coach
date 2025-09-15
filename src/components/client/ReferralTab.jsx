@@ -14,8 +14,9 @@ import { useAuth } from '@/components/auth/AuthProvider';
 const ReferralTab = () => {
   const { user } = useAuth();
   const { referredClients, loading } = useData();
-  const referralCode = user?.profile?.affiliate_code;
-  const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
+  const baseUrl = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
+  const referralCode = user?.profile?.ref_code || user?.profile?.affiliate_code || user?.id || '';
+  const referralLink = referralCode ? `${baseUrl}/register?ref=${encodeURIComponent(referralCode)}` : '';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -39,10 +40,10 @@ const ReferralTab = () => {
               <div className="flex items-center mt-4 gap-2">
                 <Input
                   readOnly
-                  value={referralLink}
+                  value={referralLink || 'Complete seu perfil para gerar o link'}
                   className="bg-white/20 text-white placeholder:text-purple-200 border-purple-400 focus-visible:ring-white"
                 />
-                <Button onClick={copyToClipboard} variant="secondary" size="icon">
+                <Button onClick={copyToClipboard} variant="secondary" size="icon" disabled={!referralLink}>
                   <Copy className="h-5 w-5" />
                 </Button>
               </div>

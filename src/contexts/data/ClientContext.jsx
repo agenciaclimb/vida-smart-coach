@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/core/supabase';
@@ -13,14 +13,23 @@ export const ClientProvider = ({ children }) => {
         trainingPlan: null,
     });
     const [loading, setLoading] = useState(true);
+    const abortControllerRef = useRef(null);
 
     const fetchClientData = useCallback(async (userId) => {
-        if (!userId) return;
+        if (!userId) {
+            setLoading(false);
+            return;
+        }
+        
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
         setLoading(true);
         try {
             const [metricsRes, planRes] = await Promise.all([
-                supabase.from('user_metrics').select('*').eq('user_id', userId).order('date', { ascending: false }),
-                supabase.from('training_plans').select('*').eq('user_id', userId).maybeSingle()
+                supabase.from('user_metrics').select('*').eq('user_id', userId).order('date', { ascending: false }).abortSignal(abortControllerRef.current.signal),
+                supabase.from('training_plans').select('*').eq('user_id', userId).maybeSingle().abortSignal(abortControllerRef.current.signal)
             ]);
 
             if (metricsRes.error) throw metricsRes.error;
@@ -32,8 +41,10 @@ export const ClientProvider = ({ children }) => {
             });
 
         } catch (error) {
-            toast.error("Erro ao carregar seus dados.");
-            console.error("Client data fetch error:", error);
+            if (error.name !== 'AbortError') {
+                toast.error("Erro ao carregar seus dados.");
+                console.error("Client data fetch error:", error);
+            }
         } finally {
             setLoading(false);
         }
@@ -49,7 +60,13 @@ export const ClientProvider = ({ children }) => {
       if (user?.id && user.profile?.role === 'client') {
           fetchClientData(user.id);
       }
-    }, [user, fetchClientData]);
+      
+      return () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+      };
+    }, [user?.id, user?.profile?.role, fetchClientData]);
 
     const value = useMemo(() => ({
         ...clientData,
