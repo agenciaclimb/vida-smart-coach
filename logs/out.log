@@ -144,3 +144,31 @@
 2025-09-15 14:57:49 +00:00: 
 2025-09-15 14:57:49 +00:00:   ➜  Local:   http://localhost:5173/
 2025-09-15 14:57:49 +00:00:   ➜  Network: use --host to expose
+2025-09-15 15:13:57 +00:00: 3:13:57 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 15:13:58 +00:00: 3:13:58 PM [vite] hmr invalidate /src/components/auth/AuthProvider.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 15:13:58 +00:00: 3:13:58 PM [vite] page reload src/components/auth/AuthProvider.tsx
+2025-09-15 15:14:18 +00:00: 3:14:18 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 15:14:26 +00:00: 3:14:26 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 15:14:35 +00:00: 3:14:35 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 15:14:41 +00:00: 3:14:41 PM [vite] hmr update /src/components/client/ProfileTab.jsx, /src/index.css
+2025-09-15 15:14:53 +00:00: 3:14:53 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 15:15:14 +00:00: 3:15:14 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 15:15:22 +00:00: 3:15:22 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 15:15:22 +00:00: 3:15:22 PM [vite] hmr invalidate /src/contexts/data/CheckinsContext.jsx Could not Fast Refresh ("useCheckins" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 15:15:22 +00:00: 3:15:22 PM [vite] hmr update /src/contexts/DataContext.jsx, /src/index.css, /src/components/client/DashboardTab.jsx
+2025-09-15 15:15:23 +00:00: 3:15:23 PM [vite] hmr invalidate /src/contexts/DataContext.jsx Could not Fast Refresh ("useData" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 15:15:23 +00:00: 3:15:23 PM [vite] hmr update /src/App.tsx, /src/pages/ClientDashboard.jsx, /src/index.css, /src/components/client/PlanTab.jsx, /src/components/client/CommunityTab.jsx, /src/components/client/ReferralTab.jsx, /src/components/client/GamificationTab.jsx, /src/components/client/ProgressChart.jsx
+2025-09-15 15:15:27 +00:00: 3:15:27 PM [vite] hmr update /src/components/client/DashboardTab.jsx, /src/index.css
+2025-09-15 15:15:32 +00:00: 3:15:32 PM [vite] hmr update /src/components/auth/AuthProvider.tsx
+2025-09-15 15:15:32 +00:00: 3:15:32 PM [vite] hmr invalidate /src/components/auth/AuthProvider.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2025-09-15 15:15:32 +00:00: 3:15:32 PM [vite] page reload src/components/auth/AuthProvider.tsx
+2025-09-15 15:15:36 +00:00: 3:15:36 PM [vite] hmr update /src/contexts/data/CheckinsContext.jsx, /src/index.css
+2025-09-15 15:16:34 +00:00: 
+2025-09-15 15:16:34 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-15 15:16:34 +00:00: > vite
+2025-09-15 15:16:34 +00:00: 
+2025-09-15 15:16:35 +00:00: 
+2025-09-15 15:16:35 +00:00:   VITE v5.4.20  ready in 744 ms
+2025-09-15 15:16:35 +00:00: 
+2025-09-15 15:16:35 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-15 15:16:35 +00:00:   ➜  Network: use --host to expose

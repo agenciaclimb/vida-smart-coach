@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
 
 // Demo mode for testing - set to true to enable
-const DEMO_MODE = true;
+const DEMO_MODE = false; // Disabled to test real database
 
 type EnrichedUser = User & { profile?: any };
 
@@ -132,33 +132,70 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         return updatedProfile;
       }
       
-      // Map incoming data to available columns only
+      // Map incoming data to EXISTING columns (will work until migration is applied)
       const allowedData = {
         id: user.id,
         full_name: profileData.full_name || profileData.name || null,
         name: profileData.name || profileData.full_name || null,
         email: user.email || profileData.email || null,
         height: profileData.height || null,
+        age: profileData.age || null,
+        activity_level: profileData.activity_level || null,
         updated_at: new Date().toISOString()
       };
 
-      console.log('Mapped profile data:', allowedData);
-      
-      // Tenta fazer upsert (INSERT ou UPDATE)
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(allowedData)
-        .select()
-        .single();
+      // If migration was applied, try to include the new fields
+      try {
+        // Test if new columns exist by including them
+        const extendedData = {
+          ...allowedData,
+          phone: profileData.phone || null,
+          current_weight: profileData.current_weight || null,
+          target_weight: profileData.target_weight || null,
+          gender: profileData.gender || null,
+          goal_type: profileData.goal_type || null
+        };
+        
+        console.log('Trying with extended profile data:', extendedData);
+        
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .upsert(extendedData)
+          .select()
+          .single();
 
-      if (error) {
-        console.error("Profile upsert error:", error);
-        throw error;
-      } else {
-        console.log("Profile updated successfully:", data);
-        // Update the user state with new profile
-        setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
-        return data;
+        if (error) {
+          if (error.message.includes('does not exist')) {
+            // Columns don't exist yet, fall back to basic fields
+            console.log('Extended fields not available, using basic fields');
+            throw new Error('FALLBACK_TO_BASIC');
+          }
+          throw error;
+        } else {
+          console.log("Profile updated successfully with extended fields:", data);
+          setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
+          return data;
+        }
+      } catch (extError) {
+        if (extError.message === 'FALLBACK_TO_BASIC') {
+          // Fall back to basic fields
+          console.log('Falling back to basic fields only');
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .upsert(allowedData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error("Profile upsert error:", error);
+            throw error;
+          } else {
+            console.log("Profile updated successfully with basic fields:", data);
+            setUser(prevUser => prevUser ? { ...prevUser, profile: data } : prevUser);
+            return data;
+          }
+        }
+        throw extError;
       }
     } catch (error) {
       console.error("Profile update error:", error);

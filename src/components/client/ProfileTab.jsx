@@ -4,17 +4,19 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-const ProfileInput = ({ id, label, type, value, onChange, placeholder }) => (
+const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) => (
     <div className="space-y-2">
         <Label htmlFor={id}>{label}</Label>
         <Input
             id={id}
             type={type}
+            step={step}
             value={value || ''}
             onChange={onChange}
             placeholder={placeholder}
@@ -48,12 +50,22 @@ const ProfileTab = () => {
         setIsSaving(true);
         
         try {
-            const { full_name, height } = formData;
+            const { 
+                full_name, phone, age, height, current_weight, target_weight, 
+                gender, activity_level, goal_type 
+            } = formData;
             
             await updateUserProfile({
                 full_name,
                 name: full_name, // Garante compatibilidade com diferentes campos de nome
-                height,
+                phone,
+                age: age ? parseInt(age) : null,
+                height: height ? parseInt(height) : null,
+                current_weight: current_weight ? parseFloat(current_weight) : null,
+                target_weight: target_weight ? parseFloat(target_weight) : null,
+                gender,
+                activity_level,
+                goal_type
             });
             
             toast.success('Perfil atualizado com sucesso!');
@@ -119,26 +131,108 @@ const ProfileTab = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <ProfileInput
                                     id="full_name"
-                                    label="Nome Completo"
+                                    label="Nome Completo *"
                                     type="text"
                                     value={formData.full_name}
                                     onChange={handleChange}
                                     placeholder="Seu nome completo"
                                 />
                                 <ProfileInput
+                                    id="phone"
+                                    label="WhatsApp"
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    placeholder="11999998888"
+                                />
+                                <ProfileInput
+                                    id="age"
+                                    label="Idade"
+                                    type="number"
+                                    value={formData.age}
+                                    onChange={handleChange}
+                                    placeholder="Ex: 30"
+                                />
+                                <ProfileInput
                                     id="height"
-                                    label="Altura (cm)"
+                                    label="Altura (cm) *"
                                     type="number"
                                     value={formData.height}
                                     onChange={handleChange}
                                     placeholder="Ex: 175"
                                 />
+                                <ProfileInput
+                                    id="current_weight"
+                                    label="Peso Atual (kg) *"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.current_weight}
+                                    onChange={handleChange}
+                                    placeholder="Ex: 75.5"
+                                />
+                                <ProfileInput
+                                    id="target_weight"
+                                    label="Peso Meta (kg)"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.target_weight}
+                                    onChange={handleChange}
+                                    placeholder="Ex: 70.0"
+                                />
                             </div>
                             
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <p className="text-yellow-800 text-sm">
-                                    ⚠️ <strong>Versão Simplificada:</strong> Apenas nome e altura estão disponíveis no momento. 
-                                    Novos campos serão adicionados em atualizações futuras.
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="gender">Gênero</Label>
+                                    <Select onValueChange={(value) => setFormData(prev => ({...prev, gender: value}))} value={formData.gender || ''}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione seu gênero" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="masculino">Masculino</SelectItem>
+                                            <SelectItem value="feminino">Feminino</SelectItem>
+                                            <SelectItem value="outro">Outro</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor="activity_level">Nível de Atividade</Label>
+                                    <Select onValueChange={(value) => setFormData(prev => ({...prev, activity_level: value}))} value={formData.activity_level || ''}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione seu nível" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sedentario">Sedentário</SelectItem>
+                                            <SelectItem value="leve">Levemente Ativo</SelectItem>
+                                            <SelectItem value="moderado">Moderadamente Ativo</SelectItem>
+                                            <SelectItem value="intenso">Muito Ativo</SelectItem>
+                                            <SelectItem value="extremo">Extremamente Ativo</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Label htmlFor="goal_type">Objetivo Principal</Label>
+                                <Select onValueChange={(value) => setFormData(prev => ({...prev, goal_type: value}))} value={formData.goal_type || ''}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Qual seu objetivo principal?" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="perder_peso">Perder Peso</SelectItem>
+                                        <SelectItem value="ganhar_massa">Ganhar Massa Muscular</SelectItem>
+                                        <SelectItem value="manter_peso">Manter Peso Atual</SelectItem>
+                                        <SelectItem value="melhorar_condicionamento">Melhorar Condicionamento</SelectItem>
+                                        <SelectItem value="saude_geral">Saúde Geral</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p className="text-blue-800 text-sm">
+                                    💡 <strong>Importante:</strong> Essas informações são essenciais para criar seu plano personalizado 
+                                    e acompanhar sua evolução. Campos marcados com * são obrigatórios.
                                 </p>
                             </div>
                             

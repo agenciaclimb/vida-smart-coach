@@ -33,6 +33,7 @@ const StatCard = ({ icon, title, value, gradient, onClick }) => (
 const DailyCheckInCard = () => {
   const { user } = useAuth();
   const { addDailyMetric, hasCheckedInToday, loadingCheckin } = useCheckins();
+  const [weight, setWeight] = useState(user?.profile?.current_weight || '');
   const [mood, setMood] = useState('');
   const [sleep, setSleep] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,6 +47,7 @@ const DailyCheckInCard = () => {
     setIsSubmitting(true);
     try {
       const metric = {
+        weight: weight ? parseFloat(weight) : null,
         mood_score: parseInt(mood),
         sleep_hours: parseFloat(sleep)
       };
@@ -54,6 +56,7 @@ const DailyCheckInCard = () => {
         // Clear form on success
         setMood('');
         setSleep('');
+        // Keep weight as it doesn't change daily
       }
     } catch (error) {
       console.error('Check-in error:', error);
@@ -84,7 +87,18 @@ const DailyCheckInCard = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="weight" className="text-sm font-medium text-gray-700 mb-1 block">Peso (kg)</label>
+              <Input 
+                id="weight" 
+                type="number" 
+                step="0.1" 
+                placeholder="Ex: 75.5" 
+                value={weight} 
+                onChange={(e) => setWeight(e.target.value)} 
+              />
+            </div>
             <div>
               <label htmlFor="mood" className="text-sm font-medium text-gray-700 mb-1 block">Humor hoje</label>
               <Select onValueChange={setMood} value={mood}>
@@ -176,7 +190,7 @@ const DashboardTab = () => {
         />
         <StatCard icon={<Award className="text-white" />} title="Nível" value={profile.level || '1'} gradient="bg-gradient-to-tr from-amber-500 to-amber-400" />
         <StatCard icon={<Zap className="text-white" />} title="Pontos" value={profile.points || '0'} gradient="bg-gradient-to-tr from-lime-500 to-lime-400" onClick={() => navigate('/dashboard?tab=gamification')} />
-        <StatCard icon={<BarChart3 className="text-white" />} title="Altura" value={`${profile.height || '--'} cm`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
+        <StatCard icon={<BarChart3 className="text-white" />} title="Peso Atual" value={`${profile.current_weight || '--'} kg`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
       </div>
 
       {/* Always show DailyCheckInCard */}

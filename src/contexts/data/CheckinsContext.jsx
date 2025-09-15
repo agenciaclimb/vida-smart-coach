@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 // Demo mode flag - should match AuthProvider
-const DEMO_MODE = true;
+const DEMO_MODE = false; // Disabled to test real database
 
 const CheckinsContext = createContext(undefined);
 
@@ -116,14 +116,22 @@ export const CheckinsProvider = ({ children }) => {
 
             const today = new Date().toISOString().split('T')[0];
             
-            const payload = {
+            // Try to include weight field if it exists after migration
+            const basePayload = {
                 user_id: user.id,
                 date: today,
-                mood: metric.mood_score || null,  // Database uses 'mood', not 'mood_score'
-                energy_level: metric.mood_score || null, // Map mood to energy_level as well
+                mood: metric.mood_score || null,
+                energy_level: metric.mood_score || null, 
                 sleep_hours: metric.sleep_hours || null,
                 created_at: new Date().toISOString()
             };
+            
+            // Try with weight field first (if migration was applied)
+            let payload = { ...basePayload };
+            if (metric.weight) {
+                payload.weight = parseFloat(metric.weight);
+                payload.mood_score = metric.mood_score; // Also try the mood_score field
+            }
 
             const { data, error } = await supabase
                 .from('daily_checkins')
