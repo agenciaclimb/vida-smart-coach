@@ -1,6 +1,7 @@
 /** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
 
 import { Routes, Route, Navigate } from "react-router-dom";
+import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import ClientDashboard from "@/pages/ClientDashboard";
 import SafeStatus from "@/pages/SafeStatus";
@@ -11,7 +12,7 @@ import AuthCallbackPage from "@/pages/AuthCallbackPage";
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<LandingPage />} />
       {/* pública */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />

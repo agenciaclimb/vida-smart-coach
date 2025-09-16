@@ -71,6 +71,40 @@ const RewardsTab = () => {
     }
   };
 
+  // Compat: tentativa dupla de inserção dependendo do schema
+  const handleAddRewardCompat = async (e) => {
+    e.preventDefault();
+    if (!newRewardName || !newRewardPoints) {
+      toast.error("Nome e pontos são obrigatórios.");
+      return;
+    }
+    setIsSubmitting(true);
+    const toastId = toast.loading("Adicionando nova recompensa...");
+    try {
+      const attempts = [
+        { name: newRewardName, description: newRewardDesc, points: parseInt(newRewardPoints, 10), icon: newRewardIcon, is_active: true },
+        { title: newRewardName, description: newRewardDesc, points_required: parseInt(newRewardPoints, 10), image_url: newRewardIcon, is_available: true },
+      ];
+      let lastError = null;
+      for (const payload of attempts) {
+        const { error } = await supabase.from('rewards').insert(payload);
+        if (!error) { lastError = null; break; }
+        lastError = error;
+      }
+      if (lastError) throw lastError;
+
+      toast.success("Nova recompensa adicionada!", { id: toastId });
+      setNewRewardName('');
+      setNewRewardDesc('');
+      setNewRewardPoints('');
+      setNewRewardIcon('??');
+      refetchData();
+    } catch (error) {
+      toast.error(`Falha ao adicionar recompensa: ${error.message}`, { id: toastId });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const handleAddReward = async (e) => {
     e.preventDefault();
     if (!newRewardName || !newRewardPoints) {
@@ -156,7 +190,7 @@ const RewardsTab = () => {
               </div>
               <div className="vida-smart-card p-6 rounded-2xl shadow-lg">
                 <h3 className="text-lg font-semibold mb-4">Adicionar Recompensa</h3>
-                <form onSubmit={handleAddReward} className="space-y-4">
+                <form onSubmit={handleAddRewardCompat} className="space-y-4">
                   <div>
                     <Label htmlFor="reward-name">Nome</Label>
                     <Input id="reward-name" value={newRewardName} onChange={e => setNewRewardName(e.target.value)} required/>
