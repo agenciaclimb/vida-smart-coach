@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/core/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 /**
  * Simplified WhatsApp Gamification Hook
