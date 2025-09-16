@@ -263,93 +263,112 @@ export default function PartnersPageCorrigida() {
                   👨‍⚕️ Parceiro Profissional
                 </h3>
                 <p className="text-lg text-gray-600 mb-8">
-                  Para profissionais da saúde e bem-estar que querem usar nossa IA como ferramenta auxiliar e ainda ganhar comissões.
+                  Para profissionais da saúde e bem-estar que querem usar nossa IA como ferramenta auxiliar e ainda ganhar comissões recorrentes.
                 </p>
 
                 <div className="space-y-4">
                   <div className="flex items-start">
-                    <div className="bg-green-100 p-2 rounded-full mr-4">
-                      <span className="text-green-600">✓</span>
+                    <div className="bg-blue-100 p-2 rounded-full mr-4">
+                      <span className="text-blue-600">🎯</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold">Painel Profissional</h4>
-                      <p className="text-gray-600">Acesso exclusivo aos dados dos seus clientes indicados.</p>
+                      <h4 className="font-semibold">Painel Profissional Exclusivo</h4>
+                      <p className="text-gray-600">Acesso completo aos dados e progresso dos seus clientes indicados.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="bg-blue-100 p-2 rounded-full mr-4">
+                      <span className="text-blue-600">⚙️</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Personalização Avançada</h4>
+                      <p className="text-gray-600">Configure informações específicas e metas personalizadas para cada cliente.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="bg-blue-100 p-2 rounded-full mr-4">
+                      <span className="text-blue-600">📊</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Relatórios Profissionais</h4>
+                      <p className="text-gray-600">Relatórios detalhados em tempo real para otimizar suas consultas.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="bg-blue-100 p-2 rounded-full mr-4">
+                      <span className="text-blue-600">🔧</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Ferramenta Auxiliar</h4>
+                      <p className="text-gray-600">IA trabalha como extensão do seu trabalho profissional.</p>
                     </div>
                   </div>
 
                   <div className="flex items-start">
                     <div className="bg-green-100 p-2 rounded-full mr-4">
-                      <span className="text-green-600">✓</span>
+                      <span className="text-green-600">💰</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold">Personalização</h4>
-                      <p className="text-gray-600">Configure informações específicas para cada cliente.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="bg-green-100 p-2 rounded-full mr-4">
-                      <span className="text-green-600">✓</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Relatórios Detalhados</h4>
-                      <p className="text-gray-600">Acompanhe o progresso dos seus clientes em tempo real.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="bg-green-100 p-2 rounded-full mr-4">
-                      <span className="text-green-600">✓</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Comissões Maiores</h4>
-                      <p className="text-gray-600">Ganhe até 50% de comissão recorrente.</p>
+                      <h4 className="font-semibold">Mesmo Sistema de Comissões</h4>
+                      <p className="text-gray-600">Ranking justo baseado em performance, não em área de atuação.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white p-8 rounded-xl shadow-lg">
-                <h4 className="text-2xl font-bold mb-6 text-center">Por Área de Atuação</h4>
+                <h4 className="text-2xl font-bold mb-6 text-center">Estrutura de Comissões</h4>
+                <p className="text-center text-gray-600 mb-6">Sistema de ranking justo para todos os profissionais</p>
                 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <div className="font-semibold">🏋️ Personal Trainers</div>
-                      <div className="text-sm text-gray-600">Acompanhamento de treinos</div>
+                      <div className="font-semibold">Bronze</div>
+                      <div className="text-sm text-gray-600">1-10 clientes</div>
                     </div>
-                    <div className="text-xl font-bold text-orange-600">30%</div>
+                    <div className="text-xl font-bold text-blue-600">15%</div>
                   </div>
 
-                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <div className="font-semibold">🥗 Nutricionistas</div>
-                      <div className="text-sm text-gray-600">Análise nutricional</div>
+                      <div className="font-semibold">Prata</div>
+                      <div className="text-sm text-gray-600">11-25 clientes</div>
                     </div>
-                    <div className="text-xl font-bold text-green-600">35%</div>
+                    <div className="text-xl font-bold text-blue-600">25%</div>
                   </div>
 
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                     <div>
-                      <div className="font-semibold">🧠 Psicólogos</div>
-                      <div className="text-sm text-gray-600">Suporte emocional</div>
+                      <div className="font-semibold">Ouro</div>
+                      <div className="text-sm text-gray-600">26-50 clientes</div>
                     </div>
-                    <div className="text-xl font-bold text-blue-600">40%</div>
+                    <div className="text-xl font-bold text-blue-600">35%</div>
                   </div>
 
                   <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
                     <div>
-                      <div className="font-semibold">✨ Coaches</div>
-                      <div className="text-sm text-gray-600">Desenvolvimento pessoal</div>
+                      <div className="font-semibold">Diamante</div>
+                      <div className="text-sm text-gray-600">51+ clientes</div>
                     </div>
-                    <div className="text-xl font-bold text-purple-600">50%</div>
+                    <div className="text-xl font-bold text-purple-600">40%</div>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">R$ 24.500</div>
-                    <div className="text-sm text-gray-600">Potencial mensal para coaches</div>
+                    <div className="text-2xl font-bold text-purple-600">R$ 19.600</div>
+                    <div className="text-sm text-gray-600">Potencial mensal com 50 clientes</div>
+                    <div className="text-xs text-blue-600 mt-1">+ Acesso ao painel profissional</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="text-center">
+                    <div className="text-sm font-semibold text-yellow-800">🎯 Diferencial Exclusivo</div>
+                    <div className="text-xs text-yellow-700">Painel profissional + personalização avançada</div>
                   </div>
                 </div>
               </div>
