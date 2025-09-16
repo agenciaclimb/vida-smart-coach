@@ -10,6 +10,7 @@ import OverviewTab from '@/components/admin/OverviewTab';
 import ClientsTab from '@/components/admin/ClientsTab';
 import PlansTab from '@/components/admin/PlansTab';
 import RewardsTab from '@/components/admin/RewardsTab';
+import GamificationManagementTab from '@/components/admin/GamificationManagementTab';
 import FinancialTab from '@/components/admin/FinancialTab';
 import AffiliatesTab from '@/components/admin/AffiliatesTab';
 import ConversationsTab from '@/components/admin/ConversationsTab';
@@ -36,6 +37,7 @@ const tabs = [
   { value: 'conversations', label: 'Conversas', component: <ConversationsTab /> },
   { value: 'plans', label: 'Planos', component: <PlansTab /> },
   { value: 'rewards', label: 'Recompensas', component: <RewardsTab /> },
+  { value: 'gamification', label: 'Gamificação', component: <GamificationManagementTab /> },
   { value: 'financial', label: 'Financeiro', component: <FinancialTab /> },
   { value: 'affiliates', label: 'Afiliados', component: <AffiliatesTab /> },
   { value: 'automations', label: 'Automações', component: <AutomationsTab /> },
