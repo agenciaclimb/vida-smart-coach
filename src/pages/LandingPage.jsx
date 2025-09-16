@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/landing/Header';
+import Header from '@/components/landing/Header_Safe';
 import Hero from '@/components/landing/Hero';
 import Benefits from '@/components/landing/Benefits';
 import HowItWorks from '@/components/landing/HowItWorks';
