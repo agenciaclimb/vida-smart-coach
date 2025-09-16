@@ -221,3 +221,41 @@
 2025-09-15 21:12:27 +00:00: 9:12:27 PM [vite] hmr update /src/contexts/DataContext.jsx, /src/index.css, /src/components/client/DashboardTab.jsx
 2025-09-15 21:12:28 +00:00: 9:12:28 PM [vite] hmr invalidate /src/contexts/DataContext.jsx Could not Fast Refresh ("useData" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
 2025-09-15 21:12:28 +00:00: 9:12:28 PM [vite] hmr update /src/App.tsx, /src/pages/ClientDashboard.jsx, /src/index.css, /src/components/client/PlanTab.jsx, /src/components/client/GamificationTab.jsx, /src/components/client/CommunityTab.jsx, /src/components/client/ReferralTab.jsx, /src/components/client/ProgressChart.jsx
+2025-09-16 20:53:37 +00:00: 
+2025-09-16 20:53:37 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-16 20:53:37 +00:00: > vite
+2025-09-16 20:53:37 +00:00: 
+2025-09-16 20:53:38 +00:00: Re-optimizing dependencies because lockfile has changed
+2025-09-16 20:53:38 +00:00: 
+2025-09-16 20:53:38 +00:00:   VITE v5.4.20  ready in 1315 ms
+2025-09-16 20:53:38 +00:00: 
+2025-09-16 20:53:38 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-16 20:53:38 +00:00:   ➜  Network: use --host to expose
+2025-09-16 20:59:04 +00:00: 
+2025-09-16 20:59:04 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-16 20:59:04 +00:00: > vite
+2025-09-16 20:59:04 +00:00: 
+2025-09-16 20:59:05 +00:00: 
+2025-09-16 20:59:05 +00:00:   VITE v5.4.20  ready in 1171 ms
+2025-09-16 20:59:05 +00:00: 
+2025-09-16 20:59:05 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-16 20:59:05 +00:00:   ➜  Network: use --host to expose
+2025-09-16 20:59:43 +00:00: 
+2025-09-16 20:59:43 +00:00: > vida-smart-coach@0.0.0 dev
+2025-09-16 20:59:43 +00:00: > vite
+2025-09-16 20:59:43 +00:00: 
+2025-09-16 20:59:44 +00:00: 
+2025-09-16 20:59:44 +00:00:   VITE v5.4.20  ready in 928 ms
+2025-09-16 20:59:44 +00:00: 
+2025-09-16 20:59:44 +00:00:   ➜  Local:   http://localhost:5173/
+2025-09-16 20:59:44 +00:00:   ➜  Network: use --host to expose
+2025-09-16 21:02:21 +00:00: 9:02:21 PM [vite] hmr update /src/App.tsx
+2025-09-16 21:02:25 +00:00: 9:02:25 PM [vite] hmr update /src/App.tsx
+2025-09-16 21:03:00 +00:00: 9:03:00 PM [vite] page reload src/components/admin/GamificationManagementTab.jsx
+2025-09-16 21:03:04 +00:00: 9:03:04 PM [vite] page reload src/components/admin/GamificationManagementTab.jsx
+2025-09-16 21:03:07 +00:00: 9:03:07 PM [vite] page reload src/components/admin/GamificationManagementTab.jsx
+2025-09-16 21:03:13 +00:00: 9:03:13 PM [vite] hmr update /src/components/client/GamificationTabEnhanced.jsx, /src/index.css
+2025-09-16 21:44:43 +00:00: 9:44:43 PM [vite] hmr update /src/components/ui/badge.jsx, /src/index.css
+2025-09-16 21:45:04 +00:00: 9:45:04 PM [vite] hmr update /src/components/demo/GamificationDemo.jsx, /src/index.css
+2025-09-16 21:45:08 +00:00: 9:45:08 PM [vite] hmr update /src/components/demo/GamificationDemo.jsx, /src/index.css
+2025-09-16 21:45:17 +00:00: 9:45:17 PM [vite] hmr update /src/components/client/GamificationTabEnhanced.jsx, /src/index.css

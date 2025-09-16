@@ -6,6 +6,7 @@ import PartnersPage from "@/pages/PartnersPage_Corrigida";
 import LoginPage from "@/pages/LoginPage";
 import ClientDashboard from "@/pages/ClientDashboard";
 import SafeStatus from "@/pages/SafeStatus";
+import GamificationDemoPage from "@/pages/GamificationDemoPage";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { DataProvider } from "@/contexts/DataContext";
 import AuthCallbackPage from "@/pages/AuthCallbackPage";
@@ -15,6 +16,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/parceiros" element={<PartnersPage />} />
+      <Route path="/demo" element={<GamificationDemoPage />} />
       {/* pública */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
