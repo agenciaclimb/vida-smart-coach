@@ -46,6 +46,10 @@ const LoginPage = () => {
   // Login handler robusto
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Prevenir duplo clique
+    if (localLoading) return;
+    
     setLocalLoading(true);
     const toastId = toast.loading('Entrando...');
 
@@ -54,6 +58,7 @@ const LoginPage = () => {
         email: loginData.email,
         password: loginData.password,
       });
+      
       if (error) throw error;
 
       if (data?.session) {
@@ -61,14 +66,17 @@ const LoginPage = () => {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
+        
+        // Aguardar um pouco para garantir que a sessão foi definida
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      navigate('/dashboard', { replace: true });
-      setLocalLoading(false);
       toast.success('Login realizado com sucesso!', { id: toastId });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
-      setLocalLoading(false);
       toast.error(err?.message ?? 'Falha ao entrar. Tente novamente.', { id: toastId });
+    } finally {
+      setLocalLoading(false);
     }
   };
 
