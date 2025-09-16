@@ -61,7 +61,6 @@ export const CheckinsProvider = ({ children }) => {
                     user_id: user.id,
                     date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
                     mood: 4,
-                    energy_level: 4,
                     sleep_hours: 7.5
                 }
             ];
