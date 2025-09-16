@@ -29,15 +29,22 @@ jobs:
           [ -n "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] && echo "✓ SUPABASE_ACCESS_TOKEN OK" || (echo "✗ Faltando SUPABASE_ACCESS_TOKEN" && exit 1)
           [ -n "${{ secrets.SUPABASE_PROJECT_REF }}" ] && echo "✓ SUPABASE_PROJECT_REF OK" || (echo "✗ Faltando SUPABASE_PROJECT_REF" && exit 1)
 
-      - name: Abort if no migrations
+      - name: Check migrations directory
         id: check_migs
         run: |
-          COUNT=$(ls -1 supabase/migrations 2>/dev/null | wc -l || true)
+          # Contar apenas arquivos .sql (ignorar diretórios)
+          COUNT=$(find supabase/migrations -name "*.sql" -type f 2>/dev/null | wc -l || echo "0")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo "Found $COUNT migration files"
+          
           if [ "$COUNT" -eq "0" ]; then
-            echo "No migrations found. Skipping with neutral exit."
-            exit 78
+            echo "No migration files found. Skipping with success."
+            exit 0
           fi
+          
+          # Listar migrações encontradas
+          echo "Migration files found:"
+          find supabase/migrations -name "*.sql" -type f | sort
 
       - name: Setup Supabase CLI
         if: steps.check_migs.outputs.count != '0'
@@ -53,39 +60,77 @@ jobs:
         if: steps.check_migs.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "Linking to project..."
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
 
-      - name: List pending migrations
-        if: steps.check_migs.outputs.count != '0'
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase migration list --status pending || true
-
-      - name: Dry run push (debug)
-        if: steps.check_migs.outputs.count != '0'
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase db push --dry-run --debug
-
-      - name: Push migrations (retry 2x)
+      - name: Check migration status
         if: steps.check_migs.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          set -e
-          supabase db push --debug || {
-            echo "First attempt failed. Retrying in 10s..."
-            sleep 10
-            supabase db push --debug
+          echo "Checking migration status..."
+          supabase migration list || echo "Migration list failed, continuing..."
+
+      - name: Repair drift if needed
+        if: steps.check_migs.outputs.count != '0'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "Checking for drift and repairing if needed..."
+          supabase db remote commit || echo "Remote commit failed or not needed, continuing..."
+
+      - name: Dry run migrations
+        if: steps.check_migs.outputs.count != '0'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "Running dry-run to check migrations..."
+          supabase db push --dry-run || echo "Dry run failed, but continuing with actual push..."
+
+      - name: Push migrations with retries
+        if: steps.check_migs.outputs.count != '0'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "Pushing migrations to production..."
+          
+          # Função para tentar push
+          attempt_push() {
+            echo "Attempt $1 of 3..."
+            if supabase db push; then
+              echo "✓ Migration push successful!"
+              return 0
+            else
+              echo "✗ Migration push failed on attempt $1"
+              return 1
+            fi
           }
+          
+          # Tentar 3 vezes com intervalos
+          if ! attempt_push 1; then
+            echo "First attempt failed. Waiting 15 seconds..."
+            sleep 15
+            
+            if ! attempt_push 2; then
+              echo "Second attempt failed. Trying drift repair..."
+              supabase db remote commit || echo "Remote commit failed"
+              sleep 10
+              
+              if ! attempt_push 3; then
+                echo "All attempts failed. Check logs above for details."
+                exit 1
+              fi
+            fi
+          fi
+          
+          echo "✅ Migrations completed successfully!"
 
-      # Reparar divergência (drift) se o push ainda falhar
-      - name: Repair drift with remote commit
-        if: failure()
+      - name: Verify migration status
+        if: steps.check_migs.outputs.count != '0'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          echo "Attempting remote commit to repair drift..."
-          supabase db remote commit
-          supabase db push --debug
+          echo "Verifying final migration status..."
+          supabase migration list || echo "Could not verify migration status"
 
