@@ -16,7 +16,7 @@ import { useGamification } from '@/contexts/data/GamificationContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const GamificationTabEnhanced = () => {
     const { user } = useAuth();

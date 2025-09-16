@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useWhatsAppGamificationSimple } from '@/hooks/useWhatsAppGamificationSimple';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/core/supabase';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const GamificationDemo = () => {
     const { user } = useAuth();
