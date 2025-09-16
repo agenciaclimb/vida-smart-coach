@@ -88,3 +88,4 @@ jobs:
           echo "Attempting remote commit to repair drift..."
           supabase db remote commit
           supabase db push --debug
+
