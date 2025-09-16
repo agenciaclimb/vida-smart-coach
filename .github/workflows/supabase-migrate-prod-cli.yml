@@ -86,5 +86,5 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           echo "Attempting remote commit to repair drift..."
-          supabase db remote commit --message "sync: remote commit to repair drift"
+          supabase db remote commit
           supabase db push --debug
