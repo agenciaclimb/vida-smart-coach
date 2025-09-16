@@ -1,8 +1,8 @@
 /** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
 
 import { Routes, Route, Navigate } from "react-router-dom";
-import LandingPage from "@/pages/LandingPage_Updated";
-import PartnersPage from "@/pages/PartnersPage";
+import LandingPage from "@/pages/LandingPage_ClienteFinal";
+import PartnersPage from "@/pages/PartnersPage_Corrigida";
 import LoginPage from "@/pages/LoginPage";
 import ClientDashboard from "@/pages/ClientDashboard";
 import SafeStatus from "@/pages/SafeStatus";
