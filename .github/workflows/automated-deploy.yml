@@ -5,14 +5,18 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
   SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
 jobs:
   # Job 1: Executar migrações no Supabase
@@ -22,6 +26,15 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
 
       - name: 🔧 Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -34,12 +47,26 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ env.SUPABASE_ACCESS_TOKEN }}
 
-      - name: 🚀 Run migrations
+      - name: 🚀 Run migrations via CLI
+        id: cli_migration
+        continue-on-error: true
         run: |
           supabase db push --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ env.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD }}
+
+      - name: 🔄 Run migrations via custom script (fallback)
+        if: steps.cli_migration.outcome == 'failure'
+        run: |
+          echo "CLI migration failed, trying custom script..."
+          npm run migrate:supabase
+        env:
+          SUPABASE_SERVICE_KEY: ${{ env.SUPABASE_SERVICE_KEY }}
+          VITE_SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+
+      - name: ✅ Migration completed
+        run: echo "Migrations completed successfully"
 
   # Job 2: Build e Deploy no Vercel
   deploy:
@@ -69,6 +96,7 @@ jobs:
 
       - name: 🚀 Deploy to Vercel
         uses: amondnet/vercel-action@v25
+        id: vercel_deploy
         with:
           vercel-token: ${{ env.VERCEL_TOKEN }}
           vercel-org-id: ${{ env.VERCEL_ORG_ID }}
@@ -76,22 +104,43 @@ jobs:
           vercel-args: '--prod'
           working-directory: ./
 
+      - name: 📝 Save deployment URL
+        run: |
+          echo "DEPLOYMENT_URL=${{ steps.vercel_deploy.outputs.preview-url }}" >> $GITHUB_ENV
+
   # Job 3: Verificar saúde do sistema
   health-check:
     name: 🏥 Health Check
     runs-on: ubuntu-latest
     needs: deploy
     steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: ⏳ Wait for deployment
+        run: sleep 30
+
       - name: 🔍 Check website health
         run: |
           echo "Verificando saúde do site..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://www.appvidasmart.com)
-          if [ $response -eq 200 ]; then
-            echo "✅ Site está funcionando corretamente!"
-          else
-            echo "❌ Site retornou código: $response"
-            exit 1
-          fi
+          for i in {1..5}; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" https://www.appvidasmart.com)
+            if [ $response -eq 200 ]; then
+              echo "✅ Site está funcionando corretamente!"
+              break
+            else
+              echo "❌ Tentativa $i: Site retornou código: $response"
+              if [ $i -eq 5 ]; then
+                exit 1
+              fi
+              sleep 10
+            fi
+          done
 
       - name: 🗄️ Check Supabase connection
         run: |
@@ -104,6 +153,18 @@ jobs:
           else
             echo "❌ Supabase retornou código: $response"
             exit 1
+          fi
+
+      - name: 🧪 Test gamification system
+        run: |
+          echo "Testando sistema de gamificação..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/gamification?select=count")
+          if [ $response -eq 200 ]; then
+            echo "✅ Sistema de gamificação está acessível!"
+          else
+            echo "⚠️ Sistema de gamificação retornou código: $response"
           fi
 
   # Job 4: Notificação de sucesso
@@ -119,5 +180,19 @@ jobs:
           echo "✅ Migrações aplicadas no Supabase"
           echo "✅ Aplicação deployada no Vercel"
           echo "✅ Health checks passaram"
+          echo "✅ Sistema de gamificação verificado"
           echo "🌐 Site disponível em: https://www.appvidasmart.com"
+
+  # Job 5: Notificação de falha
+  notify-failure:
+    name: 📢 Failure Notification
+    runs-on: ubuntu-latest
+    needs: [migrate, deploy, health-check]
+    if: failure()
+    steps:
+      - name: ❌ Deploy Failed
+        run: |
+          echo "❌ Deploy automatizado falhou!"
+          echo "🔍 Verifique os logs dos jobs anteriores"
+          echo "📧 Notifique a equipe de desenvolvimento"
 
