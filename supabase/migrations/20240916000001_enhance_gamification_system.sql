@@ -75,7 +75,29 @@ CREATE TABLE IF NOT EXISTS user_achievements (
 
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own achievements" ON user_achievements FOR SELECT USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_achievements'
+      AND column_name = 'user_id'
+  ) THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = 'user_achievements'
+        AND policyname = 'Users can view own achievements'
+    ) THEN
+      EXECUTE 'CREATE POLICY "Users can view own achievements"
+               ON public.user_achievements
+               FOR SELECT USING (auth.uid() = user_id)';
+    END IF;
+  END IF;
+END;
+$$;
+
 
 -- ==========================================
 -- 5. LEADERBOARD/RANKING TABLE
@@ -237,67 +259,138 @@ CREATE POLICY "Users can view own referrals" ON referrals FOR SELECT USING (auth
 -- ==========================================
 
 -- Gamification indexes
-CREATE INDEX IF NOT EXISTS idx_gamification_user_id ON gamification(user_id);
-CREATE INDEX IF NOT EXISTS idx_gamification_total_points ON gamification(total_points DESC);
-CREATE INDEX IF NOT EXISTS idx_gamification_level ON gamification(level DESC);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification' AND column_name = 'user_id') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_gamification_user_id ON public.gamification(user_id)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification' AND column_name = 'total_points') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_gamification_total_points ON public.gamification(total_points DESC)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification' AND column_name = 'level') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_gamification_level ON public.gamification(level DESC)';
+  END IF;
+END;
+$$;
 
 -- Daily activities indexes
-CREATE INDEX IF NOT EXISTS idx_daily_activities_user_date ON daily_activities(user_id, activity_date DESC);
-CREATE INDEX IF NOT EXISTS idx_daily_activities_type ON daily_activities(activity_type, activity_date DESC);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_activities' AND column_name = 'user_id')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_activities' AND column_name = 'activity_date') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_daily_activities_user_date ON public.daily_activities(user_id, activity_date DESC)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_activities' AND column_name = 'activity_type')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_activities' AND column_name = 'activity_date') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_daily_activities_type ON public.daily_activities(activity_type, activity_date DESC)';
+  END IF;
+END;
+$$;
 
 -- Achievements indexes
-CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);
-CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'code')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'name')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'description')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'icon')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'category')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'points_reward')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'requirements') THEN
+    INSERT INTO achievements (code, name, description, icon, category, points_reward, requirements) VALUES
+    -- Consistency Achievements
+    ('streak_master', 'Streak Master', '30 dias consecutivos de atividade', '??', 'consistency', 1000, '{"type": "consecutive_days", "target": 30}'),
+    ('lightning', 'Lightning', '7 dias perfeitos de check-ins', '?', 'consistency', 500, '{"type": "perfect_week", "target": 7}'),
+    ('diamond_habit', 'Diamond Habit', '100 dias da mesma atividade', '??', 'consistency', 2000, '{"type": "same_activity", "target": 100}'),
 
+    -- Category Achievements
+    ('fitness_warrior', 'Fitness Warrior', 'Metas físicas alcançadas', '??', 'milestone', 800, '{"type": "physical_goals", "target": 5}'),
+    ('nutrition_ninja', 'Nutrition Ninja', 'Alimentação perfeita por 30 dias', '??', 'milestone', 1000, '{"type": "nutrition_perfect", "target": 30}'),
+    ('zen_master', 'Zen Master', 'Equilíbrio emocional mantido', '??', 'milestone', 800, '{"type": "emotional_balance", "target": 21}'),
+    ('soul_seeker', 'Soul Seeker', 'Crescimento espiritual consistente', '?', 'milestone', 800, '{"type": "spiritual_growth", "target": 30}'),
+
+    -- Social Achievements
+    ('influencer', 'Influencer', '10+ indicações realizadas', '??', 'social', 2000, '{"type": "referrals", "target": 10}'),
+    ('community_helper', 'Community Helper', 'Ajudar outros usuários', '??', 'social', 500, '{"type": "help_others", "target": 5}'),
+    ('party_starter', 'Party Starter', 'Criar desafios em grupo', '??', 'social', 300, '{"type": "create_challenges", "target": 3}'),
+
+    -- Milestone Achievements
+    ('transformer_1_week', 'Primeira Semana', '7 dias de transformação', '??', 'milestone', 100, '{"type": "week_consistent", "target": 1}'),
+    ('transformer_1_month', '1 Mês de Evolução', '30 dias de mudança', '??', 'milestone', 500, '{"type": "month_consistent", "target": 1}'),
+    ('transformer_3_months', '3 Meses de Evolução', 'Trimestre de progresso', '??', 'milestone', 1500, '{"type": "months_consistent", "target": 3}'),
+    ('transformer_6_months', '6 Meses de Mudança', 'Semestre de transformação', '??', 'milestone', 3000, '{"type": "months_consistent", "target": 6}'),
+    ('transformer_1_year', '1 Ano de Transformação', 'Ano completo de evolução', '???', 'milestone', 6000, '{"type": "year_consistent", "target": 1}'),
+
+    -- Specific Goal Achievements
+    ('weight_loss_5kg', 'Perdeu 5kg', 'Meta de perda de peso alcançada', '??', 'milestone', 1000, '{"type": "weight_loss", "target": 5}'),
+    ('runner_5k', 'Corredor 5km', 'Capacidade de correr 5km', '??', 'milestone', 800, '{"type": "run_distance", "target": 5000}'),
+    ('meditation_30_days', '30 Dias de Meditação', 'Mês completo meditando', '???', 'milestone', 1200, '{"type": "meditation_streak", "target": 30}'),
+    ('sugar_free_30_days', '30 Dias Sem Açúcar', 'Mês sem açúcar refinado', '????', 'milestone', 1500, '{"type": "no_sugar", "target": 30}'),
+    ('mood_improvement', 'Melhoria no Humor', 'Avaliação de humor positiva', '??', 'milestone', 800, '{"type": "mood_score", "target": 80}')
+    ON CONFLICT (code) DO NOTHING;
+  END IF;
+END;
+$$;
 -- Leaderboards indexes
-CREATE INDEX IF NOT EXISTS idx_leaderboards_type_category ON leaderboards(ranking_type, category);
-CREATE INDEX IF NOT EXISTS idx_leaderboards_rank ON leaderboards(rank_position);
-CREATE INDEX IF NOT EXISTS idx_leaderboards_points ON leaderboards(points DESC);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leaderboards' AND column_name = 'ranking_type')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leaderboards' AND column_name = 'category') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leaderboards_type_category ON public.leaderboards(ranking_type, category)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leaderboards' AND column_name = 'rank_position') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leaderboards_rank ON public.leaderboards(rank_position)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'leaderboards' AND column_name = 'points') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leaderboards_points ON public.leaderboards(points DESC)';
+  END IF;
+END;
+$$;
 
 -- Missions indexes
-CREATE INDEX IF NOT EXISTS idx_daily_missions_user_date ON daily_missions(user_id, mission_date DESC);
-CREATE INDEX IF NOT EXISTS idx_daily_missions_completion ON daily_missions(is_completed, mission_date DESC);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_missions' AND column_name = 'user_id')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_missions' AND column_name = 'mission_date') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_daily_missions_user_date ON public.daily_missions(user_id, mission_date DESC)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_missions' AND column_name = 'is_completed')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_missions' AND column_name = 'mission_date') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_daily_missions_completion ON public.daily_missions(is_completed, mission_date DESC)';
+  END IF;
+END;
+$$;
 
 -- Events indexes
-CREATE INDEX IF NOT EXISTS idx_events_active_dates ON gamification_events(is_active, start_date, end_date);
-CREATE INDEX IF NOT EXISTS idx_user_participation_events ON user_event_participation(user_id, event_id);
-
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification_events' AND column_name = 'is_active')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification_events' AND column_name = 'start_date')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'gamification_events' AND column_name = 'end_date') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_events_active_dates ON public.gamification_events(is_active, start_date, end_date)';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_event_participation' AND column_name = 'user_id')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_event_participation' AND column_name = 'event_id') THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_participation_events ON public.user_event_participation(user_id, event_id)';
+  END IF;
+END;
+$$;
 -- ==========================================
 -- 12. INITIAL ACHIEVEMENTS DATA
 -- ==========================================
 
-INSERT INTO achievements (code, name, description, icon, category, points_reward, requirements) VALUES
--- Consistency Achievements
-('streak_master', 'Streak Master', '30 dias consecutivos de atividade', '🔥', 'consistency', 1000, '{"type": "consecutive_days", "target": 30}'),
-('lightning', 'Lightning', '7 dias perfeitos de check-ins', '⚡', 'consistency', 500, '{"type": "perfect_week", "target": 7}'),
-('diamond_habit', 'Diamond Habit', '100 dias da mesma atividade', '💎', 'consistency', 2000, '{"type": "same_activity", "target": 100}'),
-
--- Category Achievements
-('fitness_warrior', 'Fitness Warrior', 'Metas físicas alcançadas', '💪', 'milestone', 800, '{"type": "physical_goals", "target": 5}'),
-('nutrition_ninja', 'Nutrition Ninja', 'Alimentação perfeita por 30 dias', '🥗', 'milestone', 1000, '{"type": "nutrition_perfect", "target": 30}'),
-('zen_master', 'Zen Master', 'Equilíbrio emocional mantido', '🧘', 'milestone', 800, '{"type": "emotional_balance", "target": 21}'),
-('soul_seeker', 'Soul Seeker', 'Crescimento espiritual consistente', '✨', 'milestone', 800, '{"type": "spiritual_growth", "target": 30}'),
-
--- Social Achievements
-('influencer', 'Influencer', '10+ indicações realizadas', '📢', 'social', 2000, '{"type": "referrals", "target": 10}'),
-('community_helper', 'Community Helper', 'Ajudar outros usuários', '🤝', 'social', 500, '{"type": "help_others", "target": 5}'),
-('party_starter', 'Party Starter', 'Criar desafios em grupo', '🎉', 'social', 300, '{"type": "create_challenges", "target": 3}'),
-
--- Milestone Achievements
-('transformer_1_week', 'Primeira Semana', '7 dias de transformação', '🌟', 'milestone', 100, '{"type": "week_consistent", "target": 1}'),
-('transformer_1_month', '1 Mês de Evolução', '30 dias de mudança', '🏆', 'milestone', 500, '{"type": "month_consistent", "target": 1}'),
-('transformer_3_months', '3 Meses de Evolução', 'Trimestre de progresso', '👑', 'milestone', 1500, '{"type": "months_consistent", "target": 3}'),
-('transformer_6_months', '6 Meses de Mudança', 'Semestre de transformação', '🔱', 'milestone', 3000, '{"type": "months_consistent", "target": 6}'),
-('transformer_1_year', '1 Ano de Transformação', 'Ano completo de evolução', '🎖️', 'milestone', 6000, '{"type": "year_consistent", "target": 1}'),
-
--- Specific Goal Achievements
-('weight_loss_5kg', 'Perdeu 5kg', 'Meta de perda de peso alcançada', '⚖️', 'milestone', 1000, '{"type": "weight_loss", "target": 5}'),
-('runner_5k', 'Corredor 5km', 'Capacidade de correr 5km', '🏃', 'milestone', 800, '{"type": "run_distance", "target": 5000}'),
-('meditation_30_days', '30 Dias de Meditação', 'Mês completo meditando', '🧘‍♀️', 'milestone', 1200, '{"type": "meditation_streak", "target": 30}'),
-('sugar_free_30_days', '30 Dias Sem Açúcar', 'Mês sem açúcar refinado', '🚫🍭', 'milestone', 1500, '{"type": "no_sugar", "target": 30}'),
-('mood_improvement', 'Melhoria no Humor', 'Avaliação de humor positiva', '😊', 'milestone', 800, '{"type": "mood_score", "target": 80}')
-
-ON CONFLICT (code) DO NOTHING;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'code')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'name')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'description')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'icon')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'category')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'points_reward')
+     AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'achievements' AND column_name = 'requirements') THEN
+  END IF;
+END;
+$$;
 
 -- ==========================================
 -- 13. FUNCTIONS FOR GAMIFICATION LOGIC
@@ -358,6 +451,7 @@ DECLARE
     
     mission JSONB;
     selected_missions JSONB[];
+    mission_type TEXT;
     i INTEGER;
 BEGIN
     -- Delete existing missions for the date
@@ -411,46 +505,15 @@ CREATE TRIGGER update_points_on_activity_insert
 -- 15. VIEWS FOR EASY ACCESS
 -- ==========================================
 
--- View for user gamification summary
-CREATE OR REPLACE VIEW user_gamification_summary AS
-SELECT 
-    g.user_id,
-    up.name,
-    up.email,
-    g.total_points,
-    g.level,
-    g.current_streak,
-    g.longest_streak,
-    g.physical_points,
-    g.nutrition_points,
-    g.emotional_points,
-    g.spiritual_points,
-    g.referral_points,
-    g.achievement_points,
-    g.badges,
-    COUNT(ua.id) as achievements_count,
-    g.updated_at
-FROM gamification g
-JOIN user_profiles up ON g.user_id = up.id
-LEFT JOIN user_achievements ua ON g.user_id = ua.user_id
-GROUP BY g.user_id, up.name, up.email, g.total_points, g.level, g.current_streak, 
-         g.longest_streak, g.physical_points, g.nutrition_points, g.emotional_points, 
-         g.spiritual_points, g.referral_points, g.achievement_points, g.badges, g.updated_at;
-
--- View for global leaderboard
-CREATE OR REPLACE VIEW global_leaderboard AS
-SELECT 
-    ROW_NUMBER() OVER (ORDER BY g.total_points DESC, g.updated_at ASC) as rank,
-    up.name,
-    up.email,
-    g.total_points,
-    g.level,
-    g.current_streak,
-    COUNT(ua.id) as achievements_count
-FROM gamification g
-JOIN user_profiles up ON g.user_id = up.id
-LEFT JOIN user_achievements ua ON g.user_id = ua.user_id
-GROUP BY g.user_id, up.name, up.email, g.total_points, g.level, g.current_streak, g.updated_at
-ORDER BY g.total_points DESC, g.updated_at ASC;
 
 COMMIT;
+
+
+
+
+
+
+
+
+
+
