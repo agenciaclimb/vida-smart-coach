@@ -5,19 +5,15 @@
 UPDATE supabase_migrations.schema_migrations 
 SET version = '20250909220528', statements = NULL, name = 'reverted'
 WHERE version = '20250909220528';
-
 UPDATE supabase_migrations.schema_migrations 
 SET version = '20250911170500', statements = NULL, name = 'reverted'
 WHERE version = '20250911170500';
-
 UPDATE supabase_migrations.schema_migrations 
 SET version = '20250911173000', statements = NULL, name = 'reverted'
 WHERE version = '20250911173000';
-
 UPDATE supabase_migrations.schema_migrations 
 SET version = '20250911174500', statements = NULL, name = 'reverted'
 WHERE version = '20250911174500';
-
 -- Garantir que as migrações essenciais estejam marcadas como aplicadas
 INSERT INTO supabase_migrations.schema_migrations (version, name, statements) 
 VALUES 
@@ -30,7 +26,5 @@ VALUES
 ON CONFLICT (version) DO UPDATE SET 
   name = EXCLUDED.name,
   statements = EXCLUDED.statements;
-
 -- Comentário para log
 SELECT 'Migration history repaired successfully' as status;
-

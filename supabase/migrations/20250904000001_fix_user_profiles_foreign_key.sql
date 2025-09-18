@@ -1,17 +1,6 @@
--- Idempotent constraint creation
-DO $$
-BEGIN
-  -- Drop existing constraint if it exists
-  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_profiles_id_fkey') THEN
-    ALTER TABLE user_profiles DROP CONSTRAINT user_profiles_id_fkey;
-  END IF;
-  
-  -- Add the constraint
-  ALTER TABLE user_profiles ADD CONSTRAINT user_profiles_id_fkey 
-    FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
-END $$;
-
--- Verify constraint was created
+ALTER TABLE user_profiles DROP CONSTRAINT IF EXISTS user_profiles_id_fkey;
+ALTER TABLE user_profiles ADD CONSTRAINT user_profiles_id_fkey 
+FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 SELECT 
     tc.constraint_name, 
     tc.table_name, 

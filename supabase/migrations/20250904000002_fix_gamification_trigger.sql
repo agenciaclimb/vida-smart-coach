@@ -1,4 +1,3 @@
-
 DO $$
 DECLARE
   users_owner text;
@@ -17,9 +16,7 @@ BEGIN
   END IF;
 END
 $$;
-
 DROP FUNCTION IF EXISTS public.create_gamification_for_auth_user();
-
 CREATE OR REPLACE FUNCTION public.create_gamification_for_auth_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -30,7 +27,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 DO $$
 DECLARE
   users_owner text;
@@ -53,7 +49,5 @@ BEGIN
   END IF;
 END
 $$;
-
 GRANT EXECUTE ON FUNCTION public.create_gamification_for_auth_user() TO supabase_auth_admin;
-
 COMMENT ON FUNCTION public.create_gamification_for_auth_user() IS 'Creates gamification record for new users with duplicate handling';

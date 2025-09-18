@@ -15,11 +15,11 @@ BEGIN
         'community_feed'::TEXT AS rel_name,
         TRUE AS enable_rls,
         ARRAY[
-          'CREATE POLICY ""Users can view community feed"" ON public.community_feed FOR SELECT USING (true)',
-          'CREATE POLICY ""Users can insert to community feed"" ON public.community_feed FOR INSERT WITH CHECK (auth.uid() IS NOT NULL)'
+          'CREATE POLICY "Users can view community feed" ON public.community_feed FOR SELECT USING (true)',
+          'CREATE POLICY "Users can insert to community feed" ON public.community_feed FOR INSERT WITH CHECK (auth.uid() IS NOT NULL)'
         ]::TEXT[] AS policies,
         ARRAY[
-          'COMMENT ON POLICY ""Users can view community feed"" ON public.community_feed IS ''Allow all users to view community feed posts'''
+          'COMMENT ON POLICY "Users can view community feed" ON public.community_feed IS ''Allow all users to view community feed posts'''
         ]::TEXT[] AS comments
 
       UNION ALL
@@ -28,10 +28,10 @@ BEGIN
         'app_plans'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Users can view app plans"" ON public.app_plans FOR SELECT USING (true)'
+          'CREATE POLICY "Users can view app plans" ON public.app_plans FOR SELECT USING (true)'
         ]::TEXT[],
         ARRAY[
-          'COMMENT ON POLICY ""Users can view app plans"" ON public.app_plans IS ''Allow all users to view available app plans'''
+          'COMMENT ON POLICY "Users can view app plans" ON public.app_plans IS ''Allow all users to view available app plans'''
         ]::TEXT[]
 
       UNION ALL
@@ -40,8 +40,8 @@ BEGIN
         'comentfade'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Users can view comments"" ON public.comentfade FOR SELECT USING (true)',
-          'CREATE POLICY ""Users can insert comments"" ON public.comentfade FOR INSERT WITH CHECK (auth.uid() IS NOT NULL)'
+          'CREATE POLICY "Users can view comments" ON public.comentfade FOR SELECT USING (true)',
+          'CREATE POLICY "Users can insert comments" ON public.comentfade FOR INSERT WITH CHECK (auth.uid() IS NOT NULL)'
         ]::TEXT[],
         NULL::TEXT[]
 
@@ -51,7 +51,7 @@ BEGIN
         'recompensas'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Users can view rewards"" ON public.recompensas FOR SELECT USING (true)'
+          'CREATE POLICY "Users can view rewards" ON public.recompensas FOR SELECT USING (true)'
         ]::TEXT[],
         NULL::TEXT[]
 
@@ -61,7 +61,7 @@ BEGIN
         'planos_old'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Users can view old plans"" ON public.planos_old FOR SELECT USING (true)'
+          'CREATE POLICY "Users can view old plans" ON public.planos_old FOR SELECT USING (true)'
         ]::TEXT[],
         NULL::TEXT[]
 
@@ -71,7 +71,7 @@ BEGIN
         'planos'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Users can view plans"" ON public.planos FOR SELECT USING (true)'
+          'CREATE POLICY "Users can view plans" ON public.planos FOR SELECT USING (true)'
         ]::TEXT[],
         NULL::TEXT[]
 
@@ -81,11 +81,11 @@ BEGIN
         'error_logs'::TEXT,
         TRUE,
         ARRAY[
-          'CREATE POLICY ""Only admins can view error logs"" ON public.error_logs FOR SELECT USING ((SELECT 1 FROM user_profiles WHERE user_id = auth.uid() AND role = ''admin'') IS NOT NULL)',
-          'CREATE POLICY ""System can insert error logs"" ON public.error_logs FOR INSERT WITH CHECK (true)'
+          'CREATE POLICY "Only admins can view error logs" ON public.error_logs FOR SELECT USING ((SELECT 1 FROM user_profiles WHERE id = auth.uid() AND role = ''admin'') IS NOT NULL)',
+          'CREATE POLICY "System can insert error logs" ON public.error_logs FOR INSERT WITH CHECK (true)'
         ]::TEXT[],
         ARRAY[
-          'COMMENT ON POLICY ""Only admins can view error logs"" ON public.error_logs IS ''Restrict error log access to admin users only'''
+          'COMMENT ON POLICY "Only admins can view error logs" ON public.error_logs IS ''Restrict error log access to admin users only'''
         ]::TEXT[]
     ) AS policy_data
   LOOP
@@ -125,3 +125,5 @@ END;
 $$;
 
 -- Note: Security-definer views are handled in later migrations (see 20250917010000_fix_security_issues.sql)
+
+

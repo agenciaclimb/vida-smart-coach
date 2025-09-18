@@ -102,25 +102,39 @@ BEGIN
 END $$;
 
 -- Inserir dados de teste para validação (opcional)
-INSERT INTO daily_checkins (user_id, date, weight, mood, sleep_hours, water_glasses, exercise_minutes, notes)
-SELECT 
-    auth.uid(),
-    CURRENT_DATE,
-    75.5,
-    'Bom',
-    8,
-    6,
-    30,
-    'Check-in de teste após correção'
-WHERE auth.uid() IS NOT NULL
-ON CONFLICT (user_id, date) DO UPDATE SET
-    weight = EXCLUDED.weight,
-    mood = EXCLUDED.mood,
-    sleep_hours = EXCLUDED.sleep_hours,
-    water_glasses = EXCLUDED.water_glasses,
-    exercise_minutes = EXCLUDED.exercise_minutes,
-    notes = EXCLUDED.notes,
-    updated_at = NOW();
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'daily_checkins'
+          AND column_name = 'mood'
+          AND data_type IN ('text', 'character varying')
+    ) THEN
+        INSERT INTO daily_checkins (user_id, date, weight, mood, sleep_hours, water_glasses, exercise_minutes, notes)
+        SELECT
+            auth.uid(),
+            CURRENT_DATE,
+            75.5,
+            'Bom',
+            8,
+            6,
+            30,
+            'Check-in de teste após correção'
+        WHERE auth.uid() IS NOT NULL
+        ON CONFLICT (user_id, date) DO UPDATE SET
+            weight = EXCLUDED.weight,
+            mood = EXCLUDED.mood,
+            sleep_hours = EXCLUDED.sleep_hours,
+            water_glasses = EXCLUDED.water_glasses,
+            exercise_minutes = EXCLUDED.exercise_minutes,
+            notes = EXCLUDED.notes,
+            updated_at = NOW();
+    ELSE
+        RAISE NOTICE 'ℹ️ Pulando seed de daily_checkins: coluna mood não é do tipo texto.';
+    END IF;
 
-RAISE NOTICE '🎉 Migração daily_checkins concluída com sucesso!';
-
+    RAISE NOTICE '✅ Migração daily_checkins concluída com sucesso!';
+END;
+$$;

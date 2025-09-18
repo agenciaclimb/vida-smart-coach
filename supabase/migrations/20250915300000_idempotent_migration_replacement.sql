@@ -63,10 +63,8 @@ BEGIN
     END;
 
 END $$;
-
 -- Enable function body checking
 SET check_function_bodies = off;
-
 -- Create core functions with OR REPLACE to make them idempotent
 CREATE OR REPLACE FUNCTION private.check_auth_rate_limit(p_email text, p_ip_address text)
 RETURNS boolean
@@ -87,7 +85,6 @@ BEGIN
   RETURN attempt_count <= 10;
 END;
 $function$;
-
 CREATE OR REPLACE FUNCTION private.check_reset_attempt(p_email text, p_ip_address text)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -111,7 +108,6 @@ BEGIN
   RETURN attempt_count <= 10;
 END;
 $function$;
-
 -- Create view (will replace if exists)
 CREATE OR REPLACE VIEW "private"."suspicious_auth_activity" AS 
 SELECT ip_address,
@@ -124,7 +120,6 @@ WHERE (attempted_at > (now() - '24:00:00'::interval))
 GROUP BY ip_address
 HAVING (count(*) > 20)
 ORDER BY (count(*)) DESC;
-
 -- Essential core functions for system operation
 CREATE OR REPLACE FUNCTION public.get_auth_user()
 RETURNS uuid
@@ -132,7 +127,6 @@ LANGUAGE sql
 AS $function$
     SELECT auth.uid();
 $function$;
-
 CREATE OR REPLACE FUNCTION public.create_user_profile_on_signup()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -151,7 +145,6 @@ EXCEPTION WHEN OTHERS THEN
   RETURN new;
 END;
 $function$;
-
 -- Create triggers only if they don't exist
 DO $$
 BEGIN

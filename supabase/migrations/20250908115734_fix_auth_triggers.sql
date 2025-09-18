@@ -40,7 +40,6 @@ begin
   return new;
 end;
 $$;
-
 -- 2) Função: sincroniza e-mail quando auth.users.email for atualizado
 create or replace function public.sync_profile_from_auth()
 returns trigger
@@ -64,20 +63,17 @@ begin
   return new;
 end;
 $$;
-
 -- 3) (Re)cria triggers em auth.users
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
-
 drop trigger if exists on_auth_user_updated on auth.users;
 create trigger on_auth_user_updated
 after update of email on auth.users
 for each row
 when (old.email is distinct from new.email)
 execute function public.sync_profile_from_auth();
-
 -- 4) Garante RLS e policies mínimas na tabela de perfil existente
 do $$
 begin
@@ -117,7 +113,6 @@ begin
     execute 'create policy "p_insert_own" on public.profiles for insert with check (auth.uid() = id)';
   end if;
 end $$;
-
 -- 5) Permissões mínimas para execução das funções
 grant usage on schema public to anon, authenticated, service_role;
 grant execute on function public.handle_new_user() to anon, authenticated, service_role;

@@ -29,33 +29,25 @@ CREATE TABLE IF NOT EXISTS user_training_plans (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_user_id ON user_training_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_active ON user_training_plans(user_id, is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_type ON user_training_plans(plan_type);
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_created ON user_training_plans(created_at DESC);
-
 -- GIN index for JSONB queries
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_plan_data_gin ON user_training_plans USING GIN (plan_data);
 CREATE INDEX IF NOT EXISTS idx_user_training_plans_progress_gin ON user_training_plans USING GIN (progress_data);
-
 -- Row Level Security
 ALTER TABLE user_training_plans ENABLE ROW LEVEL SECURITY;
-
 -- RLS Policies
 CREATE POLICY "Users can view own training plans" ON user_training_plans 
     FOR SELECT USING (auth.uid() = user_id);
-
 CREATE POLICY "Users can insert own training plans" ON user_training_plans 
     FOR INSERT WITH CHECK (auth.uid() = user_id);
-
 CREATE POLICY "Users can update own training plans" ON user_training_plans 
     FOR UPDATE USING (auth.uid() = user_id);
-
 CREATE POLICY "Users can delete own training plans" ON user_training_plans 
     FOR DELETE USING (auth.uid() = user_id);
-
 -- Update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_user_training_plans_updated_at()
 RETURNS TRIGGER AS $$
@@ -64,13 +56,11 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
-
 DROP TRIGGER IF EXISTS update_user_training_plans_updated_at ON user_training_plans;
 CREATE TRIGGER update_user_training_plans_updated_at
     BEFORE UPDATE ON user_training_plans
     FOR EACH ROW
     EXECUTE FUNCTION update_user_training_plans_updated_at();
-
 -- Comments for documentation
 COMMENT ON TABLE user_training_plans IS 'AI-generated personalized training plans with scientific periodization';
 COMMENT ON COLUMN user_training_plans.plan_data IS 'Complete plan structure in JSON format with weeks, days, and exercises';

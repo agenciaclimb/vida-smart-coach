@@ -15,7 +15,6 @@ ALTER TABLE gamification ADD COLUMN IF NOT EXISTS achievement_points INTEGER DEF
 ALTER TABLE gamification ADD COLUMN IF NOT EXISTS weekly_points INTEGER DEFAULT 0 CHECK (weekly_points >= 0);
 ALTER TABLE gamification ADD COLUMN IF NOT EXISTS monthly_points INTEGER DEFAULT 0 CHECK (monthly_points >= 0);
 ALTER TABLE gamification ADD COLUMN IF NOT EXISTS yearly_points INTEGER DEFAULT 0 CHECK (yearly_points >= 0);
-
 -- ==========================================
 -- 2. DAILY ACTIVITIES TRACKING TABLE
 -- ==========================================
@@ -35,13 +34,10 @@ CREATE TABLE IF NOT EXISTS daily_activities (
     
     UNIQUE(user_id, activity_date, activity_type, activity_name)
 );
-
 ALTER TABLE daily_activities ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own activities" ON daily_activities FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own activities" ON daily_activities FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own activities" ON daily_activities FOR UPDATE USING (auth.uid() = user_id);
-
 -- ==========================================
 -- 3. ACHIEVEMENTS AND MILESTONES TABLE
 -- ==========================================
@@ -58,7 +54,6 @@ CREATE TABLE IF NOT EXISTS achievements (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
 -- ==========================================
 -- 4. USER ACHIEVEMENTS TABLE
 -- ==========================================
@@ -72,9 +67,7 @@ CREATE TABLE IF NOT EXISTS user_achievements (
     
     UNIQUE(user_id, achievement_id)
 );
-
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
-
 DO $$
 BEGIN
   IF EXISTS (
@@ -97,8 +90,6 @@ BEGIN
   END IF;
 END;
 $$;
-
-
 -- ==========================================
 -- 5. LEADERBOARD/RANKING TABLE
 -- ==========================================
@@ -118,11 +109,8 @@ CREATE TABLE IF NOT EXISTS leaderboards (
     
     UNIQUE(user_id, ranking_type, category, period_start, period_end)
 );
-
 ALTER TABLE leaderboards ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Allow public read access on leaderboards" ON leaderboards FOR SELECT USING (true);
-
 -- ==========================================
 -- 6. MISSIONS SYSTEM TABLE
 -- ==========================================
@@ -144,12 +132,9 @@ CREATE TABLE IF NOT EXISTS daily_missions (
     
     UNIQUE(user_id, mission_date, mission_type)
 );
-
 ALTER TABLE daily_missions ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own missions" ON daily_missions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update own missions" ON daily_missions FOR UPDATE USING (auth.uid() = user_id);
-
 -- ==========================================
 -- 7. EVENTS AND CHALLENGES TABLE
 -- ==========================================
@@ -171,11 +156,8 @@ CREATE TABLE IF NOT EXISTS gamification_events (
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
 ALTER TABLE gamification_events ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Allow public read access on events" ON gamification_events FOR SELECT USING (true);
-
 -- ==========================================
 -- 8. USER EVENT PARTICIPATION TABLE
 -- ==========================================
@@ -193,11 +175,8 @@ CREATE TABLE IF NOT EXISTS user_event_participation (
     
     UNIQUE(user_id, event_id)
 );
-
 ALTER TABLE user_event_participation ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own participation" ON user_event_participation FOR SELECT USING (auth.uid() = user_id);
-
 -- ==========================================
 -- 9. ENHANCED REDEMPTION HISTORY TABLE  
 -- ==========================================
@@ -213,11 +192,9 @@ CREATE TABLE IF NOT EXISTS redemption_history (
     status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'cancelled')),
     metadata JSONB DEFAULT '{}'
 );
-
 -- Add new columns to redemption_history if they don't exist
 ALTER TABLE redemption_history ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'cancelled'));
 ALTER TABLE redemption_history ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
-
 -- Enable RLS if not already enabled
 DO $$
 BEGIN
@@ -231,7 +208,6 @@ BEGIN
         CREATE POLICY "Users can insert own redemption history" ON redemption_history FOR INSERT WITH CHECK (auth.uid() = user_id);
     END IF;
 END $$;
-
 -- ==========================================
 -- 10. REFERRAL SYSTEM TABLE
 -- ==========================================
@@ -249,11 +225,8 @@ CREATE TABLE IF NOT EXISTS referrals (
     
     UNIQUE(referrer_id, referred_id)
 );
-
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view own referrals" ON referrals FOR SELECT USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
-
 -- ==========================================
 -- 11. INDEXES FOR PERFORMANCE
 -- ==========================================
@@ -272,7 +245,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Daily activities indexes
 DO $$
 BEGIN
@@ -286,7 +258,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Achievements indexes
 DO $$
 BEGIN
@@ -346,7 +317,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Missions indexes
 DO $$
 BEGIN
@@ -360,7 +330,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Events indexes
 DO $$
 BEGIN
@@ -391,7 +360,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- ==========================================
 -- 13. FUNCTIONS FOR GAMIFICATION LOGIC
 -- ==========================================
@@ -432,7 +400,6 @@ BEGIN
         updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql;
-
 -- Function to generate daily missions
 CREATE OR REPLACE FUNCTION generate_daily_missions_for_user(p_user_id UUID, p_date DATE DEFAULT CURRENT_DATE)
 RETURNS VOID AS $$
@@ -477,7 +444,6 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-
 -- ==========================================
 -- 14. TRIGGERS
 -- ==========================================
@@ -495,25 +461,13 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 CREATE TRIGGER update_points_on_activity_insert 
     AFTER INSERT ON daily_activities 
     FOR EACH ROW 
     EXECUTE FUNCTION trigger_update_points_on_activity();
-
 -- ==========================================
 -- 15. VIEWS FOR EASY ACCESS
 -- ==========================================
 
 
 COMMIT;
-
-
-
-
-
-
-
-
-
-

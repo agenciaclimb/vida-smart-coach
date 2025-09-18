@@ -24,11 +24,20 @@ ADD COLUMN IF NOT EXISTS energy_level INTEGER CHECK (energy_level >= 1 AND energ
 ADD COLUMN IF NOT EXISTS stress_level INTEGER CHECK (stress_level >= 1 AND stress_level <= 5),
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
--- Ensure water_intake has proper default and NOT NULL constraint
-ALTER TABLE daily_checkins 
-ALTER COLUMN water_intake SET DEFAULT 0,
-ALTER COLUMN water_intake SET NOT NULL;
-
+-- Ensure water_intake has proper default and NOT NULL constraint only when column exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'daily_checkins'
+      AND column_name = 'water_intake'
+  ) THEN
+    EXECUTE 'ALTER TABLE daily_checkins ALTER COLUMN water_intake SET DEFAULT 0';
+    EXECUTE 'ALTER TABLE daily_checkins ALTER COLUMN water_intake SET NOT NULL';
+  END IF;
+END;
+$$;
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_user_profiles_phone ON user_profiles(phone);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_current_weight ON user_profiles(current_weight);
@@ -37,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_goal_type ON user_profiles(goal_typ
 CREATE INDEX IF NOT EXISTS idx_daily_checkins_weight ON daily_checkins(weight);
 CREATE INDEX IF NOT EXISTS idx_daily_checkins_mood_score ON daily_checkins(mood_score);
 CREATE INDEX IF NOT EXISTS idx_daily_checkins_created_at ON daily_checkins(created_at);
-CREATE INDEX IF NOT EXISTS idx_daily_checkins_user_id_date ON daily_checkins(user_id, created_at::date);
+CREATE INDEX IF NOT EXISTS idx_daily_checkins_user_id_date ON daily_checkins (user_id, created_at);
 
 -- Add comments for documentation
 COMMENT ON COLUMN user_profiles.phone IS 'Phone number for client contact';
@@ -87,7 +96,7 @@ $$ LANGUAGE plpgsql;
 -- Create view for user progress tracking
 CREATE OR REPLACE VIEW user_progress AS
 SELECT 
-    up.user_id,
+    up.id AS user_id,
     up.full_name,
     up.current_weight,
     up.target_weight,
@@ -100,14 +109,23 @@ SELECT
     AVG(dc.mood_score) as avg_mood,
     AVG(dc.sleep_hours) as avg_sleep,
     MAX(dc.created_at) as last_checkin,
-    (SELECT weight FROM daily_checkins WHERE user_id = up.user_id AND weight IS NOT NULL ORDER BY created_at DESC LIMIT 1) as latest_weight
+    (SELECT weight FROM daily_checkins WHERE user_id = up.id AND weight IS NOT NULL ORDER BY created_at DESC LIMIT 1) as latest_weight
 FROM user_profiles up
-LEFT JOIN daily_checkins dc ON up.user_id = dc.user_id
-GROUP BY up.user_id, up.full_name, up.current_weight, up.target_weight, up.height, up.goal_type, up.activity_level;
+LEFT JOIN daily_checkins dc ON up.id = dc.user_id
+GROUP BY up.id, up.full_name, up.current_weight, up.target_weight, up.height, up.goal_type, up.activity_level;
 
 COMMENT ON VIEW user_progress IS 'Comprehensive view of user progress including BMI calculations and check-in statistics';
 
 -- Grant appropriate permissions
 GRANT SELECT ON user_progress TO authenticated;
 GRANT EXECUTE ON FUNCTION calculate_bmi(DECIMAL, DECIMAL) TO authenticated;
+
+
+
+
+
+
+
+
+
 

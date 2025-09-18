@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -28,7 +27,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 DO $$
 DECLARE
   users_owner text;
@@ -52,9 +50,7 @@ BEGIN
   END IF;
 END
 $$;
-
 GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
 GRANT ALL ON public.user_profiles TO supabase_auth_admin;
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
-
 COMMENT ON FUNCTION public.handle_new_user() IS 'Automatically creates user profile when new user is created in auth.users';

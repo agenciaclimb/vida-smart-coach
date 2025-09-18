@@ -67,62 +67,55 @@ EXCEPTION
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Ensure proper permissions for the function
 GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
 GRANT ALL ON public.user_profiles TO supabase_auth_admin;
 GRANT ALL ON public.gamification TO supabase_auth_admin;
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
-
--- Create trigger (will only succeed if we have permissions)
-DO $$
-DECLARE
-  trigger_exists BOOLEAN;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'on_auth_user_created' 
-    AND tgrelid = 'auth.users'::regclass
-  ) INTO trigger_exists;
-
-  IF NOT trigger_exists THEN
-    BEGIN
-      CREATE TRIGGER on_auth_user_created
-        AFTER INSERT ON auth.users
-        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-      RAISE NOTICE 'Trigger created successfully';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE 'Insufficient privileges to create trigger on auth.users';
-      WHEN OTHERS THEN
-        RAISE NOTICE 'Failed to create trigger: %', SQLERRM;
-    END;
-  ELSE
-    RAISE NOTICE 'Trigger already exists';
-  END IF;
-END
-$$;
-
 -- Ensure RLS policies are correct
 DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
-
 CREATE POLICY "Users can view own profile" 
   ON user_profiles FOR SELECT 
   USING (auth.uid() = id);
-
 CREATE POLICY "Users can insert own profile" 
   ON user_profiles FOR INSERT 
   WITH CHECK (auth.uid() = id);
-
 CREATE POLICY "Users can update own profile" 
   ON user_profiles FOR UPDATE 
   USING (auth.uid() = id);
-
 -- Service role policy for system operations
-CREATE POLICY "Service role full access" 
-  ON user_profiles 
-  USING (auth.jwt()->>'role' = 'service_role');
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename  = 'user_profiles'
+      AND policyname = 'Service role full access'
+  ) THEN
+    CREATE POLICY "Service role full access"
+      ON public.user_profiles
+      FOR ALL
+      USING (auth.jwt() ->> 'role' = 'service_role')
+      WITH CHECK (auth.jwt() ->> 'role' = 'service_role');
+  END IF;
+END $$;
 COMMENT ON FUNCTION public.handle_new_user() IS 'Creates user profile and gamification record when new user registers';
+-- Ensure trigger is created only if it does not already exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'auth'
+      AND c.relname = 'users'
+      AND t.tgname = 'on_auth_user_created'
+  ) THEN
+    CREATE TRIGGER on_auth_user_created
+      AFTER INSERT ON auth.users
+      FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+  END IF;
+END $$;

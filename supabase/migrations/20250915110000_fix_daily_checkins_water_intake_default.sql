@@ -17,7 +17,6 @@ BEGIN
     RAISE NOTICE 'Skipping water_intake migration: column does not exist on public.daily_checkins.';
   END IF;
 END $$;
-
 -- ? VERIFICAÇÃO
 DO $$
 BEGIN

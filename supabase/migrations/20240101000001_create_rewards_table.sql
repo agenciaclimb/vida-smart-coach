@@ -8,11 +8,8 @@ CREATE TABLE IF NOT EXISTS public.rewards (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
 ALTER TABLE public.rewards ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Allow public read access on rewards" ON public.rewards
     FOR SELECT USING (true);
-
 CREATE POLICY "Allow authenticated users to manage rewards" ON public.rewards
     FOR ALL USING (auth.role() = 'authenticated');
