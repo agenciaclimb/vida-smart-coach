@@ -1,0 +1,14 @@
+user_profiles=OK
+daily_checkins=OK
+whatsapp_messages=OK
+whatsapp_gamification_log=OK
+subscription_plans=OK
+comments=OK
+gamification=OK
+user_achievements=OK
+daily_activities=OK
+daily_missions=OK
+leaderboards=OK
+referrals=OK
+achievements=OK
+gamification_events=OK

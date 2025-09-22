@@ -32,6 +32,12 @@ END $$;
 -- Remover constraint NOT NULL do campo mood se existir
 ALTER TABLE daily_checkins ALTER COLUMN mood DROP NOT NULL;
 
+
+-- Garantir que colunas existentes estejam presentes em bases antigas
+ALTER TABLE daily_checkins
+  ADD COLUMN IF NOT EXISTS water_glasses INTEGER,
+  ADD COLUMN IF NOT EXISTS exercise_minutes INTEGER;
+
 -- Garantir que os campos essenciais tenham valores padrão apropriados
 ALTER TABLE daily_checkins ALTER COLUMN water_glasses SET DEFAULT 0;
 ALTER TABLE daily_checkins ALTER COLUMN exercise_minutes SET DEFAULT 0;

@@ -1,0 +1,10 @@
+
+FullName
+--------
+C:\Users\JE\Documents\vida-smart-coach\node_modules\@supabase\auth-helpers-react\src\index.tsx
+C:\Users\JE\Documents\vida-smart-coach\src\components\client\GamificationTabEnhanced.jsx
+C:\Users\JE\Documents\vida-smart-coach\src\contexts\data\GamificationContext.jsx
+C:\Users\JE\Documents\vida-smart-coach\src\pages\AdminDashboard.jsx
+C:\Users\JE\Documents\vida-smart-coach\src\pages\PartnerDashboard.jsx
+C:\Users\JE\Documents\vida-smart-coach\src\App.tsx
+
