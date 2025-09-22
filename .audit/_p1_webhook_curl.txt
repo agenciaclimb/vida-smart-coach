@@ -1,0 +1,4 @@
+curl -X POST https://<REF>.supabase.co/functions/v1/evolution-webhook \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: <TOKEN>" \
+  -d '{"message":{"id":"p1-smoke-001"}}'
