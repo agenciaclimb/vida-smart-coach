@@ -1,5 +1,3 @@
-set search_path = public;
-
 
 
 SET statement_timeout = 0;
@@ -2600,36 +2598,6 @@ CREATE TABLE IF NOT EXISTS "public"."plans" (
 ALTER TABLE "public"."plans" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."subscription_plans" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "name" "text" NOT NULL,
-    "description" "text",
-    "price" numeric(10,2) DEFAULT 0,
-    "features" "jsonb" DEFAULT '[]'::"jsonb",
-    "is_active" boolean DEFAULT true,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "stripe_price_id" "text"
-);
-
-
-ALTER TABLE "public"."subscription_plans" OWNER TO "postgres";
-
-
-CREATE OR REPLACE VIEW "public"."plans_normalized" AS
- SELECT "id" AS "plan_id",
-    "stripe_price_id",
-    COALESCE(("features" ->> 'name'::"text"), "initcap"(("id")::"text")) AS "name",
-    COALESCE(("features" ->> 'tier'::"text"), ("id")::"text") AS "tier",
-    COALESCE((("features" ->> 'points_multiplier'::"text"))::numeric, (1)::numeric) AS "points_multiplier",
-    COALESCE((("features" ->> 'trial_days'::"text"))::integer, 0) AS "trial_days",
-    "features"
-   FROM "public"."subscription_plans" "p";
-
-
-ALTER VIEW "public"."plans_normalized" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."points_ledger" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "phone" "text" NOT NULL,
@@ -2797,6 +2765,21 @@ ALTER SEQUENCE "public"."stripe_webhooks_id_seq" OWNER TO "postgres";
 
 ALTER SEQUENCE "public"."stripe_webhooks_id_seq" OWNED BY "public"."stripe_webhooks"."id";
 
+
+
+CREATE TABLE IF NOT EXISTS "public"."subscription_plans" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "description" "text",
+    "price" numeric(10,2) DEFAULT 0,
+    "features" "jsonb" DEFAULT '[]'::"jsonb",
+    "is_active" boolean DEFAULT true,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."subscription_plans" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."supabase_migrations" (
@@ -3092,8 +3075,7 @@ CREATE TABLE IF NOT EXISTS "public"."whatsapp_messages" (
     "received_at" timestamp with time zone DEFAULT "now"(),
     "instance_id" "text",
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "external_id" "text"
+    "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
 
@@ -3858,10 +3840,6 @@ CREATE INDEX "idx_whatsapp_messages_created_at" ON "public"."whatsapp_messages" 
 
 
 
-CREATE UNIQUE INDEX "idx_whatsapp_messages_external_id" ON "public"."whatsapp_messages" USING "btree" ("external_id");
-
-
-
 CREATE INDEX "idx_whatsapp_messages_instance_id" ON "public"."whatsapp_messages" USING "btree" ("instance_id");
 
 
@@ -4255,7 +4233,6 @@ CREATE POLICY "Allow authenticated users to insert their own metrics" ON "public
 
 
 
-CREATE POLICY "Allow authenticated users to manage plans" ON "public"."plans" USING (("auth"."role"() = 'authenticated'::"text"));
 
 
 
@@ -4317,7 +4294,6 @@ CREATE POLICY "Allow public read access on leaderboards" ON "public"."leaderboar
 
 
 
-CREATE POLICY "Allow public read access on plans" ON "public"."plans" FOR SELECT USING (true);
 
 
 
@@ -5825,18 +5801,6 @@ GRANT ALL ON TABLE "public"."plans" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."subscription_plans" TO "anon";
-GRANT ALL ON TABLE "public"."subscription_plans" TO "authenticated";
-GRANT ALL ON TABLE "public"."subscription_plans" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."plans_normalized" TO "anon";
-GRANT ALL ON TABLE "public"."plans_normalized" TO "authenticated";
-GRANT ALL ON TABLE "public"."plans_normalized" TO "service_role";
-
-
-
 GRANT ALL ON TABLE "public"."points_ledger" TO "anon";
 GRANT ALL ON TABLE "public"."points_ledger" TO "authenticated";
 GRANT ALL ON TABLE "public"."points_ledger" TO "service_role";
@@ -5900,6 +5864,12 @@ GRANT ALL ON TABLE "public"."stripe_webhooks" TO "service_role";
 GRANT ALL ON SEQUENCE "public"."stripe_webhooks_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."stripe_webhooks_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."stripe_webhooks_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."subscription_plans" TO "anon";
+GRANT ALL ON TABLE "public"."subscription_plans" TO "authenticated";
+GRANT ALL ON TABLE "public"."subscription_plans" TO "service_role";
 
 
 
@@ -6042,4 +6012,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 RESET ALL;
-

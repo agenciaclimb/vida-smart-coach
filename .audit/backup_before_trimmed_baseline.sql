@@ -1,5 +1,3 @@
-set search_path = public;
-
 
 
 SET statement_timeout = 0;
@@ -14,14 +12,130 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 
-CREATE SCHEMA IF NOT EXISTS "public";
+CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";
 
 
-ALTER SCHEMA "public" OWNER TO "pg_database_owner";
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE SCHEMA IF NOT EXISTS "private";
+
+
+ALTER SCHEMA "private" OWNER TO "postgres";
 
 
 COMMENT ON SCHEMA "public" IS 'standard public schema';
 
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION "private"."check_auth_rate_limit"("p_email" "text", "p_ip_address" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+  attempt_count INT;
+BEGIN
+  -- Count recent attempts from this IP
+  SELECT COUNT(*) INTO attempt_count
+  FROM private.auth_attempts
+  WHERE ip_address = p_ip_address
+    AND attempted_at > (now() - interval '1 hour');
+    
+  -- Return false if too many attempts
+  RETURN attempt_count <= 10;
+END;
+$$;
+
+
+ALTER FUNCTION "private"."check_auth_rate_limit"("p_email" "text", "p_ip_address" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "private"."check_reset_attempt"("p_email" "text", "p_ip_address" "text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+  attempt_count INT;
+BEGIN
+  -- Log this attempt
+  INSERT INTO private.auth_attempts (email, ip_address)
+  VALUES (p_email, p_ip_address);
+  
+  -- Count recent attempts from this IP
+  SELECT COUNT(*) INTO attempt_count
+  FROM private.auth_attempts
+  WHERE ip_address = p_ip_address
+    AND attempted_at > (now() - interval '1 hour');
+    
+  -- Return false if too many attempts
+  RETURN attempt_count <= 10;
+END;
+$$;
+
+
+ALTER FUNCTION "private"."check_reset_attempt"("p_email" "text", "p_ip_address" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "private"."get_user_role"("user_id" "uuid" DEFAULT "auth"."uid"()) RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+  user_role text;
+BEGIN
+  SELECT role INTO user_role
+  FROM public.user_roles
+  WHERE user_id = get_user_role.user_id;
+  
+  RETURN user_role;
+END;
+$$;
+
+
+ALTER FUNCTION "private"."get_user_role"("user_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."auth_has_access_to_resource"("req" json) RETURNS boolean
@@ -1593,6 +1707,48 @@ $$;
 ALTER FUNCTION "public"."update_user_training_plans_updated_at"() OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "private"."auth_attempts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "email" "text" NOT NULL,
+    "ip_address" "text" NOT NULL,
+    "attempted_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "success" boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE "private"."auth_attempts" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "private"."function_execution_log" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "function_name" "text" NOT NULL,
+    "user_id" "uuid",
+    "execution_time" timestamp with time zone DEFAULT "now"(),
+    "parameters" "jsonb",
+    "success" boolean,
+    "error_message" "text"
+);
+
+
+ALTER TABLE "private"."function_execution_log" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "private"."suspicious_auth_activity" AS
+ SELECT "ip_address",
+    "count"(*) AS "attempt_count",
+    "array_agg"(DISTINCT "email") AS "targeted_emails",
+    "min"("attempted_at") AS "first_attempt",
+    "max"("attempted_at") AS "last_attempt"
+   FROM "private"."auth_attempts"
+  WHERE ("attempted_at" > ("now"() - '24:00:00'::interval))
+  GROUP BY "ip_address"
+ HAVING ("count"(*) > 20)
+  ORDER BY ("count"(*)) DESC;
+
+
+ALTER VIEW "private"."suspicious_auth_activity" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."academies" (
     "id" integer NOT NULL,
     "name" "text" NOT NULL,
@@ -3148,6 +3304,16 @@ ALTER TABLE ONLY "public"."stripe_webhooks" ALTER COLUMN "id" SET DEFAULT "nextv
 
 
 
+ALTER TABLE ONLY "private"."auth_attempts"
+    ADD CONSTRAINT "auth_attempts_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "private"."function_execution_log"
+    ADD CONSTRAINT "function_execution_log_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."academies"
     ADD CONSTRAINT "academies_pkey" PRIMARY KEY ("id");
 
@@ -3595,6 +3761,10 @@ ALTER TABLE ONLY "public"."whatsapp_gamification_log"
 
 ALTER TABLE ONLY "public"."whatsapp_messages"
     ADD CONSTRAINT "whatsapp_messages_pkey" PRIMARY KEY ("id");
+
+
+
+CREATE INDEX "idx_auth_attempts_ip_email" ON "private"."auth_attempts" USING "btree" ("ip_address", "email", "attempted_at");
 
 
 
@@ -5092,11 +5262,205 @@ CREATE POLICY "webhook_logs_service_all" ON "public"."webhook_logs" TO "service_
 ALTER TABLE "public"."whatsapp_messages" ENABLE ROW LEVEL SECURITY;
 
 
+
+
+ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT USAGE ON SCHEMA "private" TO "authenticated";
+
+
+
 GRANT USAGE ON SCHEMA "public" TO "postgres";
 GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
 GRANT USAGE ON SCHEMA "public" TO "service_role";
 GRANT USAGE ON SCHEMA "public" TO "supabase_auth_admin";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+REVOKE ALL ON FUNCTION "private"."get_user_role"("user_id" "uuid") FROM PUBLIC;
 
 
 
@@ -5449,6 +5813,27 @@ GRANT ALL ON FUNCTION "public"."update_user_gamification"("p_user_id" "uuid", "p
 GRANT ALL ON FUNCTION "public"."update_user_training_plans_updated_at"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_user_training_plans_updated_at"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_user_training_plans_updated_at"() TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6011,6 +6396,12 @@ GRANT ALL ON TABLE "public"."whatsapp_messages" TO "service_role";
 
 
 
+
+
+
+
+
+
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
@@ -6041,5 +6432,28 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 
-RESET ALL;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESET ALL;

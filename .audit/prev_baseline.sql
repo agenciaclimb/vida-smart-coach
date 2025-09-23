@@ -3598,367 +3598,379 @@ ALTER TABLE ONLY "public"."whatsapp_messages"
 
 
 
-CREATE INDEX "ai_interactions_phone_idx" ON "public"."ai_interactions" USING "btree" ("phone", "created_at" DESC);
+CREATE INDEX IF NOT EXISTS "ai_interactions_phone_idx" ON "public"."ai_interactions" USING "btree" ("phone", "created_at" DESC);
 
 
 
-CREATE INDEX "ai_messages_phone_created_idx" ON "public"."ai_messages" USING "btree" ("phone", "created_at" DESC);
+CREATE INDEX IF NOT EXISTS "ai_messages_phone_created_idx" ON "public"."ai_messages" USING "btree" ("phone", "created_at" DESC);
 
 
 
-CREATE INDEX "ai_nudges_due_idx" ON "public"."ai_nudges" USING "btree" ("status", "scheduled_at");
+CREATE INDEX IF NOT EXISTS "ai_nudges_due_idx" ON "public"."ai_nudges" USING "btree" ("status", "scheduled_at");
 
 
 
-CREATE INDEX "ai_users_last_user_at_idx" ON "public"."ai_users" USING "btree" ("last_user_at" DESC);
+CREATE INDEX IF NOT EXISTS "ai_users_last_user_at_idx" ON "public"."ai_users" USING "btree" ("last_user_at" DESC);
 
 
 
-CREATE INDEX "ai_users_next_action_idx" ON "public"."ai_users" USING "btree" ("next_action");
+CREATE INDEX IF NOT EXISTS "ai_users_next_action_idx" ON "public"."ai_users" USING "btree" ("next_action");
 
 
 
-CREATE INDEX "ai_users_phone_idx" ON "public"."ai_users" USING "btree" ("phone");
+CREATE INDEX IF NOT EXISTS "ai_users_phone_idx" ON "public"."ai_users" USING "btree" ("phone");
 
 
 
-CREATE UNIQUE INDEX "ai_users_phone_uidx" ON "public"."ai_users" USING "btree" ("phone");
+CREATE UNIQUE INDEX IF NOT EXISTS "ai_users_phone_uidx" ON "public"."ai_users" USING "btree" ("phone");
 
 
 
-CREATE INDEX "ai_users_state_idx" ON "public"."ai_users" USING "btree" ("state");
+CREATE INDEX IF NOT EXISTS "ai_users_state_idx" ON "public"."ai_users" USING "btree" ("state");
 
 
 
-CREATE INDEX "idx_activity_tracking_completed_at" ON "public"."activity_tracking" USING "btree" ("completed_at");
+CREATE INDEX IF NOT EXISTS "idx_activity_tracking_completed_at" ON "public"."activity_tracking" USING "btree" ("completed_at");
 
 
 
-CREATE INDEX "idx_activity_tracking_phone_number" ON "public"."activity_tracking" USING "btree" ("phone_number");
+CREATE INDEX IF NOT EXISTS "idx_activity_tracking_phone_number" ON "public"."activity_tracking" USING "btree" ("phone_number");
 
 
 
-CREATE INDEX "idx_activity_tracking_type" ON "public"."activity_tracking" USING "btree" ("activity_type");
+CREATE INDEX IF NOT EXISTS "idx_activity_tracking_type" ON "public"."activity_tracking" USING "btree" ("activity_type");
 
 
 
-CREATE INDEX "idx_ai_events_phone_time" ON "public"."ai_events" USING "btree" ("phone", "created_at" DESC);
+CREATE INDEX IF NOT EXISTS "idx_ai_events_phone_time" ON "public"."ai_events" USING "btree" ("phone", "created_at" DESC);
 
 
 
-CREATE INDEX "idx_ai_events_type" ON "public"."ai_events" USING "btree" ("type");
+CREATE INDEX IF NOT EXISTS "idx_ai_events_type" ON "public"."ai_events" USING "btree" ("type");
 
 
 
-CREATE INDEX "idx_ai_users_last_plan" ON "public"."ai_users" USING "btree" ("last_plan_generated_at" DESC);
+CREATE INDEX IF NOT EXISTS "idx_ai_users_last_plan" ON "public"."ai_users" USING "btree" ("last_plan_generated_at" DESC);
 
 
 
-CREATE INDEX "idx_ai_users_step" ON "public"."ai_users" USING "btree" ("step");
+CREATE INDEX IF NOT EXISTS "idx_ai_users_step" ON "public"."ai_users" USING "btree" ("step");
 
 
 
-CREATE INDEX "idx_billing_subscriptions_subscription" ON "public"."billing_subscriptions" USING "btree" ("stripe_subscription_id");
+CREATE INDEX IF NOT EXISTS "idx_billing_subscriptions_subscription" ON "public"."billing_subscriptions" USING "btree" ("stripe_subscription_id");
 
 
 
-CREATE INDEX "idx_comments_post_id" ON "public"."comments" USING "btree" ("post_id");
 
 
 
-CREATE INDEX "idx_comments_user_id" ON "public"."comments" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_community_posts_created_at" ON "public"."community_posts" USING "btree" ("created_at" DESC);
 
 
+CREATE INDEX IF NOT EXISTS "idx_community_posts_created_at" ON "public"."community_posts" USING "btree" ("created_at" DESC);
 
-CREATE INDEX "idx_community_posts_user_id" ON "public"."community_posts" USING "btree" ("user_id");
 
 
+CREATE INDEX IF NOT EXISTS "idx_community_posts_user_id" ON "public"."community_posts" USING "btree" ("user_id");
 
-CREATE INDEX "idx_conversation_history_created_at" ON "public"."conversation_history" USING "btree" ("created_at");
 
 
+CREATE INDEX IF NOT EXISTS "idx_conversation_history_created_at" ON "public"."conversation_history" USING "btree" ("created_at");
 
-CREATE INDEX "idx_conversation_history_message_type" ON "public"."conversation_history" USING "btree" ("message_type");
 
 
+CREATE INDEX IF NOT EXISTS "idx_conversation_history_message_type" ON "public"."conversation_history" USING "btree" ("message_type");
 
-CREATE INDEX "idx_conversation_history_phone_number" ON "public"."conversation_history" USING "btree" ("phone_number");
 
 
+CREATE INDEX IF NOT EXISTS "idx_conversation_history_phone_number" ON "public"."conversation_history" USING "btree" ("phone_number");
 
-CREATE INDEX "idx_conversations_user_id" ON "public"."conversations" USING "btree" ("user_id");
 
 
+CREATE INDEX IF NOT EXISTS "idx_conversations_user_id" ON "public"."conversations" USING "btree" ("user_id");
 
-CREATE INDEX "idx_daily_checkins_created_at" ON "public"."daily_checkins" USING "btree" ("created_at");
 
 
 
-CREATE INDEX "idx_daily_checkins_date" ON "public"."daily_checkins" USING "btree" ("date");
 
 
 
-CREATE INDEX "idx_daily_checkins_mood_score" ON "public"."daily_checkins" USING "btree" ("mood_score");
 
 
 
-CREATE INDEX "idx_daily_checkins_user_date" ON "public"."daily_checkins" USING "btree" ("user_id", "date");
 
 
 
-CREATE INDEX "idx_daily_checkins_user_id" ON "public"."daily_checkins" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_daily_checkins_user_id_date" ON "public"."daily_checkins" USING "btree" ("user_id", "created_at");
 
 
 
-CREATE INDEX "idx_daily_checkins_weight" ON "public"."daily_checkins" USING "btree" ("weight");
+CREATE INDEX IF NOT EXISTS "idx_daily_checkins_user_id" ON "public"."daily_checkins" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_daily_missions_completion" ON "public"."daily_missions" USING "btree" ("is_completed", "mission_date" DESC);
 
 
 
-CREATE INDEX "idx_daily_missions_user_date" ON "public"."daily_missions" USING "btree" ("user_id", "mission_date" DESC);
 
 
 
-CREATE INDEX "idx_events_active_dates" ON "public"."gamification_events" USING "btree" ("is_active", "start_date", "end_date");
 
 
 
-CREATE INDEX "idx_gamification_level" ON "public"."gamification" USING "btree" ("level" DESC);
 
 
 
-CREATE INDEX "idx_gamification_total_points" ON "public"."gamification" USING "btree" ("total_points" DESC);
 
 
 
-CREATE INDEX "idx_gamification_user_id" ON "public"."gamification" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_leaderboards_points" ON "public"."leaderboards" USING "btree" ("points" DESC);
 
 
 
-CREATE INDEX "idx_leaderboards_rank" ON "public"."leaderboards" USING "btree" ("rank_position");
 
 
 
-CREATE INDEX "idx_leaderboards_type_category" ON "public"."leaderboards" USING "btree" ("ranking_type", "category");
 
 
 
-CREATE INDEX "idx_post_likes_post_id" ON "public"."post_likes" USING "btree" ("post_id");
 
 
 
-CREATE INDEX "idx_post_likes_user_id" ON "public"."post_likes" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_resources_owner_id" ON "public"."resources" USING "btree" ("owner_id");
 
 
 
-CREATE INDEX "idx_subscription_plans_is_active" ON "public"."subscription_plans" USING "btree" ("is_active");
 
 
 
-CREATE INDEX "idx_system_logs_created_at" ON "public"."system_logs" USING "btree" ("created_at" DESC);
 
 
 
-CREATE INDEX "idx_system_logs_event_type" ON "public"."system_logs" USING "btree" ("event_type");
 
 
+CREATE INDEX IF NOT EXISTS "idx_post_likes_post_id" ON "public"."post_likes" USING "btree" ("post_id");
 
-CREATE INDEX "idx_system_logs_user_id" ON "public"."system_logs" USING "btree" ("user_id");
 
 
+CREATE INDEX IF NOT EXISTS "idx_post_likes_user_id" ON "public"."post_likes" USING "btree" ("user_id");
 
-CREATE INDEX "idx_user_achievements_phone_number" ON "public"."user_achievements" USING "btree" ("phone_number");
 
 
+CREATE INDEX IF NOT EXISTS "idx_resources_owner_id" ON "public"."resources" USING "btree" ("owner_id");
 
-CREATE INDEX "idx_user_achievements_type" ON "public"."user_achievements" USING "btree" ("achievement_type");
 
 
 
-CREATE INDEX "idx_user_achievements_unlocked_at" ON "public"."user_achievements" USING "btree" ("unlocked_at");
 
 
 
-CREATE INDEX "idx_user_participation_events" ON "public"."user_event_participation" USING "btree" ("user_id", "event_id");
+CREATE INDEX IF NOT EXISTS "idx_system_logs_created_at" ON "public"."system_logs" USING "btree" ("created_at" DESC);
 
 
 
-CREATE INDEX "idx_user_profiles_activity_level" ON "public"."user_profiles" USING "btree" ("activity_level");
+CREATE INDEX IF NOT EXISTS "idx_system_logs_event_type" ON "public"."system_logs" USING "btree" ("event_type");
 
 
 
-CREATE INDEX "idx_user_profiles_current_weight" ON "public"."user_profiles" USING "btree" ("current_weight");
+CREATE INDEX IF NOT EXISTS "idx_system_logs_user_id" ON "public"."system_logs" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_user_profiles_email" ON "public"."user_profiles" USING "btree" ("email");
+CREATE INDEX IF NOT EXISTS "idx_user_achievements_phone_number" ON "public"."user_achievements" USING "btree" ("phone_number");
 
 
 
-CREATE INDEX "idx_user_profiles_full_name" ON "public"."user_profiles" USING "btree" ("full_name");
+CREATE INDEX IF NOT EXISTS "idx_user_achievements_type" ON "public"."user_achievements" USING "btree" ("achievement_type");
 
 
 
-CREATE INDEX "idx_user_profiles_goal_type" ON "public"."user_profiles" USING "btree" ("goal_type");
+CREATE INDEX IF NOT EXISTS "idx_user_achievements_unlocked_at" ON "public"."user_achievements" USING "btree" ("unlocked_at");
 
 
 
-CREATE INDEX "idx_user_profiles_phone" ON "public"."user_profiles" USING "btree" ("phone");
 
 
 
-CREATE INDEX "idx_user_training_plans_active" ON "public"."user_training_plans" USING "btree" ("user_id", "is_active") WHERE ("is_active" = true);
 
 
 
-CREATE INDEX "idx_user_training_plans_created" ON "public"."user_training_plans" USING "btree" ("created_at" DESC);
 
 
 
-CREATE INDEX "idx_user_training_plans_plan_data_gin" ON "public"."user_training_plans" USING "gin" ("plan_data");
 
 
 
-CREATE INDEX "idx_user_training_plans_progress_gin" ON "public"."user_training_plans" USING "gin" ("progress_data");
+CREATE INDEX IF NOT EXISTS "idx_user_profiles_email" ON "public"."user_profiles" USING "btree" ("email");
 
 
 
-CREATE INDEX "idx_user_training_plans_type" ON "public"."user_training_plans" USING "btree" ("plan_type");
+CREATE INDEX IF NOT EXISTS "idx_user_profiles_full_name" ON "public"."user_profiles" USING "btree" ("full_name");
 
 
 
-CREATE INDEX "idx_user_training_plans_user_id" ON "public"."user_training_plans" USING "btree" ("user_id");
 
 
 
-CREATE INDEX "idx_whatsapp_gamification_log_created_at" ON "public"."whatsapp_gamification_log" USING "btree" ("created_at" DESC);
 
 
 
-CREATE INDEX "idx_whatsapp_messages_created_at" ON "public"."whatsapp_messages" USING "btree" ("created_at" DESC);
 
 
 
-CREATE UNIQUE INDEX "idx_whatsapp_messages_external_id" ON "public"."whatsapp_messages" USING "btree" ("external_id");
 
 
 
-CREATE INDEX "idx_whatsapp_messages_instance_id" ON "public"."whatsapp_messages" USING "btree" ("instance_id");
 
 
 
-CREATE INDEX "idx_whatsapp_messages_phone_number" ON "public"."whatsapp_messages" USING "btree" ("phone_number");
 
 
 
-CREATE INDEX "idx_whatsapp_messages_received_at" ON "public"."whatsapp_messages" USING "btree" ("received_at");
 
 
 
-CREATE UNIQUE INDEX "profiles_referral_code_key" ON "public"."profiles" USING "btree" ("referral_code") WHERE ("role" = 'partner'::"text");
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS "profiles_referral_code_key" ON "public"."profiles" USING "btree" ("referral_code") WHERE ("role" = 'partner'::"text");
+
+
+
+drop trigger if exists "ai_users_updated_at" on "public"."ai_users";
 CREATE OR REPLACE TRIGGER "ai_users_updated_at" BEFORE UPDATE ON "public"."ai_users" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
 
 
 
+drop trigger if exists "app_settings_updated_at" on "public"."app_settings";
 CREATE OR REPLACE TRIGGER "app_settings_updated_at" BEFORE UPDATE ON "public"."app_settings" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_set_timestamp"();
 
 
 
-CREATE OR REPLACE TRIGGER "comments_set_updated_at" BEFORE UPDATE ON "public"."comments" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
+
+drop trigger if exists "on_profile_insert_generate_affiliate_code" on "public"."profiles";
 CREATE OR REPLACE TRIGGER "on_profile_insert_generate_affiliate_code" BEFORE INSERT ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."generate_affiliate_code"();
 
 
 
+drop trigger if exists "on_redemption_created" on "public"."redemption_history";
 CREATE OR REPLACE TRIGGER "on_redemption_created" AFTER INSERT ON "public"."redemption_history" FOR EACH ROW EXECUTE FUNCTION "public"."handle_redemption"();
 
 
 
+drop trigger if exists "on_stripe_webhook_received" on "public"."stripe_webhooks";
 CREATE OR REPLACE TRIGGER "on_stripe_webhook_received" AFTER INSERT ON "public"."stripe_webhooks" FOR EACH ROW EXECUTE FUNCTION "public"."handle_stripe_webhook"();
 
 
 
+drop trigger if exists "set_timestamp" on "public"."user_profiles";
 CREATE OR REPLACE TRIGGER "set_timestamp" BEFORE UPDATE ON "public"."user_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
 
+drop trigger if exists "set_updated_at" on "public"."profiles";
 CREATE OR REPLACE TRIGGER "set_updated_at" BEFORE UPDATE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."update_modified_column"();
 
 
 
-CREATE OR REPLACE TRIGGER "subscription_plans_set_updated_at" BEFORE UPDATE ON "public"."subscription_plans" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
+
+drop trigger if exists "tr_generate_affiliate_code" on "public"."affiliates";
 CREATE OR REPLACE TRIGGER "tr_generate_affiliate_code" BEFORE INSERT ON "public"."affiliates" FOR EACH ROW EXECUTE FUNCTION "public"."generate_affiliate_code"();
 
 
 
+drop trigger if exists "trg_ai_users_updated" on "public"."ai_users";
 CREATE OR REPLACE TRIGGER "trg_ai_users_updated" BEFORE UPDATE ON "public"."ai_users" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
 
+drop trigger if exists "trg_ai_users_updated_at" on "public"."ai_users";
 CREATE OR REPLACE TRIGGER "trg_ai_users_updated_at" BEFORE UPDATE ON "public"."ai_users" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
 
-CREATE OR REPLACE TRIGGER "trg_daily_checkins_updated_at" BEFORE UPDATE ON "public"."daily_checkins" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
 
+
+drop trigger if exists "trg_profiles_referral_token" on "public"."profiles";
 CREATE OR REPLACE TRIGGER "trg_profiles_referral_token" BEFORE INSERT OR UPDATE ON "public"."profiles" FOR EACH ROW EXECUTE FUNCTION "public"."ensure_referral_token"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_daily_checkins_updated_at" BEFORE UPDATE ON "public"."daily_checkins" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_daily_checkins_updated_at_trigger" BEFORE UPDATE ON "public"."daily_checkins" FOR EACH ROW EXECUTE FUNCTION "public"."update_daily_checkins_updated_at"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_gamification_updated_at" BEFORE UPDATE ON "public"."gamification" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_points_on_activity_insert" AFTER INSERT ON "public"."daily_activities" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_update_points_on_activity"();
 
 
 
+
+
+
+
+drop trigger if exists "update_resources_timestamp" on "public"."resources";
 CREATE OR REPLACE TRIGGER "update_resources_timestamp" BEFORE UPDATE ON "public"."resources" FOR EACH ROW EXECUTE FUNCTION "public"."update_modified_column"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_user_profiles_updated_at" BEFORE UPDATE ON "public"."user_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_user_training_plans_updated_at" BEFORE UPDATE ON "public"."user_training_plans" FOR EACH ROW EXECUTE FUNCTION "public"."update_user_training_plans_updated_at"();
+
+
 
 
 
@@ -4177,531 +4189,1375 @@ ALTER TABLE ONLY "public"."user_training_plans"
 
 
 
-CREATE POLICY "Admin pode ver todos os logs" ON "public"."system_logs" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."role" = 'admin'::"text")))));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Admin pode ver todos os logs'
+  ) then
+    CREATE POLICY "Admin pode ver todos os logs" ON "public"."system_logs" FOR SELECT USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Administrators can add logs for any user'
+  ) then
+    CREATE POLICY "Administrators can add logs for any user" ON "public"."system_logs" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Administrators can view all logs'
+  ) then
+    CREATE POLICY "Administrators can view all logs" ON "public"."system_logs" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'academies' and policyname = 'Allow admin to manage academies'
+  ) then
+    CREATE POLICY "Allow admin to manage academies" ON "public"."academies" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'automations' and policyname = 'Allow admin to manage automations'
+  ) then
+    CREATE POLICY "Allow admin to manage automations" ON "public"."automations" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'integrations' and policyname = 'Allow admin to manage integrations'
+  ) then
+    CREATE POLICY "Allow admin to manage integrations" ON "public"."integrations" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plans' and policyname = 'Allow admin to manage plans'
+  ) then
+    CREATE POLICY "Allow admin to manage plans" ON "public"."plans" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'rewards' and policyname = 'Allow admin to manage rewards'
+  ) then
+    CREATE POLICY "Allow admin to manage rewards" ON "public"."rewards" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'app_settings' and policyname = 'Allow admin to manage settings'
+  ) then
+    CREATE POLICY "Allow admin to manage settings" ON "public"."app_settings" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'redemption_history' and policyname = 'Allow admins to insert redemptions'
+  ) then
+    CREATE POLICY "Allow admins to insert redemptions" ON "public"."redemption_history" FOR INSERT WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
+
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliates' and policyname = 'Allow admins to manage all affiliates'
+  ) then
+    CREATE POLICY "Allow admins to manage all affiliates" ON "public"."affiliates" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Administrators can add logs for any user" ON "public"."system_logs" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversations' and policyname = 'Allow admins to manage all conversations'
+  ) then
+    CREATE POLICY "Allow admins to manage all conversations" ON "public"."conversations" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Administrators can view all logs" ON "public"."system_logs" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'payout_requests' and policyname = 'Allow admins to manage all payout requests'
+  ) then
+    CREATE POLICY "Allow admins to manage all payout requests" ON "public"."payout_requests" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage academies" ON "public"."academies" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'community_posts' and policyname = 'Allow admins to manage all posts'
+  ) then
+    CREATE POLICY "Allow admins to manage all posts" ON "public"."community_posts" USING ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage automations" ON "public"."automations" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_integrations' and policyname = 'Allow admins to view all integrations'
+  ) then
+    CREATE POLICY "Allow admins to view all integrations" ON "public"."user_integrations" FOR SELECT USING ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage integrations" ON "public"."integrations" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'redemption_history' and policyname = 'Allow admins to view all redemptions'
+  ) then
+    CREATE POLICY "Allow admins to view all redemptions" ON "public"."redemption_history" FOR SELECT USING ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage plans" ON "public"."plans" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_metrics' and policyname = 'Allow admins to view all user metrics'
+  ) then
+    CREATE POLICY "Allow admins to view all user metrics" ON "public"."user_metrics" FOR SELECT USING ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage rewards" ON "public"."rewards" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_metrics' and policyname = 'Allow authenticated users to insert their own metrics'
+  ) then
+    CREATE POLICY "Allow authenticated users to insert their own metrics" ON "public"."user_metrics" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow admin to manage settings" ON "public"."app_settings" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
 
 
 
-CREATE POLICY "Allow admins to insert redemptions" ON "public"."redemption_history" FOR INSERT WITH CHECK ("public"."is_admin"());
 
 
 
-CREATE POLICY "Allow admins to manage all affiliates" ON "public"."affiliates" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plans' and policyname = 'Allow authenticated users to read active plans'
+  ) then
+    CREATE POLICY "Allow authenticated users to read active plans" ON "public"."plans" FOR SELECT TO "authenticated" USING (("is_active" = true));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to manage all conversations" ON "public"."conversations" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'rewards' and policyname = 'Allow authenticated users to read active rewards'
+  ) then
+    CREATE POLICY "Allow authenticated users to read active rewards" ON "public"."rewards" FOR SELECT USING ((("auth"."role"() = 'authenticated'::"text") AND ("is_active" = true)));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to manage all payout requests" ON "public"."payout_requests" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
 
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Allow authenticated users to read all profiles'
+  ) then
+    CREATE POLICY "Allow authenticated users to read all profiles" ON "public"."profiles" FOR SELECT TO "authenticated" USING (true);
+  end if;
+end;
+$$;
 
+
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'automations' and policyname = 'Allow authenticated users to read automations'
+  ) then
+    CREATE POLICY "Allow authenticated users to read automations" ON "public"."automations" FOR SELECT TO "authenticated" USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to manage all posts" ON "public"."community_posts" USING ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_metrics' and policyname = 'Allow authenticated users to read their own metrics'
+  ) then
+    CREATE POLICY "Allow authenticated users to read their own metrics" ON "public"."user_metrics" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to view all integrations" ON "public"."user_integrations" FOR SELECT USING ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_metrics' and policyname = 'Allow authenticated users to update their own metrics'
+  ) then
+    CREATE POLICY "Allow authenticated users to update their own metrics" ON "public"."user_metrics" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to view all redemptions" ON "public"."redemption_history" FOR SELECT USING ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Allow full access for service role'
+  ) then
+    CREATE POLICY "Allow full access for service role" ON "public"."profiles" USING (("auth"."role"() = 'service_role'::"text")) WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow admins to view all user metrics" ON "public"."user_metrics" FOR SELECT USING ("public"."is_admin"());
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Allow individual read access'
+  ) then
+    CREATE POLICY "Allow individual read access" ON "public"."profiles" FOR SELECT USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow authenticated users to insert their own metrics" ON "public"."user_metrics" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Allow individual update access'
+  ) then
+    CREATE POLICY "Allow individual update access" ON "public"."profiles" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow authenticated users to manage plans" ON "public"."plans" USING (("auth"."role"() = 'authenticated'::"text"));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'payout_requests' and policyname = 'Allow partners to manage their own payout requests'
+  ) then
+    CREATE POLICY "Allow partners to manage their own payout requests" ON "public"."payout_requests" USING (("auth"."uid"() = "partner_id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow authenticated users to manage rewards" ON "public"."rewards" USING (("auth"."role"() = 'authenticated'::"text"));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliates' and policyname = 'Allow partners to view affiliates'
+  ) then
+    CREATE POLICY "Allow partners to view affiliates" ON "public"."affiliates" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."role" = 'partner'::"text")))));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Allow authenticated users to read active plans" ON "public"."plans" FOR SELECT TO "authenticated" USING (("is_active" = true));
 
 
 
-CREATE POLICY "Allow authenticated users to read active rewards" ON "public"."rewards" FOR SELECT USING ((("auth"."role"() = 'authenticated'::"text") AND ("is_active" = true)));
 
 
 
-CREATE POLICY "Allow authenticated users to read all profiles" ON "public"."profiles" FOR SELECT TO "authenticated" USING (true);
 
 
 
-CREATE POLICY "Allow authenticated users to read automations" ON "public"."automations" FOR SELECT TO "authenticated" USING (true);
 
 
 
-CREATE POLICY "Allow authenticated users to read their own metrics" ON "public"."user_metrics" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Allow authenticated users to update their own metrics" ON "public"."user_metrics" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Allow full access for service role" ON "public"."profiles" USING (("auth"."role"() = 'service_role'::"text")) WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliates' and policyname = 'Allow public read access to active affiliates'
+  ) then
+    CREATE POLICY "Allow public read access to active affiliates" ON "public"."affiliates" FOR SELECT TO "authenticated", "anon" USING (("active" = true));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow individual read access" ON "public"."profiles" FOR SELECT USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'stripe_events' and policyname = 'Allow public read on stripe_events'
+  ) then
+    CREATE POLICY "Allow public read on stripe_events" ON "public"."stripe_events" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow individual update access" ON "public"."profiles" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'stripe_webhooks' and policyname = 'Allow service_role to insert webhooks'
+  ) then
+    CREATE POLICY "Allow service_role to insert webhooks" ON "public"."stripe_webhooks" FOR INSERT WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow partners to manage their own payout requests" ON "public"."payout_requests" USING (("auth"."uid"() = "partner_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'post_likes' and policyname = 'Allow users to delete their own likes'
+  ) then
+    CREATE POLICY "Allow users to delete their own likes" ON "public"."post_likes" FOR DELETE USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow partners to view affiliates" ON "public"."affiliates" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."role" = 'partner'::"text")))));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'community_posts' and policyname = 'Allow users to delete their own posts'
+  ) then
+    CREATE POLICY "Allow users to delete their own posts" ON "public"."community_posts" FOR DELETE USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read access on events" ON "public"."gamification_events" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversations' and policyname = 'Allow users to insert their own conversations'
+  ) then
+    CREATE POLICY "Allow users to insert their own conversations" ON "public"."conversations" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read access on leaderboards" ON "public"."leaderboards" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'post_likes' and policyname = 'Allow users to insert their own likes'
+  ) then
+    CREATE POLICY "Allow users to insert their own likes" ON "public"."post_likes" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read access on plans" ON "public"."plans" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'community_posts' and policyname = 'Allow users to insert their own posts'
+  ) then
+    CREATE POLICY "Allow users to insert their own posts" ON "public"."community_posts" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read access on rewards" ON "public"."rewards" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'redemption_history' and policyname = 'Allow users to insert their own redemptions'
+  ) then
+    CREATE POLICY "Allow users to insert their own redemptions" ON "public"."redemption_history" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read access to active affiliates" ON "public"."affiliates" FOR SELECT TO "authenticated", "anon" USING (("active" = true));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_integrations' and policyname = 'Allow users to manage their own integrations'
+  ) then
+    CREATE POLICY "Allow users to manage their own integrations" ON "public"."user_integrations" USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow public read on stripe_events" ON "public"."stripe_events" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'post_likes' and policyname = 'Allow users to read all likes'
+  ) then
+    CREATE POLICY "Allow users to read all likes" ON "public"."post_likes" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow service_role to insert webhooks" ON "public"."stripe_webhooks" FOR INSERT WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'community_posts' and policyname = 'Allow users to read all posts'
+  ) then
+    CREATE POLICY "Allow users to read all posts" ON "public"."community_posts" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to delete their own likes" ON "public"."post_likes" FOR DELETE USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversations' and policyname = 'Allow users to read their own conversations'
+  ) then
+    CREATE POLICY "Allow users to read their own conversations" ON "public"."conversations" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to delete their own posts" ON "public"."community_posts" FOR DELETE USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'community_posts' and policyname = 'Allow users to update their own posts'
+  ) then
+    CREATE POLICY "Allow users to update their own posts" ON "public"."community_posts" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to insert their own conversations" ON "public"."conversations" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'redemption_history' and policyname = 'Allow users to view their own redemptions'
+  ) then
+    CREATE POLICY "Allow users to view their own redemptions" ON "public"."redemption_history" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to insert their own likes" ON "public"."post_likes" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'academies' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."academies" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to insert their own posts" ON "public"."community_posts" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliate_clicks' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."affiliate_clicks" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to insert their own redemptions" ON "public"."redemption_history" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliate_commissions' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."affiliate_commissions" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to manage their own integrations" ON "public"."user_integrations" USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliate_conversions' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."affiliate_conversions" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to read all likes" ON "public"."post_likes" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliate_links' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."affiliate_links" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to read all posts" ON "public"."community_posts" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_users' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."ai_users" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to read their own conversations" ON "public"."conversations" FOR SELECT USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'automations' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."automations" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to update their own posts" ON "public"."community_posts" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'badges' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."badges" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Allow users to view their own redemptions" ON "public"."redemption_history" FOR SELECT USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'nutrition_plans' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."nutrition_plans" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."academies" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_badges' and policyname = 'Enable read access for all users'
+  ) then
+    CREATE POLICY "Enable read access for all users" ON "public"."user_badges" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."affiliate_clicks" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'Insert own profile'
+  ) then
+    CREATE POLICY "Insert own profile" ON "public"."user_profiles" FOR INSERT TO "authenticated" WITH CHECK (("id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."affiliate_commissions" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Only administrators can delete logs'
+  ) then
+    CREATE POLICY "Only administrators can delete logs" ON "public"."system_logs" FOR DELETE TO "authenticated" USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."affiliate_conversions" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Only administrators can update logs'
+  ) then
+    CREATE POLICY "Only administrators can update logs" ON "public"."system_logs" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
+       FROM "public"."profiles"
+      WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."affiliate_links" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."ai_users" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Enable read access for all users" ON "public"."automations" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_coach_actions' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."ai_coach_actions" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Enable read access for all users" ON "public"."badges" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_coach_settings' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."ai_coach_settings" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Enable read access for all users" ON "public"."nutrition_plans" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_nudges' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."ai_nudges" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Enable read access for all users" ON "public"."user_badges" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'habits' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."habits" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Insert own profile" ON "public"."user_profiles" FOR INSERT TO "authenticated" WITH CHECK (("id" = "auth"."uid"()));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'inbound_events' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."inbound_events" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Only administrators can delete logs" ON "public"."system_logs" FOR DELETE TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'integrations_evolution' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."integrations_evolution" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Only administrators can update logs" ON "public"."system_logs" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."profiles"
-  WHERE (("profiles"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("profiles"."role" = 'admin'::"text")))));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'integrations_whatsapp' and policyname = 'Public read access'
+  ) then
+    CREATE POLICY "Public read access" ON "public"."integrations_whatsapp" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Only admins can view error logs" ON "public"."error_logs" FOR SELECT USING ((( SELECT 1
-   FROM "public"."user_profiles"
-  WHERE (("user_profiles"."id" = "auth"."uid"()) AND ("user_profiles"."role" = 'admin'::"text"))) IS NOT NULL));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'habit_logs' and policyname = 'Public read habit logs'
+  ) then
+    CREATE POLICY "Public read habit logs" ON "public"."habit_logs" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
-COMMENT ON POLICY "Only admins can view error logs" ON "public"."error_logs" IS 'Restrict error log access to admin users only';
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'Read own profile'
+  ) then
+    CREATE POLICY "Read own profile" ON "public"."user_profiles" FOR SELECT TO "authenticated" USING (("id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Public read access" ON "public"."ai_coach_actions" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Service role can create profiles'
+  ) then
+    CREATE POLICY "Service role can create profiles" ON "public"."profiles" FOR INSERT TO "service_role" WITH CHECK (true);
+  end if;
+end;
+$$;
 
-CREATE POLICY "Public read access" ON "public"."ai_coach_settings" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'activity_tracking' and policyname = 'Service role can manage activity_tracking'
+  ) then
+    CREATE POLICY "Service role can manage activity_tracking" ON "public"."activity_tracking" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Public read access" ON "public"."ai_nudges" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversation_history' and policyname = 'Service role can manage conversation_history'
+  ) then
+    CREATE POLICY "Service role can manage conversation_history" ON "public"."conversation_history" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Public read access" ON "public"."habits" FOR SELECT USING (true);
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_achievements' and policyname = 'Service role can manage user_achievements'
+  ) then
+    CREATE POLICY "Service role can manage user_achievements" ON "public"."user_achievements" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Public read access" ON "public"."inbound_events" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Public read access" ON "public"."integrations_evolution" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Public read access" ON "public"."integrations_whatsapp" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliates' and policyname = 'Service role full access'
+  ) then
+    CREATE POLICY "Service role full access" ON "public"."affiliates" TO "service_role" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Public read habit logs" ON "public"."habit_logs" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'billing_subscriptions' and policyname = 'Service role manage billing_subscriptions'
+  ) then
+    CREATE POLICY "Service role manage billing_subscriptions" ON "public"."billing_subscriptions" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Read own profile" ON "public"."user_profiles" FOR SELECT TO "authenticated" USING (("id" = "auth"."uid"()));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Serviços podem gerenciar logs'
+  ) then
+    CREATE POLICY "Serviços podem gerenciar logs" ON "public"."system_logs" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Service role can create profiles" ON "public"."profiles" FOR INSERT TO "service_role" WITH CHECK (true);
 
 
 
-CREATE POLICY "Service role can manage activity_tracking" ON "public"."activity_tracking" USING (("auth"."role"() = 'service_role'::"text"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'Update own profile'
+  ) then
+    CREATE POLICY "Update own profile" ON "public"."user_profiles" FOR UPDATE TO "authenticated" USING (("id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Service role can manage conversation_history" ON "public"."conversation_history" USING (("auth"."role"() = 'service_role'::"text"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Users can add their own logs'
+  ) then
+    CREATE POLICY "Users can add their own logs" ON "public"."system_logs" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Service role can manage user_achievements" ON "public"."user_achievements" USING (("auth"."role"() = 'service_role'::"text"));
 
 
 
-CREATE POLICY "Service role can manage whatsapp_messages" ON "public"."whatsapp_messages" USING (("auth"."role"() = 'service_role'::"text"));
 
 
 
-CREATE POLICY "Service role full access" ON "public"."affiliates" TO "service_role" USING (true) WITH CHECK (true);
 
 
 
-CREATE POLICY "Service role manage billing_subscriptions" ON "public"."billing_subscriptions" USING (("auth"."role"() = 'service_role'::"text"));
 
 
 
-CREATE POLICY "Serviços podem gerenciar logs" ON "public"."system_logs" USING (("auth"."role"() = 'service_role'::"text"));
 
 
 
-CREATE POLICY "System can insert error logs" ON "public"."error_logs" FOR INSERT WITH CHECK (true);
 
 
 
-CREATE POLICY "Update own profile" ON "public"."user_profiles" FOR UPDATE TO "authenticated" USING (("id" = "auth"."uid"()));
 
 
 
-CREATE POLICY "Users can add their own logs" ON "public"."system_logs" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
 
 
 
-CREATE POLICY "Users can delete own checkins" ON "public"."daily_checkins" FOR DELETE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can delete own training plans" ON "public"."user_training_plans" FOR DELETE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can insert own activities" ON "public"."daily_activities" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can insert own checkins" ON "public"."daily_checkins" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can insert own gamification" ON "public"."gamification" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can insert own profile" ON "public"."user_profiles" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "Users can insert own redemption history" ON "public"."redemption_history" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can insert own training plans" ON "public"."user_training_plans" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can update own activities" ON "public"."daily_activities" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Users can update own profile'
+  ) then
+    CREATE POLICY "Users can update own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id")) WITH CHECK (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Users can update own checkins" ON "public"."daily_checkins" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can update own gamification" ON "public"."gamification" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can update own missions" ON "public"."daily_missions" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can update own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id")) WITH CHECK (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'activity_tracking' and policyname = 'Users can view activity_tracking'
+  ) then
+    CREATE POLICY "Users can view activity_tracking" ON "public"."activity_tracking" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Users can update own profile" ON "public"."user_profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'conversation_history' and policyname = 'Users can view conversation_history'
+  ) then
+    CREATE POLICY "Users can view conversation_history" ON "public"."conversation_history" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Users can update own training plans" ON "public"."user_training_plans" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view activity_tracking" ON "public"."activity_tracking" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users can view conversation_history" ON "public"."conversation_history" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users can view own activities" ON "public"."daily_activities" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own checkins" ON "public"."daily_checkins" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own gamification" ON "public"."gamification" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own missions" ON "public"."daily_missions" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_plans' and policyname = 'Users can view own plans'
+  ) then
+    CREATE POLICY "Users can view own plans" ON "public"."user_plans" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Users can view own participation" ON "public"."user_event_participation" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Users can view own profile'
+  ) then
+    CREATE POLICY "Users can view own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Users can view own plans" ON "public"."user_plans" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "Users can view own profile" ON "public"."user_profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "Users can view own redemption history" ON "public"."redemption_history" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own referrals" ON "public"."referrals" FOR SELECT USING ((("auth"."uid"() = "referrer_id") OR ("auth"."uid"() = "referred_id")));
 
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'billing_subscriptions' and policyname = 'Users can view own subscription'
+  ) then
+    CREATE POLICY "Users can view own subscription" ON "public"."billing_subscriptions" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
-CREATE POLICY "Users can view own subscription" ON "public"."billing_subscriptions" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view own training plans" ON "public"."user_training_plans" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view their own logs" ON "public"."system_logs" FOR SELECT TO "authenticated" USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'system_logs' and policyname = 'Users can view their own logs'
+  ) then
+    CREATE POLICY "Users can view their own logs" ON "public"."system_logs" FOR SELECT TO "authenticated" USING (("user_id" = ( SELECT "auth"."uid"() AS "uid")));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Users can view user_achievements" ON "public"."user_achievements" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_achievements' and policyname = 'Users can view user_achievements'
+  ) then
+    CREATE POLICY "Users can view user_achievements" ON "public"."user_achievements" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "Users can view whatsapp_messages" ON "public"."whatsapp_messages" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users own data" ON "public"."coach_user_state" USING (("auth"."uid"() = "user_id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'coach_user_state' and policyname = 'Users own data'
+  ) then
+    CREATE POLICY "Users own data" ON "public"."coach_user_state" USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Users own data" ON "public"."daily_metrics" USING (("auth"."uid"() = "user_id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'daily_metrics' and policyname = 'Users own data'
+  ) then
+    CREATE POLICY "Users own data" ON "public"."daily_metrics" USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Users own training plans" ON "public"."training_plans" USING (("auth"."uid"() = "user_id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'training_plans' and policyname = 'Users own training plans'
+  ) then
+    CREATE POLICY "Users own training plans" ON "public"."training_plans" USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuarios podem atualizar seus próprios recursos" ON "public"."resources" FOR UPDATE TO "authenticated" USING (("owner_id" = "auth"."uid"())) WITH CHECK (("owner_id" = "auth"."uid"()));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'resources' and policyname = 'Usuarios podem atualizar seus próprios recursos'
+  ) then
+    CREATE POLICY "Usuarios podem atualizar seus próprios recursos" ON "public"."resources" FOR UPDATE TO "authenticated" USING (("owner_id" = "auth"."uid"())) WITH CHECK (("owner_id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuarios podem excluir seus próprios recursos" ON "public"."resources" FOR DELETE TO "authenticated" USING (("owner_id" = "auth"."uid"()));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'resources' and policyname = 'Usuarios podem excluir seus próprios recursos'
+  ) then
+    CREATE POLICY "Usuarios podem excluir seus próprios recursos" ON "public"."resources" FOR DELETE TO "authenticated" USING (("owner_id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuarios podem inserir seus próprios recursos" ON "public"."resources" FOR INSERT TO "authenticated" WITH CHECK (("owner_id" = "auth"."uid"()));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'resources' and policyname = 'Usuarios podem inserir seus próprios recursos'
+  ) then
+    CREATE POLICY "Usuarios podem inserir seus próprios recursos" ON "public"."resources" FOR INSERT TO "authenticated" WITH CHECK (("owner_id" = "auth"."uid"()));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuarios podem visualizar seus próprios recursos ou recursos p" ON "public"."resources" FOR SELECT TO "authenticated" USING ("public"."auth_has_access_to_resource"("owner_id", "id", "permission"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'resources' and policyname = 'Usuarios podem visualizar seus próprios recursos ou recursos p'
+  ) then
+    CREATE POLICY "Usuarios podem visualizar seus próprios recursos ou recursos p" ON "public"."resources" FOR SELECT TO "authenticated" USING ("public"."auth_has_access_to_resource"("owner_id", "id", "permission"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuários podem atualizar seu próprio perfil" ON "public"."profiles" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Usuários podem atualizar seu próprio perfil'
+  ) then
+    CREATE POLICY "Usuários podem atualizar seu próprio perfil" ON "public"."profiles" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuários podem atualizar seus próprios perfis" ON "public"."profiles" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Usuários podem atualizar seus próprios perfis'
+  ) then
+    CREATE POLICY "Usuários podem atualizar seus próprios perfis" ON "public"."profiles" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuários podem ver seu próprio perfil" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Usuários podem ver seu próprio perfil'
+  ) then
+    CREATE POLICY "Usuários podem ver seu próprio perfil" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
 
-CREATE POLICY "Usuários podem ver seus próprios perfis" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'Usuários podem ver seus próprios perfis'
+  ) then
+    CREATE POLICY "Usuários podem ver seus próprios perfis" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
+  end if;
+end;
+$$;
 
 
 
@@ -4729,7 +5585,16 @@ ALTER TABLE "public"."affiliate_links" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."affiliates" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "affiliates_select_all" ON "public"."affiliates" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'affiliates' and policyname = 'affiliates_select_all'
+  ) then
+    CREATE POLICY "affiliates_select_all" ON "public"."affiliates" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
@@ -4745,7 +5610,16 @@ ALTER TABLE "public"."ai_conversations" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."ai_events" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "ai_events_service" ON "public"."ai_events" USING (true) WITH CHECK (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_events' and policyname = 'ai_events_service'
+  ) then
+    CREATE POLICY "ai_events_service" ON "public"."ai_events" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
@@ -4755,40 +5629,94 @@ ALTER TABLE "public"."ai_interactions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."ai_messages" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "ai_messages_service" ON "public"."ai_messages" USING (true) WITH CHECK (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_messages' and policyname = 'ai_messages_service'
+  ) then
+    CREATE POLICY "ai_messages_service" ON "public"."ai_messages" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "ai_messages_service_all" ON "public"."ai_messages" TO "service_role" USING (true) WITH CHECK (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_messages' and policyname = 'ai_messages_service_all'
+  ) then
+    CREATE POLICY "ai_messages_service_all" ON "public"."ai_messages" TO "service_role" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
 ALTER TABLE "public"."ai_nudges" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "ai_read" ON "public"."ai_settings" FOR SELECT TO "authenticated" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_settings' and policyname = 'ai_read'
+  ) then
+    CREATE POLICY "ai_read" ON "public"."ai_settings" FOR SELECT TO "authenticated" USING (true);
+  end if;
+end;
+$$;
 
 
 
 ALTER TABLE "public"."ai_settings" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "ai_settings admin write" ON "public"."ai_settings" TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."profiles" "p"
-  WHERE (("p"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("p"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."profiles" "p"
-  WHERE (("p"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("p"."role" = 'admin'::"text")))));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_settings' and policyname = 'ai_settings admin write'
+  ) then
+    CREATE POLICY "ai_settings admin write" ON "public"."ai_settings" TO "authenticated" USING ((EXISTS ( SELECT 1
+       FROM "public"."profiles" "p"
+      WHERE (("p"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("p"."role" = 'admin'::"text"))))) WITH CHECK ((EXISTS ( SELECT 1
+       FROM "public"."profiles" "p"
+      WHERE (("p"."id" = ( SELECT "auth"."uid"() AS "uid")) AND ("p"."role" = 'admin'::"text")))));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "ai_settings read" ON "public"."ai_settings" FOR SELECT USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_settings' and policyname = 'ai_settings read'
+  ) then
+    CREATE POLICY "ai_settings read" ON "public"."ai_settings" FOR SELECT USING (true);
+  end if;
+end;
+$$;
 
 
 
 ALTER TABLE "public"."ai_users" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "ai_write_admin" ON "public"."ai_settings" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_settings' and policyname = 'ai_write_admin'
+  ) then
+    CREATE POLICY "ai_write_admin" ON "public"."ai_settings" TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+  end if;
+end;
+$$;
 
 
 
@@ -4816,7 +5744,7 @@ ALTER TABLE "public"."commissions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."community_posts" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "community_posts_public_read" ON "public"."community_posts" FOR SELECT USING (true);
+
 
 
 
@@ -4838,16 +5766,23 @@ ALTER TABLE "public"."daily_metrics" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."daily_missions" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "emergency_access_user_profiles" ON "public"."user_profiles" USING (true) WITH CHECK (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'emergency_access_user_profiles'
+  ) then
+    CREATE POLICY "emergency_access_user_profiles" ON "public"."user_profiles" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
 ALTER TABLE "public"."error_logs" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "error_logs_admin_only" ON "public"."error_logs" USING ((EXISTS ( SELECT 1
-   FROM "public"."user_profiles"
-  WHERE (("user_profiles"."id" = "auth"."uid"()) AND ("user_profiles"."role" = 'admin'::"text")))));
+
 
 
 
@@ -4881,39 +5816,37 @@ ALTER TABLE "public"."leaderboards" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."measurements" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "migrations_admin_only" ON "public"."supabase_migrations" USING ((EXISTS ( SELECT 1
-   FROM "public"."user_profiles"
-  WHERE (("user_profiles"."id" = "auth"."uid"()) AND ("user_profiles"."role" = 'admin'::"text")))));
+
 
 
 
 ALTER TABLE "public"."nutrition_plans" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "p_insert_own" ON "public"."profiles" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "p_select_own" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "p_update_own" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+
+
+
 
 
 
 ALTER TABLE "public"."payout_requests" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "perfil:owner read" ON "public"."user_profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "perfil:owner write" ON "public"."user_profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "perfil:self insert" ON "public"."user_profiles" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
+
+
+
 
 
 
@@ -4923,7 +5856,16 @@ ALTER TABLE "public"."plan_days" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."plans" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "plans_read_public" ON "public"."plans" FOR SELECT TO "authenticated", "anon" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plans' and policyname = 'plans_read_public'
+  ) then
+    CREATE POLICY "plans_read_public" ON "public"."plans" FOR SELECT TO "authenticated", "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
@@ -4936,35 +5878,107 @@ ALTER TABLE "public"."post_likes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "profiles_select_own" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_select_own'
+  ) then
+    CREATE POLICY "profiles_select_own" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "profiles_update_own" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_update_own'
+  ) then
+    CREATE POLICY "profiles_update_own" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "public read plans" ON "public"."plans" FOR SELECT TO "anon" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plans' and policyname = 'public read plans'
+  ) then
+    CREATE POLICY "public read plans" ON "public"."plans" FOR SELECT TO "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "public read rewards" ON "public"."rewards" FOR SELECT TO "anon" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'rewards' and policyname = 'public read rewards'
+  ) then
+    CREATE POLICY "public read rewards" ON "public"."rewards" FOR SELECT TO "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "public_read_plans" ON "public"."plans" FOR SELECT TO "anon" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plans' and policyname = 'public_read_plans'
+  ) then
+    CREATE POLICY "public_read_plans" ON "public"."plans" FOR SELECT TO "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "public_read_rewards" ON "public"."rewards" FOR SELECT TO "anon" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'rewards' and policyname = 'public_read_rewards'
+  ) then
+    CREATE POLICY "public_read_rewards" ON "public"."rewards" FOR SELECT TO "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "read ai settings" ON "public"."ai_settings" FOR SELECT TO "authenticated" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_settings' and policyname = 'read ai settings'
+  ) then
+    CREATE POLICY "read ai settings" ON "public"."ai_settings" FOR SELECT TO "authenticated" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "read_own_profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'read_own_profile'
+  ) then
+    CREATE POLICY "read_own_profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
 
 
@@ -4980,39 +5994,111 @@ ALTER TABLE "public"."resources" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."rewards" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "rewards_public_read" ON "public"."rewards" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "rewards_read_public" ON "public"."rewards" FOR SELECT TO "authenticated", "anon" USING (true);
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'rewards' and policyname = 'rewards_read_public'
+  ) then
+    CREATE POLICY "rewards_read_public" ON "public"."rewards" FOR SELECT TO "authenticated", "anon" USING (true);
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_ai_conversations" ON "public"."ai_conversations" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_conversations' and policyname = 'service_role_all_ai_conversations'
+  ) then
+    CREATE POLICY "service_role_all_ai_conversations" ON "public"."ai_conversations" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_ai_interactions" ON "public"."ai_interactions" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'ai_interactions' and policyname = 'service_role_all_ai_interactions'
+  ) then
+    CREATE POLICY "service_role_all_ai_interactions" ON "public"."ai_interactions" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_checkins" ON "public"."checkins" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'checkins' and policyname = 'service_role_all_checkins'
+  ) then
+    CREATE POLICY "service_role_all_checkins" ON "public"."checkins" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_commissions" ON "public"."commissions" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'commissions' and policyname = 'service_role_all_commissions'
+  ) then
+    CREATE POLICY "service_role_all_commissions" ON "public"."commissions" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_measurements" ON "public"."measurements" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'measurements' and policyname = 'service_role_all_measurements'
+  ) then
+    CREATE POLICY "service_role_all_measurements" ON "public"."measurements" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_plan_days" ON "public"."plan_days" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'plan_days' and policyname = 'service_role_all_plan_days'
+  ) then
+    CREATE POLICY "service_role_all_plan_days" ON "public"."plan_days" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "service_role_all_points_ledger" ON "public"."points_ledger" USING (("auth"."role"() = 'service_role'::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'points_ledger' and policyname = 'service_role_all_points_ledger'
+  ) then
+    CREATE POLICY "service_role_all_points_ledger" ON "public"."points_ledger" USING (("auth"."role"() = 'service_role'::"text"));
+  end if;
+end;
+$$;
 
 
 
@@ -5031,11 +6117,29 @@ ALTER TABLE "public"."system_logs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."training_plans" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "update_own_profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profiles' and policyname = 'update_own_profile'
+  ) then
+    CREATE POLICY "update_own_profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "user can read own sub" ON "public"."billing_subscriptions" FOR SELECT USING (("auth"."uid"() = "user_id"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'billing_subscriptions' and policyname = 'user can read own sub'
+  ) then
+    CREATE POLICY "user can read own sub" ON "public"."billing_subscriptions" FOR SELECT USING (("auth"."uid"() = "user_id"));
+  end if;
+end;
+$$;
 
 
 
@@ -5060,15 +6164,42 @@ ALTER TABLE "public"."user_plans" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_profiles" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "user_profiles_insert_policy" ON "public"."user_profiles" FOR INSERT WITH CHECK ((("auth"."uid"())::"text" = ("id")::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'user_profiles_insert_policy'
+  ) then
+    CREATE POLICY "user_profiles_insert_policy" ON "public"."user_profiles" FOR INSERT WITH CHECK ((("auth"."uid"())::"text" = ("id")::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "user_profiles_select_policy" ON "public"."user_profiles" FOR SELECT USING ((("auth"."uid"())::"text" = ("id")::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'user_profiles_select_policy'
+  ) then
+    CREATE POLICY "user_profiles_select_policy" ON "public"."user_profiles" FOR SELECT USING ((("auth"."uid"())::"text" = ("id")::"text"));
+  end if;
+end;
+$$;
 
 
 
-CREATE POLICY "user_profiles_update_policy" ON "public"."user_profiles" FOR UPDATE USING ((("auth"."uid"())::"text" = ("id")::"text")) WITH CHECK ((("auth"."uid"())::"text" = ("id")::"text"));
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'user_profiles' and policyname = 'user_profiles_update_policy'
+  ) then
+    CREATE POLICY "user_profiles_update_policy" ON "public"."user_profiles" FOR UPDATE USING ((("auth"."uid"())::"text" = ("id")::"text")) WITH CHECK ((("auth"."uid"())::"text" = ("id")::"text"));
+  end if;
+end;
+$$;
 
 
 
@@ -5078,14 +6209,32 @@ ALTER TABLE "public"."user_training_plans" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "users_service_read" ON "public"."users" FOR SELECT TO "service_role" USING (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'users' and policyname = 'users_service_read'
+  ) then
+    CREATE POLICY "users_service_read" ON "public"."users" FOR SELECT TO "service_role" USING (true);
+  end if;
+end;
+$$;
 
 
 
 ALTER TABLE "public"."webhook_logs" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "webhook_logs_service_all" ON "public"."webhook_logs" TO "service_role" USING (true) WITH CHECK (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'webhook_logs' and policyname = 'webhook_logs_service_all'
+  ) then
+    CREATE POLICY "webhook_logs_service_all" ON "public"."webhook_logs" TO "service_role" USING (true) WITH CHECK (true);
+  end if;
+end;
+$$;
 
 
 
@@ -6042,4 +7191,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 RESET ALL;
-
