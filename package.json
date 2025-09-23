@@ -10,7 +10,12 @@
     "migrate": "node scripts/automated-migration.mjs",
     "migrate:supabase": "node scripts/supabase-migration-runner.mjs",
     "deploy": "node scripts/deploy-complete.mjs",
-    "deploy:full": "npm run migrate:supabase && npm run build && npm run deploy"
+    "deploy:full": "npm run migrate:supabase && npm run build && npm run deploy",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref $npm_package_config_supabase_ref",
+    "supabase:secrets": "npx supabase secrets set --env-file .env.functions",
+    "supabase:deploy": "npx supabase functions deploy agent-create agent-report agent-apply-patch",
+    "supabase:serve": "npx supabase functions serve"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.2.1",
@@ -69,5 +74,8 @@
     "eslint-config-react-app": "^7.0.1",
     "typescript": "^5.4.0",
     "vite": "^5.2.0"
+  },
+  "config": {
+    "supabase_ref": "SEU-PROJECT-REF"
   }
 }
