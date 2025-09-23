@@ -1,0 +1,6 @@
+
+FullName
+--------
+C:\Users\JE\Documents\vida-smart-coach\node_modules\@remix-run\router\dist\router.d.ts
+C:\Users\JE\Documents\vida-smart-coach\node_modules\@remix-run\router\router.ts
+

@@ -1,0 +1,1048 @@
+drop trigger if exists "comments_set_updated_at" on "public"."comments";
+
+drop trigger if exists "update_points_on_activity_insert" on "public"."daily_activities";
+
+drop trigger if exists "trg_daily_checkins_updated_at" on "public"."daily_checkins";
+
+drop trigger if exists "update_daily_checkins_updated_at" on "public"."daily_checkins";
+
+drop trigger if exists "update_daily_checkins_updated_at_trigger" on "public"."daily_checkins";
+
+drop trigger if exists "subscription_plans_set_updated_at" on "public"."subscription_plans";
+
+drop trigger if exists "update_user_training_plans_updated_at" on "public"."user_training_plans";
+
+drop policy "Users can insert own activities" on "public"."daily_activities";
+
+drop policy "Users can update own activities" on "public"."daily_activities";
+
+drop policy "Users can view own activities" on "public"."daily_activities";
+
+drop policy "Users can delete own checkins" on "public"."daily_checkins";
+
+drop policy "Users can update own missions" on "public"."daily_missions";
+
+drop policy "Users can view own missions" on "public"."daily_missions";
+
+drop policy "Allow public read access on events" on "public"."gamification_events";
+
+drop policy "Allow public read access on leaderboards" on "public"."leaderboards";
+
+drop policy "Users can insert own redemption history" on "public"."redemption_history";
+
+drop policy "Users can view own redemption history" on "public"."redemption_history";
+
+drop policy "Users can view own referrals" on "public"."referrals";
+
+drop policy "rewards_public_read" on "public"."rewards";
+
+drop policy "subscription_plans_public_read" on "public"."subscription_plans";
+
+drop policy "migrations_admin_only" on "public"."supabase_migrations";
+
+drop policy "Users can view own achievements" on "public"."user_achievements";
+
+drop policy "Users can view own participation" on "public"."user_event_participation";
+
+drop policy "perfil:owner read" on "public"."user_profiles";
+
+drop policy "perfil:owner write" on "public"."user_profiles";
+
+drop policy "perfil:self insert" on "public"."user_profiles";
+
+drop policy "Users can delete own training plans" on "public"."user_training_plans";
+
+drop policy "Users can insert own training plans" on "public"."user_training_plans";
+
+drop policy "Users can update own training plans" on "public"."user_training_plans";
+
+drop policy "Users can view own training plans" on "public"."user_training_plans";
+
+revoke delete on table "public"."achievements" from "anon";
+
+revoke insert on table "public"."achievements" from "anon";
+
+revoke references on table "public"."achievements" from "anon";
+
+revoke select on table "public"."achievements" from "anon";
+
+revoke trigger on table "public"."achievements" from "anon";
+
+revoke truncate on table "public"."achievements" from "anon";
+
+revoke update on table "public"."achievements" from "anon";
+
+revoke delete on table "public"."achievements" from "authenticated";
+
+revoke insert on table "public"."achievements" from "authenticated";
+
+revoke references on table "public"."achievements" from "authenticated";
+
+revoke select on table "public"."achievements" from "authenticated";
+
+revoke trigger on table "public"."achievements" from "authenticated";
+
+revoke truncate on table "public"."achievements" from "authenticated";
+
+revoke update on table "public"."achievements" from "authenticated";
+
+revoke delete on table "public"."achievements" from "service_role";
+
+revoke insert on table "public"."achievements" from "service_role";
+
+revoke references on table "public"."achievements" from "service_role";
+
+revoke select on table "public"."achievements" from "service_role";
+
+revoke trigger on table "public"."achievements" from "service_role";
+
+revoke truncate on table "public"."achievements" from "service_role";
+
+revoke update on table "public"."achievements" from "service_role";
+
+revoke delete on table "public"."comments" from "anon";
+
+revoke insert on table "public"."comments" from "anon";
+
+revoke references on table "public"."comments" from "anon";
+
+revoke select on table "public"."comments" from "anon";
+
+revoke trigger on table "public"."comments" from "anon";
+
+revoke truncate on table "public"."comments" from "anon";
+
+revoke update on table "public"."comments" from "anon";
+
+revoke delete on table "public"."comments" from "authenticated";
+
+revoke insert on table "public"."comments" from "authenticated";
+
+revoke references on table "public"."comments" from "authenticated";
+
+revoke select on table "public"."comments" from "authenticated";
+
+revoke trigger on table "public"."comments" from "authenticated";
+
+revoke truncate on table "public"."comments" from "authenticated";
+
+revoke update on table "public"."comments" from "authenticated";
+
+revoke delete on table "public"."comments" from "service_role";
+
+revoke insert on table "public"."comments" from "service_role";
+
+revoke references on table "public"."comments" from "service_role";
+
+revoke select on table "public"."comments" from "service_role";
+
+revoke trigger on table "public"."comments" from "service_role";
+
+revoke truncate on table "public"."comments" from "service_role";
+
+revoke update on table "public"."comments" from "service_role";
+
+revoke delete on table "public"."daily_activities" from "anon";
+
+revoke insert on table "public"."daily_activities" from "anon";
+
+revoke references on table "public"."daily_activities" from "anon";
+
+revoke select on table "public"."daily_activities" from "anon";
+
+revoke trigger on table "public"."daily_activities" from "anon";
+
+revoke truncate on table "public"."daily_activities" from "anon";
+
+revoke update on table "public"."daily_activities" from "anon";
+
+revoke delete on table "public"."daily_activities" from "authenticated";
+
+revoke insert on table "public"."daily_activities" from "authenticated";
+
+revoke references on table "public"."daily_activities" from "authenticated";
+
+revoke select on table "public"."daily_activities" from "authenticated";
+
+revoke trigger on table "public"."daily_activities" from "authenticated";
+
+revoke truncate on table "public"."daily_activities" from "authenticated";
+
+revoke update on table "public"."daily_activities" from "authenticated";
+
+revoke delete on table "public"."daily_activities" from "service_role";
+
+revoke insert on table "public"."daily_activities" from "service_role";
+
+revoke references on table "public"."daily_activities" from "service_role";
+
+revoke select on table "public"."daily_activities" from "service_role";
+
+revoke trigger on table "public"."daily_activities" from "service_role";
+
+revoke truncate on table "public"."daily_activities" from "service_role";
+
+revoke update on table "public"."daily_activities" from "service_role";
+
+revoke delete on table "public"."daily_missions" from "anon";
+
+revoke insert on table "public"."daily_missions" from "anon";
+
+revoke references on table "public"."daily_missions" from "anon";
+
+revoke select on table "public"."daily_missions" from "anon";
+
+revoke trigger on table "public"."daily_missions" from "anon";
+
+revoke truncate on table "public"."daily_missions" from "anon";
+
+revoke update on table "public"."daily_missions" from "anon";
+
+revoke delete on table "public"."daily_missions" from "authenticated";
+
+revoke insert on table "public"."daily_missions" from "authenticated";
+
+revoke references on table "public"."daily_missions" from "authenticated";
+
+revoke select on table "public"."daily_missions" from "authenticated";
+
+revoke trigger on table "public"."daily_missions" from "authenticated";
+
+revoke truncate on table "public"."daily_missions" from "authenticated";
+
+revoke update on table "public"."daily_missions" from "authenticated";
+
+revoke delete on table "public"."daily_missions" from "service_role";
+
+revoke insert on table "public"."daily_missions" from "service_role";
+
+revoke references on table "public"."daily_missions" from "service_role";
+
+revoke select on table "public"."daily_missions" from "service_role";
+
+revoke trigger on table "public"."daily_missions" from "service_role";
+
+revoke truncate on table "public"."daily_missions" from "service_role";
+
+revoke update on table "public"."daily_missions" from "service_role";
+
+revoke delete on table "public"."gamification_events" from "anon";
+
+revoke insert on table "public"."gamification_events" from "anon";
+
+revoke references on table "public"."gamification_events" from "anon";
+
+revoke select on table "public"."gamification_events" from "anon";
+
+revoke trigger on table "public"."gamification_events" from "anon";
+
+revoke truncate on table "public"."gamification_events" from "anon";
+
+revoke update on table "public"."gamification_events" from "anon";
+
+revoke delete on table "public"."gamification_events" from "authenticated";
+
+revoke insert on table "public"."gamification_events" from "authenticated";
+
+revoke references on table "public"."gamification_events" from "authenticated";
+
+revoke select on table "public"."gamification_events" from "authenticated";
+
+revoke trigger on table "public"."gamification_events" from "authenticated";
+
+revoke truncate on table "public"."gamification_events" from "authenticated";
+
+revoke update on table "public"."gamification_events" from "authenticated";
+
+revoke delete on table "public"."gamification_events" from "service_role";
+
+revoke insert on table "public"."gamification_events" from "service_role";
+
+revoke references on table "public"."gamification_events" from "service_role";
+
+revoke select on table "public"."gamification_events" from "service_role";
+
+revoke trigger on table "public"."gamification_events" from "service_role";
+
+revoke truncate on table "public"."gamification_events" from "service_role";
+
+revoke update on table "public"."gamification_events" from "service_role";
+
+revoke delete on table "public"."leaderboards" from "anon";
+
+revoke insert on table "public"."leaderboards" from "anon";
+
+revoke references on table "public"."leaderboards" from "anon";
+
+revoke select on table "public"."leaderboards" from "anon";
+
+revoke trigger on table "public"."leaderboards" from "anon";
+
+revoke truncate on table "public"."leaderboards" from "anon";
+
+revoke update on table "public"."leaderboards" from "anon";
+
+revoke delete on table "public"."leaderboards" from "authenticated";
+
+revoke insert on table "public"."leaderboards" from "authenticated";
+
+revoke references on table "public"."leaderboards" from "authenticated";
+
+revoke select on table "public"."leaderboards" from "authenticated";
+
+revoke trigger on table "public"."leaderboards" from "authenticated";
+
+revoke truncate on table "public"."leaderboards" from "authenticated";
+
+revoke update on table "public"."leaderboards" from "authenticated";
+
+revoke delete on table "public"."leaderboards" from "service_role";
+
+revoke insert on table "public"."leaderboards" from "service_role";
+
+revoke references on table "public"."leaderboards" from "service_role";
+
+revoke select on table "public"."leaderboards" from "service_role";
+
+revoke trigger on table "public"."leaderboards" from "service_role";
+
+revoke truncate on table "public"."leaderboards" from "service_role";
+
+revoke update on table "public"."leaderboards" from "service_role";
+
+revoke delete on table "public"."redemption_history" from "anon";
+
+revoke insert on table "public"."redemption_history" from "anon";
+
+revoke references on table "public"."redemption_history" from "anon";
+
+revoke select on table "public"."redemption_history" from "anon";
+
+revoke trigger on table "public"."redemption_history" from "anon";
+
+revoke truncate on table "public"."redemption_history" from "anon";
+
+revoke update on table "public"."redemption_history" from "anon";
+
+revoke delete on table "public"."redemption_history" from "authenticated";
+
+revoke insert on table "public"."redemption_history" from "authenticated";
+
+revoke references on table "public"."redemption_history" from "authenticated";
+
+revoke select on table "public"."redemption_history" from "authenticated";
+
+revoke trigger on table "public"."redemption_history" from "authenticated";
+
+revoke truncate on table "public"."redemption_history" from "authenticated";
+
+revoke update on table "public"."redemption_history" from "authenticated";
+
+revoke delete on table "public"."redemption_history" from "service_role";
+
+revoke insert on table "public"."redemption_history" from "service_role";
+
+revoke references on table "public"."redemption_history" from "service_role";
+
+revoke select on table "public"."redemption_history" from "service_role";
+
+revoke trigger on table "public"."redemption_history" from "service_role";
+
+revoke truncate on table "public"."redemption_history" from "service_role";
+
+revoke update on table "public"."redemption_history" from "service_role";
+
+revoke delete on table "public"."referrals" from "anon";
+
+revoke insert on table "public"."referrals" from "anon";
+
+revoke references on table "public"."referrals" from "anon";
+
+revoke select on table "public"."referrals" from "anon";
+
+revoke trigger on table "public"."referrals" from "anon";
+
+revoke truncate on table "public"."referrals" from "anon";
+
+revoke update on table "public"."referrals" from "anon";
+
+revoke delete on table "public"."referrals" from "authenticated";
+
+revoke insert on table "public"."referrals" from "authenticated";
+
+revoke references on table "public"."referrals" from "authenticated";
+
+revoke select on table "public"."referrals" from "authenticated";
+
+revoke trigger on table "public"."referrals" from "authenticated";
+
+revoke truncate on table "public"."referrals" from "authenticated";
+
+revoke update on table "public"."referrals" from "authenticated";
+
+revoke delete on table "public"."referrals" from "service_role";
+
+revoke insert on table "public"."referrals" from "service_role";
+
+revoke references on table "public"."referrals" from "service_role";
+
+revoke select on table "public"."referrals" from "service_role";
+
+revoke trigger on table "public"."referrals" from "service_role";
+
+revoke truncate on table "public"."referrals" from "service_role";
+
+revoke update on table "public"."referrals" from "service_role";
+
+revoke delete on table "public"."subscription_plans" from "anon";
+
+revoke insert on table "public"."subscription_plans" from "anon";
+
+revoke references on table "public"."subscription_plans" from "anon";
+
+revoke select on table "public"."subscription_plans" from "anon";
+
+revoke trigger on table "public"."subscription_plans" from "anon";
+
+revoke truncate on table "public"."subscription_plans" from "anon";
+
+revoke update on table "public"."subscription_plans" from "anon";
+
+revoke delete on table "public"."subscription_plans" from "authenticated";
+
+revoke insert on table "public"."subscription_plans" from "authenticated";
+
+revoke references on table "public"."subscription_plans" from "authenticated";
+
+revoke select on table "public"."subscription_plans" from "authenticated";
+
+revoke trigger on table "public"."subscription_plans" from "authenticated";
+
+revoke truncate on table "public"."subscription_plans" from "authenticated";
+
+revoke update on table "public"."subscription_plans" from "authenticated";
+
+revoke delete on table "public"."subscription_plans" from "service_role";
+
+revoke insert on table "public"."subscription_plans" from "service_role";
+
+revoke references on table "public"."subscription_plans" from "service_role";
+
+revoke select on table "public"."subscription_plans" from "service_role";
+
+revoke trigger on table "public"."subscription_plans" from "service_role";
+
+revoke truncate on table "public"."subscription_plans" from "service_role";
+
+revoke update on table "public"."subscription_plans" from "service_role";
+
+revoke delete on table "public"."supabase_migrations" from "anon";
+
+revoke insert on table "public"."supabase_migrations" from "anon";
+
+revoke references on table "public"."supabase_migrations" from "anon";
+
+revoke select on table "public"."supabase_migrations" from "anon";
+
+revoke trigger on table "public"."supabase_migrations" from "anon";
+
+revoke truncate on table "public"."supabase_migrations" from "anon";
+
+revoke update on table "public"."supabase_migrations" from "anon";
+
+revoke delete on table "public"."supabase_migrations" from "authenticated";
+
+revoke insert on table "public"."supabase_migrations" from "authenticated";
+
+revoke references on table "public"."supabase_migrations" from "authenticated";
+
+revoke select on table "public"."supabase_migrations" from "authenticated";
+
+revoke trigger on table "public"."supabase_migrations" from "authenticated";
+
+revoke truncate on table "public"."supabase_migrations" from "authenticated";
+
+revoke update on table "public"."supabase_migrations" from "authenticated";
+
+revoke delete on table "public"."supabase_migrations" from "service_role";
+
+revoke insert on table "public"."supabase_migrations" from "service_role";
+
+revoke references on table "public"."supabase_migrations" from "service_role";
+
+revoke select on table "public"."supabase_migrations" from "service_role";
+
+revoke trigger on table "public"."supabase_migrations" from "service_role";
+
+revoke truncate on table "public"."supabase_migrations" from "service_role";
+
+revoke update on table "public"."supabase_migrations" from "service_role";
+
+revoke delete on table "public"."user_achievements" from "anon";
+
+revoke insert on table "public"."user_achievements" from "anon";
+
+revoke references on table "public"."user_achievements" from "anon";
+
+revoke select on table "public"."user_achievements" from "anon";
+
+revoke trigger on table "public"."user_achievements" from "anon";
+
+revoke truncate on table "public"."user_achievements" from "anon";
+
+revoke update on table "public"."user_achievements" from "anon";
+
+revoke delete on table "public"."user_achievements" from "authenticated";
+
+revoke insert on table "public"."user_achievements" from "authenticated";
+
+revoke references on table "public"."user_achievements" from "authenticated";
+
+revoke select on table "public"."user_achievements" from "authenticated";
+
+revoke trigger on table "public"."user_achievements" from "authenticated";
+
+revoke truncate on table "public"."user_achievements" from "authenticated";
+
+revoke update on table "public"."user_achievements" from "authenticated";
+
+revoke delete on table "public"."user_achievements" from "service_role";
+
+revoke insert on table "public"."user_achievements" from "service_role";
+
+revoke references on table "public"."user_achievements" from "service_role";
+
+revoke select on table "public"."user_achievements" from "service_role";
+
+revoke trigger on table "public"."user_achievements" from "service_role";
+
+revoke truncate on table "public"."user_achievements" from "service_role";
+
+revoke update on table "public"."user_achievements" from "service_role";
+
+revoke delete on table "public"."user_event_participation" from "anon";
+
+revoke insert on table "public"."user_event_participation" from "anon";
+
+revoke references on table "public"."user_event_participation" from "anon";
+
+revoke select on table "public"."user_event_participation" from "anon";
+
+revoke trigger on table "public"."user_event_participation" from "anon";
+
+revoke truncate on table "public"."user_event_participation" from "anon";
+
+revoke update on table "public"."user_event_participation" from "anon";
+
+revoke delete on table "public"."user_event_participation" from "authenticated";
+
+revoke insert on table "public"."user_event_participation" from "authenticated";
+
+revoke references on table "public"."user_event_participation" from "authenticated";
+
+revoke select on table "public"."user_event_participation" from "authenticated";
+
+revoke trigger on table "public"."user_event_participation" from "authenticated";
+
+revoke truncate on table "public"."user_event_participation" from "authenticated";
+
+revoke update on table "public"."user_event_participation" from "authenticated";
+
+revoke delete on table "public"."user_event_participation" from "service_role";
+
+revoke insert on table "public"."user_event_participation" from "service_role";
+
+revoke references on table "public"."user_event_participation" from "service_role";
+
+revoke select on table "public"."user_event_participation" from "service_role";
+
+revoke trigger on table "public"."user_event_participation" from "service_role";
+
+revoke truncate on table "public"."user_event_participation" from "service_role";
+
+revoke update on table "public"."user_event_participation" from "service_role";
+
+revoke delete on table "public"."user_training_plans" from "anon";
+
+revoke insert on table "public"."user_training_plans" from "anon";
+
+revoke references on table "public"."user_training_plans" from "anon";
+
+revoke select on table "public"."user_training_plans" from "anon";
+
+revoke trigger on table "public"."user_training_plans" from "anon";
+
+revoke truncate on table "public"."user_training_plans" from "anon";
+
+revoke update on table "public"."user_training_plans" from "anon";
+
+revoke delete on table "public"."user_training_plans" from "authenticated";
+
+revoke insert on table "public"."user_training_plans" from "authenticated";
+
+revoke references on table "public"."user_training_plans" from "authenticated";
+
+revoke select on table "public"."user_training_plans" from "authenticated";
+
+revoke trigger on table "public"."user_training_plans" from "authenticated";
+
+revoke truncate on table "public"."user_training_plans" from "authenticated";
+
+revoke update on table "public"."user_training_plans" from "authenticated";
+
+revoke delete on table "public"."user_training_plans" from "service_role";
+
+revoke insert on table "public"."user_training_plans" from "service_role";
+
+revoke references on table "public"."user_training_plans" from "service_role";
+
+revoke select on table "public"."user_training_plans" from "service_role";
+
+revoke trigger on table "public"."user_training_plans" from "service_role";
+
+revoke truncate on table "public"."user_training_plans" from "service_role";
+
+revoke update on table "public"."user_training_plans" from "service_role";
+
+revoke delete on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke insert on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke references on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke select on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke trigger on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke truncate on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke update on table "public"."whatsapp_gamification_log" from "anon";
+
+revoke delete on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke insert on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke references on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke select on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke trigger on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke truncate on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke update on table "public"."whatsapp_gamification_log" from "authenticated";
+
+revoke delete on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke insert on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke references on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke select on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke trigger on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke truncate on table "public"."whatsapp_gamification_log" from "service_role";
+
+revoke update on table "public"."whatsapp_gamification_log" from "service_role";
+
+alter table "public"."achievements" drop constraint "achievements_code_key";
+
+alter table "public"."achievements" drop constraint "ux_achievements_code";
+
+alter table "public"."daily_activities" drop constraint "daily_activities_user_id_activity_date_activity_type_activi_key";
+
+alter table "public"."daily_activities" drop constraint "daily_activities_user_id_fkey";
+
+alter table "public"."daily_checkins" drop constraint "daily_checkins_stress_level_check";
+
+alter table "public"."daily_checkins" drop constraint "unique_user_date_checkin";
+
+alter table "public"."daily_missions" drop constraint "daily_missions_user_id_fkey";
+
+alter table "public"."daily_missions" drop constraint "daily_missions_user_id_mission_date_mission_type_key";
+
+alter table "public"."gamification" drop constraint "gamification_achievement_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_emotional_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_monthly_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_nutrition_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_physical_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_referral_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_spiritual_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_weekly_points_check";
+
+alter table "public"."gamification" drop constraint "gamification_yearly_points_check";
+
+alter table "public"."leaderboards" drop constraint "leaderboards_user_id_fkey";
+
+alter table "public"."leaderboards" drop constraint "leaderboards_user_id_ranking_type_category_period_start_per_key";
+
+alter table "public"."redemption_history" drop constraint "redemption_history_status_check";
+
+alter table "public"."redemption_history" drop constraint "redemption_history_user_id_fkey";
+
+alter table "public"."referrals" drop constraint "referrals_referred_id_fkey";
+
+alter table "public"."referrals" drop constraint "referrals_referrer_id_fkey";
+
+alter table "public"."referrals" drop constraint "referrals_referrer_id_referred_id_key";
+
+alter table "public"."referrals" drop constraint "referrals_status_check";
+
+alter table "public"."user_achievements" drop constraint "user_achievements_achievement_id_fkey";
+
+alter table "public"."user_achievements" drop constraint "user_achievements_user_id_achievement_id_key";
+
+alter table "public"."user_achievements" drop constraint "user_achievements_user_id_fkey";
+
+alter table "public"."user_event_participation" drop constraint "user_event_participation_event_id_fkey";
+
+alter table "public"."user_event_participation" drop constraint "user_event_participation_user_id_event_id_key";
+
+alter table "public"."user_event_participation" drop constraint "user_event_participation_user_id_fkey";
+
+alter table "public"."user_training_plans" drop constraint "user_training_plans_user_id_fkey";
+
+drop view if exists "public"."app_plans";
+
+drop function if exists "public"."create_user_profile_on_signup"();
+
+drop function if exists "public"."generate_daily_missions_for_user"(p_user_id uuid, p_date date);
+
+drop function if exists "public"."get_auth_user"();
+
+drop function if exists "public"."on_auth_user_created"();
+
+drop view if exists "public"."planos";
+
+drop view if exists "public"."plans_normalized";
+
+drop view if exists "public"."recompensas";
+
+drop function if exists "public"."set_updated_at"();
+
+drop function if exists "public"."trigger_update_points_on_activity"();
+
+drop function if exists "public"."update_daily_checkins_updated_at"();
+
+drop function if exists "public"."update_user_gamification"(p_user_id uuid, p_points_to_add integer, p_activity_type text, p_is_bonus boolean);
+
+drop function if exists "public"."update_user_training_plans_updated_at"();
+
+drop view if exists "public"."user_progress";
+
+drop function if exists "public"."calculate_bmi"(weight_kg numeric, height_cm numeric);
+
+alter table "public"."achievements" drop constraint "achievements_pkey";
+
+alter table "public"."comments" drop constraint "comments_pkey";
+
+alter table "public"."daily_activities" drop constraint "daily_activities_pkey";
+
+alter table "public"."daily_missions" drop constraint "daily_missions_pkey";
+
+alter table "public"."gamification_events" drop constraint "gamification_events_pkey";
+
+alter table "public"."leaderboards" drop constraint "leaderboards_pkey";
+
+alter table "public"."redemption_history" drop constraint "redemption_history_pkey";
+
+alter table "public"."referrals" drop constraint "referrals_pkey";
+
+alter table "public"."subscription_plans" drop constraint "subscription_plans_pkey";
+
+alter table "public"."supabase_migrations" drop constraint "supabase_migrations_pkey";
+
+alter table "public"."user_achievements" drop constraint "user_achievements_pkey";
+
+alter table "public"."user_event_participation" drop constraint "user_event_participation_pkey";
+
+alter table "public"."user_training_plans" drop constraint "user_training_plans_pkey";
+
+alter table "public"."whatsapp_gamification_log" drop constraint "whatsapp_gamification_log_pkey";
+
+drop index if exists "public"."achievements_code_key";
+
+drop index if exists "public"."achievements_pkey";
+
+drop index if exists "public"."comments_pkey";
+
+drop index if exists "public"."daily_activities_pkey";
+
+drop index if exists "public"."daily_activities_user_id_activity_date_activity_type_activi_key";
+
+drop index if exists "public"."daily_missions_pkey";
+
+drop index if exists "public"."daily_missions_user_id_mission_date_mission_type_key";
+
+drop index if exists "public"."gamification_events_pkey";
+
+drop index if exists "public"."idx_comments_post_id";
+
+drop index if exists "public"."idx_comments_user_id";
+
+drop index if exists "public"."idx_daily_activities_type";
+
+drop index if exists "public"."idx_daily_activities_user_date";
+
+drop index if exists "public"."idx_daily_checkins_created_at";
+
+drop index if exists "public"."idx_daily_checkins_date";
+
+drop index if exists "public"."idx_daily_checkins_mood_score";
+
+drop index if exists "public"."idx_daily_checkins_user_id_date";
+
+drop index if exists "public"."idx_daily_checkins_weight";
+
+drop index if exists "public"."idx_daily_missions_completion";
+
+drop index if exists "public"."idx_daily_missions_user_date";
+
+drop index if exists "public"."idx_events_active_dates";
+
+drop index if exists "public"."idx_gamification_level";
+
+drop index if exists "public"."idx_gamification_total_points";
+
+drop index if exists "public"."idx_gamification_user_id";
+
+drop index if exists "public"."idx_leaderboards_points";
+
+drop index if exists "public"."idx_leaderboards_rank";
+
+drop index if exists "public"."idx_leaderboards_type_category";
+
+drop index if exists "public"."idx_subscription_plans_is_active";
+
+drop index if exists "public"."idx_user_participation_events";
+
+drop index if exists "public"."idx_user_profiles_activity_level";
+
+drop index if exists "public"."idx_user_profiles_current_weight";
+
+drop index if exists "public"."idx_user_profiles_goal_type";
+
+drop index if exists "public"."idx_user_profiles_phone";
+
+drop index if exists "public"."idx_user_training_plans_active";
+
+drop index if exists "public"."idx_user_training_plans_created";
+
+drop index if exists "public"."idx_user_training_plans_plan_data_gin";
+
+drop index if exists "public"."idx_user_training_plans_progress_gin";
+
+drop index if exists "public"."idx_user_training_plans_type";
+
+drop index if exists "public"."idx_user_training_plans_user_id";
+
+drop index if exists "public"."idx_whatsapp_gamification_log_created_at";
+
+drop index if exists "public"."idx_whatsapp_messages_created_at";
+
+drop index if exists "public"."leaderboards_pkey";
+
+drop index if exists "public"."leaderboards_user_id_ranking_type_category_period_start_per_key";
+
+drop index if exists "public"."redemption_history_pkey";
+
+drop index if exists "public"."referrals_pkey";
+
+drop index if exists "public"."referrals_referrer_id_referred_id_key";
+
+drop index if exists "public"."subscription_plans_pkey";
+
+drop index if exists "public"."supabase_migrations_pkey";
+
+drop index if exists "public"."unique_user_date_checkin";
+
+drop index if exists "public"."user_achievements_pkey";
+
+drop index if exists "public"."user_achievements_user_id_achievement_id_key";
+
+drop index if exists "public"."user_event_participation_pkey";
+
+drop index if exists "public"."user_event_participation_user_id_event_id_key";
+
+drop index if exists "public"."user_training_plans_pkey";
+
+drop index if exists "public"."ux_achievements_code";
+
+drop index if exists "public"."whatsapp_gamification_log_pkey";
+
+drop table "public"."achievements";
+
+drop table "public"."comments";
+
+drop table "public"."daily_activities";
+
+drop table "public"."daily_missions";
+
+drop table "public"."gamification_events";
+
+drop table "public"."leaderboards";
+
+drop table "public"."redemption_history";
+
+drop table "public"."referrals";
+
+drop table "public"."subscription_plans";
+
+drop table "public"."supabase_migrations";
+
+drop table "public"."user_achievements";
+
+drop table "public"."user_event_participation";
+
+drop table "public"."user_training_plans";
+
+drop table "public"."whatsapp_gamification_log";
+
+alter table "public"."daily_checkins" drop column "mood_score";
+
+alter table "public"."daily_checkins" drop column "stress_level";
+
+alter table "public"."daily_checkins" drop column "updated_at";
+
+alter table "public"."daily_checkins" drop column "water_glasses";
+
+alter table "public"."daily_checkins" drop column "weight";
+
+alter table "public"."daily_checkins" alter column "date" drop default;
+
+alter table "public"."daily_checkins" alter column "exercise_minutes" drop default;
+
+alter table "public"."daily_checkins" alter column "mood" set not null;
+
+alter table "public"."daily_checkins" alter column "water_intake" drop default;
+
+alter table "public"."gamification" drop column "achievement_points";
+
+alter table "public"."gamification" drop column "emotional_points";
+
+alter table "public"."gamification" drop column "monthly_points";
+
+alter table "public"."gamification" drop column "nutrition_points";
+
+alter table "public"."gamification" drop column "physical_points";
+
+alter table "public"."gamification" drop column "referral_points";
+
+alter table "public"."gamification" drop column "spiritual_points";
+
+alter table "public"."gamification" drop column "weekly_points";
+
+alter table "public"."gamification" drop column "yearly_points";
+
+alter table "public"."user_profiles" drop column "current_weight";
+
+alter table "public"."user_profiles" drop column "full_name";
+
+alter table "public"."user_profiles" drop column "gender";
+
+alter table "public"."user_profiles" drop column "goal_type";
+
+alter table "public"."user_profiles" drop column "phone";
+
+alter table "public"."user_profiles" drop column "target_weight";
+
+alter table "public"."user_profiles" drop column "whatsapp";
+
+alter table "public"."user_profiles" add column "role" text not null default 'client'::text;
+
+alter table "public"."user_profiles" add constraint "user_profiles_role_check" CHECK ((role = ANY (ARRAY['client'::text, 'partner'::text, 'admin'::text]))) not valid;
+
+alter table "public"."user_profiles" validate constraint "user_profiles_role_check";
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.create_gamification_for_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    INSERT INTO gamification (user_id) VALUES (NEW.id);
+    RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  user_phone TEXT;
+BEGIN
+  -- Extract phone from metadata
+  user_phone := COALESCE(
+    NEW.raw_user_meta_data->>'whatsapp',
+    NEW.raw_user_meta_data->>'phone',
+    NULL
+  );
+
+  INSERT INTO public.user_profiles (
+    id,
+    name,
+    email,
+    activity_level,
+    role,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+    COALESCE(NEW.email, 'user' || substr(NEW.id::text, 1, 8) || '@temp.local'),
+    'moderate',
+    COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    name = COALESCE(EXCLUDED.name, user_profiles.name),
+    email = COALESCE(EXCLUDED.email, user_profiles.email),
+    updated_at = NOW();
+  
+  -- Create gamification record if it doesn't exist
+  INSERT INTO public.gamification (
+    user_id,
+    level,
+    xp,
+    coins,
+    streak,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    1,
+    0,
+    0,
+    0,
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (user_id) DO NOTHING;
+  
+  RETURN NEW;
+EXCEPTION 
+  WHEN OTHERS THEN
+    -- Log the error but don't fail the user creation
+    RAISE WARNING 'Error in handle_new_user trigger: %', SQLERRM;
+    RETURN NEW;
+END;
+$function$
+;
+
+
+

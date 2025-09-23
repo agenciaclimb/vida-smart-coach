@@ -1,0 +1,7 @@
+Using project host: supabase.co
+Loading project ref from file: supabase\.temp\project-ref
+Using connection pooler: postgresql://postgres.zzugbgoylwbaojdnunuz:[YOUR-PASSWORD]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+Initialising login role...
+Using access token for profile: supabase
+failed to connect as temp role: failed to connect to `host=aws-0-sa-east-1.pooler.supabase.com user=cli_login_postgres.zzugbgoylwbaojdnunuz database=postgres`: failed SASL auth (invalid SCRAM server-final-message received from server)
+Retry (1/8): failed to connect as temp role: failed to connect to `host=aws-0-sa-east-1.pooler.supabase.com user=cli_login_postgres.zzugbgoylwbaojdnunuz database=postgres`: failed SASL auth (invalid SCRAM server-final-message received from server)

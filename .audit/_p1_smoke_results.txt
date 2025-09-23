@@ -1,0 +1,6 @@
+Trigger on auth.users: 1 row
+  trigger enabled=O
+Functions handle_new_user / on_auth_user_created / sync_profile_from_auth: 3 rows
+  functions: public.handle_new_user(), public.on_auth_user_created(), public.sync_profile_from_auth()
+Sample row from public.plans_normalized: ERROR - 42P01 relation "public.plans_normalized" does not exist
+Index definition: 0 rows
