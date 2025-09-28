@@ -1,182 +1,88 @@
-# Supabase CLI (v1)
+# Vida Smart Coach - Guia Técnico
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main)
+## 1. Visão Geral
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+O Vida Smart Coach é um sistema de coaching de vida holístico, construído sobre a plataforma Supabase. Ele utiliza uma IA com tecnologia da OpenAI para fornecer coaching personalizado em quatro áreas: física, alimentar, emocional e espiritual. A integração com o WhatsApp é feita através da API Evolution, e os pagamentos são processados pelo Stripe.
 
-This repository contains all the functionality for Supabase CLI.
+## 2. Arquitetura
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+- **Backend & Banco de Dados:** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage, Edge Functions).
+- **Frontend:** React (Vite).
+- **IA (Inteligência Artificial):** [OpenAI API](https://openai.com/docs) (GPT).
+- **Mensageria:** [Evolution API](https://evolution-api.com/) para integração com o WhatsApp.
+- **Pagamentos:** [Stripe](https://stripe.com/) para gerenciamento de assinaturas.
+- **Testes:** [Vitest](https://vitest.dev/) para testes unitários e de integração.
 
-## Getting started
+## 3. Pré-requisitos
 
-### Install the CLI
+Antes de começar, certifique-se de ter as seguintes ferramentas instaladas:
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+- [Node.js](https://nodejs.org/) (versão 20.x ou superior)
+- [pnpm](https://pnpm.io/installation)
+- [Docker](https://www.docker.com/products/docker-desktop/) (necessário para o Supabase CLI)
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
 
-```bash
-npm i supabase --save-dev
-```
+## 4. Configuração do Ambiente
 
-To install the beta release channel:
+1.  **Clonar o Repositório:**
+    ```bash
+    git clone <URL_DO_REPOSITORIO>
+    cd vida-smart-coach
+    ```
 
-```bash
-npm i supabase@beta --save-dev
-```
+2.  **Instalar Dependências:**
+    ```bash
+    pnpm install
+    ```
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+3.  **Configurar Variáveis de Ambiente:**
+    Crie uma cópia do arquivo `.env.example` (se existir) ou crie um novo arquivo chamado `.env` na raiz do projeto e adicione as seguintes variáveis:
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+    ```env
+    # Supabase (obtido ao rodar 'supabase start')
+    SUPABASE_URL=http://localhost:54321
+    SUPABASE_ANON_KEY=your-anon-key
+    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+    # OpenAI
+    OPENAI_API_KEY=sk-your-openai-api-key
 
-<details>
-  <summary><b>macOS</b></summary>
+    # Stripe
+    STRIPE_API_KEY=sk_test_your-stripe-api-key
+    STRIPE_WEBHOOK_SECRET=whsec_your-stripe-webhook-secret
 
-  Available via [Homebrew](https://brew.sh). To install:
+    # Evolution API (para o webhook do WhatsApp)
+    EVOLUTION_API_SECRET=your-evolution-api-secret
+    EVOLUTION_API_URL=http://localhost:8080
+    EVOLUTION_API_KEY=your-evolution-api-key
+    ```
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+## 5. Executando o Projeto Localmente
 
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
+1.  **Iniciar o Ambiente Supabase:**
+    Este comando iniciará os contêineres do Docker para o banco de dados, Auth e outras APIs do Supabase. Ao final, ele exibirá as URLs e chaves da API local, que você deve usar para preencher seu arquivo `.env`.
 
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
+    ```bash
+    supabase start
+    ```
 
-<details>
-  <summary><b>Windows</b></summary>
+2.  **Aplicar as Migrações do Banco de Dados:**
+    Para criar as tabelas e funções necessárias, execute:
+    ```bash
+    supabase db reset
+    ```
 
-  Available via [Scoop](https://scoop.sh). To install:
+3.  **Iniciar o Frontend:**
+    Em um novo terminal, inicie o servidor de desenvolvimento do Vite:
+    ```bash
+    pnpm dev
+    ```
+    A aplicação estará disponível em `http://localhost:5173`.
 
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
+## 6. Executando os Testes
 
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+Para garantir a qualidade e a estabilidade do código, execute a suíte de testes automatizados:
 
 ```bash
-supabase bootstrap
-```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
-
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
+pnpm test
 ```

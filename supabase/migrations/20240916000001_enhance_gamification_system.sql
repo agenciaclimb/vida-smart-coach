@@ -357,18 +357,17 @@ DECLARE
     ]'::JSONB;
     
     mission JSONB;
-    selected_missions JSONB[];
-    i INTEGER;
+    mission_type_record RECORD; -- Declare a record variable for the loop
 BEGIN
     -- Delete existing missions for the date
     DELETE FROM daily_missions WHERE user_id = p_user_id AND mission_date = p_date;
     
     -- Select one mission of each type randomly
-    FOR mission_type IN SELECT DISTINCT value->>'type' FROM jsonb_array_elements(missions_data)
+    FOR mission_type_record IN SELECT DISTINCT value->>'type' AS type FROM jsonb_array_elements(missions_data) -- Alias the column
     LOOP
         SELECT value INTO mission 
         FROM jsonb_array_elements(missions_data) 
-        WHERE value->>'type' = mission_type 
+        WHERE value->>'type' = mission_type_record.type -- Use the alias
         ORDER BY random() 
         LIMIT 1;
         

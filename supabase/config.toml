@@ -323,40 +323,34 @@ backend = "postgres"
 
 # Edge Functions configuration
 [functions.hello-world]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-affiliates]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-create-affiliate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-delete-affiliate]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-active-provider]
-verify_jwt = false
+verify_jwt = true
 
 [functions.evolution-qr]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-google-credentials]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-google-calendar-credentials]
-verify_jwt = false
+verify_jwt = true
 
-[functions.account-upsert]
-verify_jwt = false
-
-[functions.account-upsert-fixed]
-verify_jwt = false
-
-[functions.account-upsert-fixed-corrected]
-verify_jwt = false
+[functions.upsert-user]
+verify_jwt = true
 
 [functions.user-creation-fix]
-verify_jwt = false
+verify_jwt = true
 
 [functions.evolution-webhook]
 verify_jwt = false
@@ -375,10 +369,10 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.agent-create]
-verify_jwt = false
+verify_jwt = true
 
 [functions.agent-report]
-verify_jwt = false
+verify_jwt = true
 
 [functions.agent-apply-patch]
-verify_jwt = false
+verify_jwt = true

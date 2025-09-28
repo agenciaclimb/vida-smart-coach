@@ -38,13 +38,11 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@stripe/stripe-js": "^2.2.2",
     "@supabase/auth-helpers-react": "^0.5.0",
-    "@supabase/supabase-js": "^2.57.4",
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
     "date-fns": "^3.0.6",
-    "dotenv": "^17.2.2",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.378.0",
     "pm2": "^6.0.10",
@@ -59,7 +57,10 @@
     "tailwind-merge": "^1.1.4",
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "stripe": "^14.0.0",
+    "@supabase/supabase-js": "^2.57.4",
+    "micro": "^10.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
@@ -70,6 +71,7 @@
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
+    "dotenv": "^17.2.2",
     "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
     "typescript": "^5.4.0",
@@ -77,5 +79,9 @@
   },
   "config": {
     "supabase_ref": "SEU-PROJECT-REF"
+  },
+  "packageManager": "pnpm@8.15.6",
+  "engines": {
+    "node": "20.x"
   }
 }
