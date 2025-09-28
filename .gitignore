@@ -1,3 +1,19 @@
+# Node / build
 node_modules/
 dist/
-tsconfig.tsbuildinfo
+.vercel/
+.vscode/
+coverage/
+
+# Ambientes
+.env*
+!.env.example
+
+# Logs e temporários
+logs/
+*.log
+.tmp/
+codex_*/
+.codex_*
+audit/
+sandbox/
