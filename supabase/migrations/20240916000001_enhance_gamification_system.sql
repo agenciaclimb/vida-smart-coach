@@ -342,7 +342,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function to generate daily missions
 CREATE OR REPLACE FUNCTION generate_daily_missions_for_user(p_user_id UUID, p_date DATE DEFAULT CURRENT_DATE)
-RETURNS VOID AS $
+RETURNS VOID AS $$
 DECLARE
     missions_data JSONB := '[
         {"type": "easy", "category": "physical", "title": "Check-in de treino", "description": "Faça seu check-in de treino diário", "points": 10},
@@ -381,7 +381,7 @@ BEGIN
         );
     END LOOP;
 END;
-$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 -- ==========================================
 -- 14. TRIGGERS
