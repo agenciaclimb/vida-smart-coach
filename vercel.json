@@ -31,8 +31,8 @@
     }
   },
   "functions": {
-    "app/**": {
-      "runtime": "nodejs18.x"
+    "api/**/*.{js,ts}": {
+      "runtime": "nodejs20.x"
     }
   }
 }
