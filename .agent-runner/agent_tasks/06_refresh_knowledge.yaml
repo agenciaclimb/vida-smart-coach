@@ -1,0 +1,12 @@
+name: "Atualizar conhecimento do documento mestre"
+goal: "Extrair trecho recente do Documento Mestre para auxiliar o planejamento"
+steps:
+  - run: 'powershell -File scripts\\refresh-knowledge.ps1'
+    expect: "Trecho salvo"
+  - analyze: |
+      Resumir pontos criticos do trecho gerado em domain_knowledge/doc_excerpt.md.
+      Sinalizar novas metas ou incidentes mencionados.
+  - output: "agent_outputs/doc_excerpt_summary.md"
+context:
+  notas: |
+    Utilize este passo antes de gerar novos planos longos, garantindo que o LLM receba informacoes atualizadas.

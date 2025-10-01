@@ -1,0 +1,13 @@
+name: "Checar Supabase Auth e REST"
+goal: "Validar endpoints e chaves"
+steps:
+  - run: 'curl -fsSL "%SUPABASE_URL%/auth/v1/health" -H "apikey: %SUPABASE_ANON_KEY%"'
+  - run: 'powershell -Command "(Invoke-WebRequest -Headers @{apikey=\"$env:SUPABASE_ANON_KEY\"} -Uri \"$env:SUPABASE_URL/rest/v1/\" -Method Head).StatusCode"'
+  - analyze: |
+      Esperado: JSON de health no Auth e status 200 ou 401 no REST.
+      Se houver divergencia, sugerir checagens de chave ou URL.
+  - output: "agent_outputs/supabase_health_report.md"
+context:
+  supabase_logs: |
+    Falha recorrente: 403/401 apos troca de ANON_KEY no Vercel.
+    Conferir se service role esta restrito ao backend; nao expor em clientes.

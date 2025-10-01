@@ -1,0 +1,18 @@
+{
+  "name": "vida-agent-dual-provider",
+  "private": true,
+  "type": "module",
+  "version": "0.2.0",
+  "scripts": {
+    "build": "echo \"No build needed\"",
+    "agent:plan": "node ./scripts/agent-plan.mjs",
+    "agent:apply": "node ./scripts/agent-apply.mjs",
+    "agent:loop": "bash ./scripts/vida-agent-loop.sh",
+    "agent:loop:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/vida-agent-loop.ps1",
+    "agent:nightly": "powershell -ExecutionPolicy Bypass -File ./scripts/vida-agent-nightly.ps1",
+    "validate": "bash ./scripts/validate.sh"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,18 @@
+name: "Verificar variaveis essenciais"
+goal: "Checar e consolidar envs locais e de producao"
+steps:
+  - run: 'powershell -File scripts\\sync-env.ps1'
+    expect: "Copia concluida"
+  - run: 'type .env.local'
+    when: 'exists(".env.local")'
+  - run: 'vercel env pull .env.vercel'
+    expect: "arquivo .env.vercel criado"
+  - analyze: |
+      Compare .env.example, .env.local e .env.vercel.
+      Liste variaveis faltantes ou diferentes.
+  - output: "agent_outputs/env_diff_report.md"
+context:
+  referencias: |
+    Projeto principal guarda secrets em C:\Users\JE\Documents\vida-smart-coach\.env.local.
+    Validar SUPABASE_URL, SUPABASE_ANON_KEY, STRIPE_SECRET_KEY, VERCEL_TOKEN.
+    Marcar placeholders FIXME para variaveis ausentes.

@@ -1,0 +1,9 @@
+name: "Env Drift"
+goal: "Detectar variaveis faltantes ou divergentes entre Vercel e local"
+steps:
+  - run: 'vercel env pull .env.vercel'
+  - run: 'powershell -File scripts\\compare-env.ps1'
+  - output: "agent_outputs/env_drift_result.md"
+context:
+  drift_notes: |
+    Priorizar SUPABASE, STRIPE e chaves de webhooks. Se variaveis obrigatorias nao puderem ser sincronizadas, gerar `FIXME_SECRET_<NOME>` e instrucoes manualmente.

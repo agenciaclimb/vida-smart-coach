@@ -1,0 +1,16 @@
+name: "Validar integracao GitHub e Vercel"
+goal: "Garantir que push dispara deploy"
+steps:
+  - run: 'vercel whoami'
+  - run: 'vercel link --yes'
+  - run: 'git remote -v'
+  - analyze: |
+      Se `vercel whoami` falhar ou nao houver link, solicitar novo VERCEL_TOKEN.
+      Se o remoto nao for o esperado, registrar o problema.
+  - output: "agent_outputs/vercel_github_report.md"
+context:
+  vercel_error_log: |
+    Erro comum: "Cannot install with frozen-lockfile" quando o projeto principal tem `pnpm install` faltando.
+    Se aparecer "No existing projects linked", rodar `vercel link` conforme orientacao do CLI.
+  github_notes: |
+    Deploy principal acontece a partir de `main`. Conferir se branch atual tem permissão no Vercel.

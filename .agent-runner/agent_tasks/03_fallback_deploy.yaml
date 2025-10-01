@@ -1,0 +1,9 @@
+name: "Fallback Deploy"
+goal: "Garantir deploy mesmo se integracao falhar"
+steps:
+  - run: 'vercel deploy --prod --confirm'
+  - analyze: "Se falhar, salvar log completo e propor acao corretiva."
+  - output: "agent_outputs/fallback_deploy_log.txt"
+context:
+  deploy_history: |
+    Usar apenas após validar 00-04. Se falhar com quota ou permissão, registrar no relatório e notificar manualmente.

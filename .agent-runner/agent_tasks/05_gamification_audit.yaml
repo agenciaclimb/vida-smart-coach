@@ -1,0 +1,15 @@
+name: "Auditar Gamification"
+goal: "Garantir consistencia do dashboard do cliente"
+steps:
+  - run: 'powershell -Command "Get-Content ..\\vida-smart-coach\\src\\components\\client\\GamificationTabEnhanced.jsx | Measure-Object -Line"'
+    expect: "Arquivo detectado."
+  - analyze: |
+      Revisar GamificationTabEnhanced.jsx (estado e hooks).
+      Conferir contexto em src/contexts/data/GamificationContext.jsx.
+      Verificar se metas, pontos e sequencias batem com o Documento Mestre.
+      Mapear pendencias encontradas pelo agente para proximos ciclos.
+  - output: "agent_outputs/gamification_audit.md"
+context:
+  foco_principal: |
+    Baseado no Documento Mestre: metas personalizaveis, sequencia diaria, progresso geral.
+    Priorizar bugs ou lacunas em calculo de pontos e metas individuais.
