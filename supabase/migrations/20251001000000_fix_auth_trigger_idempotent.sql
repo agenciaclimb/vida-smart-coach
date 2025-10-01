@@ -26,7 +26,7 @@ BEGIN
   )
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuario'),
     COALESCE(NEW.email, 'user' || substr(NEW.id::text, 1, 8) || '@temp.local'),
     'moderate',
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
@@ -38,8 +38,8 @@ BEGIN
     email = COALESCE(EXCLUDED.email, user_profiles.email),
     updated_at = NOW();
 
-  INSERT INTO public.gamification (user_id, level, xp, coins, streak, created_at, updated_at)
-  VALUES (NEW.id, 1, 0, 0, 0, NOW(), NOW())
+  INSERT INTO public.gamification (user_id, total_points, current_level, streak_days)
+  VALUES (NEW.id, 0, 1, 0)
   ON CONFLICT (user_id) DO NOTHING;
 
   RETURN NEW;
@@ -70,12 +70,22 @@ BEGIN
   ) INTO trigger_exists;
 
   IF trigger_exists THEN
-    EXECUTE 'DROP TRIGGER on_auth_user_created ON auth.users';
+    BEGIN
+      EXECUTE 'DROP TRIGGER on_auth_user_created ON auth.users';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Insufficient privileges to drop trigger on auth.users';
+    END;
   END IF;
 
-  EXECUTE 'CREATE TRIGGER on_auth_user_created
-           AFTER INSERT ON auth.users
-           FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()';
+  BEGIN
+    EXECUTE 'CREATE TRIGGER on_auth_user_created
+             AFTER INSERT ON auth.users
+             FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Insufficient privileges to create trigger on auth.users';
+  END;
 END $$;
 
 DO $$
