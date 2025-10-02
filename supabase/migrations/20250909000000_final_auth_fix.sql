@@ -121,6 +121,7 @@ CREATE POLICY "Users can update own profile"
   USING (auth.uid() = id);
 
 -- Service role policy for system operations
+DROP POLICY IF EXISTS "Service role full access" ON user_profiles;
 CREATE POLICY "Service role full access" 
   ON user_profiles 
   USING (auth.jwt()->>'role' = 'service_role');
