@@ -242,8 +242,8 @@ ON CONFLICT (name) DO NOTHING;
 ### **3. Migração do Banco**
 1. **Acesse o Supabase Dashboard**: https://app.supabase.com/project/zzugbgoylwbaojdnunuz
 2. **Vá para SQL Editor**
-3. **Execute o SQL acima** (copie e cole todo o bloco)
-4. **Verifique** se todas as tabelas foram criadas
+3. **Execute o SQL acima** (copie e cole todo o bloco), garantindo que as funções `public.handle_new_user()` e `public.sync_profile_from_auth()` e seus respectivos triggers (`on_auth_user_created`, `on_auth_user_updated`) sejam aplicados de forma idempotente.
+4. **Verifique** se todas as tabelas e triggers foram criados/atualizados corretamente.
 
 ### **4. Configuração WhatsApp (Opcional)**
 - Para integração real com WhatsApp, configure:
