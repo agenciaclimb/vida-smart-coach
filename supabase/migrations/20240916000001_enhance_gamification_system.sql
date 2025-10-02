@@ -357,6 +357,7 @@ DECLARE
     ]'::JSONB;
     
     mission JSONB;
+    mission_type_record RECORD;
     selected_missions JSONB[];
     mission_type_record RECORD;
 BEGIN
@@ -368,7 +369,11 @@ BEGIN
     LOOP
         SELECT value INTO mission 
         FROM jsonb_array_elements(missions_data) 
+<<<<<<< HEAD
         WHERE value->>'type' = mission_type_record.mission_type_record.mission_type_record.mission_type_record.mission_type_record.mission_type 
+=======
+        WHERE value->>'type' = mission_type_record.mission_type 
+>>>>>>> origin/main
         ORDER BY random() 
         LIMIT 1;
         
