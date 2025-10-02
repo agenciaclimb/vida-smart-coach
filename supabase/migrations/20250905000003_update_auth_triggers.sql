@@ -1,7 +1,8 @@
--- Fix auth trigger creation (idempotent)
--- Date: 2025-10-01
--- Purpose: Ensure handle_new_user trigger function exists and is applied safely
+-- Ensure required extensions
+create extension if not exists "pg_net" with schema extensions;
+create extension if not exists "supabase_vault" with schema vault;
 
+-- Recreate helper function that provisions a profile record for new auth users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -75,60 +76,19 @@ EXCEPTION
 END;
 $$;
 
-GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
-GRANT ALL ON public.user_profiles TO supabase_auth_admin;
-GRANT ALL ON public.gamification TO supabase_auth_admin;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
-GRANT EXECUTE ON FUNCTION public.sync_profile_from_auth() TO supabase_auth_admin;
+-- Remove old triggers before recreation to avoid duplicates
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
 
-DO $$
-DECLARE
-  trigger_exists BOOLEAN;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1
-    FROM pg_trigger t
-    JOIN pg_class c ON c.oid = t.tgrelid
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = 'auth'
-      AND c.relname = 'users'
-      AND t.tgname = 'on_auth_user_created'
-  ) INTO trigger_exists;
+-- Create trigger for new auth users
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user();
 
-  IF trigger_exists THEN
-    BEGIN
-      EXECUTE 'DROP TRIGGER on_auth_user_created ON auth.users';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE 'Insufficient privileges to drop trigger on auth.users';
-    END;
-  END IF;
-
-  BEGIN
-    EXECUTE 'CREATE TRIGGER on_auth_user_created
-             AFTER INSERT ON auth.users
-             FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()';
-  EXCEPTION
-    WHEN insufficient_privilege THEN
-      RAISE NOTICE 'Insufficient privileges to create trigger on auth.users';
-  END;
-END $$;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public'
-      AND tablename  = 'user_profiles'
-      AND policyname = 'Service role full access'
-  ) THEN
-    CREATE POLICY "Service role full access"
-      ON public.user_profiles
-      FOR ALL
-      USING (auth.jwt() ->> 'role' = 'service_role')
-      WITH CHECK (auth.jwt() ->> 'role' = 'service_role');
-  END IF;
-END $$;
-
-COMMENT ON FUNCTION public.handle_new_user() IS 'Creates user profile and gamification record when new user registers.';
-
+-- Sync updates from auth.users to profile
+CREATE TRIGGER on_auth_user_updated
+AFTER UPDATE OF email, phone, raw_user_meta_data, last_sign_in_at ON auth.users
+FOR EACH ROW
+WHEN (OLD.* IS DISTINCT FROM NEW.*)
+EXECUTE FUNCTION public.sync_profile_from_auth();

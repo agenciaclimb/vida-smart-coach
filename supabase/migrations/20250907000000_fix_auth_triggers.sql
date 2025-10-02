@@ -6,11 +6,11 @@ create extension if not exists "supabase_vault" with schema vault;
 drop trigger if exists on_auth_user_created on auth.users;
 drop trigger if exists on_auth_user_updated on auth.users;
 
--- 2. Conectar o AFTER INSERT de auth.users -> public.on_auth_user_created()
+-- 2. Conectar o AFTER INSERT de auth.users -> public.handle_new_user()
 create trigger on_auth_user_created
 after insert on auth.users
 for each row
-execute function public.on_auth_user_created();
+execute function public.handle_new_user();
 
 -- 3. Sincronizar updates essenciais do auth.users -> profiles
 create trigger on_auth_user_updated
