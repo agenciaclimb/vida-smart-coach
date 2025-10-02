@@ -62,8 +62,8 @@ BEGIN
   UPDATE public.user_profiles
      SET email = COALESCE(NEW.email, user_profiles.email),
          name = COALESCE(NEW.raw_user_meta_data->>'full_name', user_profiles.name),
-         role = COALESCE(NEW.raw_user_meta_data->>'role', user_profiles.role),
-         activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', user_profiles.activity_level),
+         role = COALESCE(NEW.raw_user_meta_data->>'role', EXCLUDED.role, user_profiles.role),
+         activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', EXCLUDED.activity_level, user_profiles.activity_level),
          updated_at = NOW()
    WHERE id = NEW.id;
 
@@ -131,3 +131,4 @@ BEGIN
 END $$;
 
 COMMENT ON FUNCTION public.handle_new_user() IS 'Creates user profile and gamification record when new user registers.';
+
