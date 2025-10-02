@@ -8,38 +8,40 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  user_phone TEXT;
+  fallback_email TEXT := COALESCE(NEW.email, 'user_' || NEW.id::text || '@temp.local');
+  fallback_name  TEXT := COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuario');
+  fallback_role  TEXT := COALESCE(NEW.raw_user_meta_data->>'role', 'client');
+  fallback_activity TEXT := COALESCE(NEW.raw_user_meta_data->>'activity_level', 'moderate');
 BEGIN
-  user_phone := COALESCE(
-    NEW.raw_user_meta_data->>'whatsapp',
-    NEW.raw_user_meta_data->>'phone'
-  );
-
   INSERT INTO public.user_profiles (
     id,
     name,
     email,
     activity_level,
     role,
+    onboarding_completed,
     created_at,
     updated_at
-  )
-  VALUES (
+  ) VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuario'),
-    COALESCE(NEW.email, 'user' || substr(NEW.id::text, 1, 8) || '@temp.local'),
-    'moderate',
-    COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+    fallback_name,
+    fallback_email,
+    fallback_activity,
+    fallback_role,
+    FALSE,
     NOW(),
     NOW()
   )
   ON CONFLICT (id) DO UPDATE SET
     name = COALESCE(EXCLUDED.name, user_profiles.name),
     email = COALESCE(EXCLUDED.email, user_profiles.email),
+    activity_level = COALESCE(user_profiles.activity_level, EXCLUDED.activity_level),
+    role = COALESCE(user_profiles.role, EXCLUDED.role),
+    onboarding_completed = COALESCE(user_profiles.onboarding_completed, EXCLUDED.onboarding_completed),
     updated_at = NOW();
 
-  INSERT INTO public.gamification (user_id, total_points, current_level, streak_days)
-  VALUES (NEW.id, 0, 1, 0)
+  INSERT INTO public.gamification (user_id)
+  VALUES (NEW.id)
   ON CONFLICT (user_id) DO NOTHING;
 
   RETURN NEW;
@@ -50,10 +52,34 @@ EXCEPTION
 END;
 $$;
 
+-- Keep profile information in sync when sensitive auth fields are updated
+CREATE OR REPLACE FUNCTION public.sync_profile_from_auth()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.user_profiles
+     SET email = COALESCE(NEW.email, user_profiles.email),
+         name = COALESCE(NEW.raw_user_meta_data->>'full_name', user_profiles.name),
+         role = COALESCE(NEW.raw_user_meta_data->>'role', user_profiles.role),
+         activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', user_profiles.activity_level),
+         updated_at = NOW()
+   WHERE id = NEW.id;
+
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING 'Error in sync_profile_from_auth trigger: %', SQLERRM;
+    RETURN NEW;
+END;
+$$;
+
 GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
 GRANT ALL ON public.user_profiles TO supabase_auth_admin;
 GRANT ALL ON public.gamification TO supabase_auth_admin;
 GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.sync_profile_from_auth() TO supabase_auth_admin;
 
 DO $$
 DECLARE
