@@ -5,7 +5,7 @@
 create or replace view public.rewards_normalized as
 select
   r.id,
-  coalesce(r.name, r.title)                                       as name,
+  coalesce(r.title, '')                                       as name,
   r.description,
   coalesce(r.points, r.points_required)                           as points,
   coalesce(r.icon, r.image_url)                                   as icon,

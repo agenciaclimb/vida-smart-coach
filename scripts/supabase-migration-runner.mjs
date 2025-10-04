@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
+
 /**
  * Supabase Migration Runner - Vida Smart Coach
  * Executa migrações usando a API REST do Supabase

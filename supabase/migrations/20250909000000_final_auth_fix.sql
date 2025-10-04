@@ -1,128 +1,83 @@
--- Final fix for authentication and user profile creation
+-- Final auth hardening: policies and safety checks
 -- Date: 2025-09-09
--- Purpose: Ensure user_profiles table has correct constraints and trigger
 
--- First, ensure the trigger function is properly set up
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-DECLARE
-  user_phone TEXT;
-BEGIN
-  -- Extract phone from metadata
-  user_phone := COALESCE(
-    NEW.raw_user_meta_data->>'whatsapp',
-    NEW.raw_user_meta_data->>'phone',
-    NULL
-  );
+-- Ensure Supabase Auth admin keeps required privileges
+grant usage on schema public to supabase_auth_admin;
+grant all on public.user_profiles to supabase_auth_admin;
+grant all on public.gamification to supabase_auth_admin;
+grant execute on function public.handle_new_user() to supabase_auth_admin;
+grant execute on function public.sync_profile_from_auth() to supabase_auth_admin;
 
-  INSERT INTO public.user_profiles (
-    id,
-    name,
-    email,
-    activity_level,
-    role,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
-    COALESCE(NEW.email, 'user' || substr(NEW.id::text, 1, 8) || '@temp.local'),
-    'moderate',
-    COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
-    NOW(),
-    NOW()
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    name = COALESCE(EXCLUDED.name, user_profiles.name),
-    email = COALESCE(EXCLUDED.email, user_profiles.email),
-    updated_at = NOW();
-  
-  -- Create gamification record if it doesn't exist
-  INSERT INTO public.gamification (
-    user_id,
-    level,
-    xp,
-    coins,
-    streak,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    1,
-    0,
-    0,
-    0,
-    NOW(),
-    NOW()
-  )
-  ON CONFLICT (user_id) DO NOTHING;
-  
-  RETURN NEW;
-EXCEPTION 
-  WHEN OTHERS THEN
-    -- Log the error but don't fail the user creation
-    RAISE WARNING 'Error in handle_new_user trigger: %', SQLERRM;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- Refresh row level security policies for user_profiles
+drop policy if exists "Users can view own profile" on user_profiles;
+drop policy if exists "Users can insert own profile" on user_profiles;
+drop policy if exists "Users can update own profile" on user_profiles;
 
--- Ensure proper permissions for the function
-GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
-GRANT ALL ON public.user_profiles TO supabase_auth_admin;
-GRANT ALL ON public.gamification TO supabase_auth_admin;
-GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
+create policy "Users can view own profile"
+  on user_profiles for select
+  using (auth.uid() = id);
 
--- Create trigger (will only succeed if we have permissions)
-DO $$
-DECLARE
-  trigger_exists BOOLEAN;
-BEGIN
-  SELECT EXISTS (
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'on_auth_user_created' 
-    AND tgrelid = 'auth.users'::regclass
-  ) INTO trigger_exists;
+create policy "Users can insert own profile"
+  on user_profiles for insert
+  with check (auth.uid() = id);
 
-  IF NOT trigger_exists THEN
-    BEGIN
-      CREATE TRIGGER on_auth_user_created
-        AFTER INSERT ON auth.users
-        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-      RAISE NOTICE 'Trigger created successfully';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE 'Insufficient privileges to create trigger on auth.users';
-      WHEN OTHERS THEN
-        RAISE NOTICE 'Failed to create trigger: %', SQLERRM;
-    END;
-  ELSE
-    RAISE NOTICE 'Trigger already exists';
-  END IF;
-END
-$$;
+create policy "Users can update own profile"
+  on user_profiles for update
+  using (auth.uid() = id);
 
--- Ensure RLS policies are correct
-DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+-- Explicit full access for service role tokens
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'user_profiles'
+      and policyname = 'Service role full access'
+  ) then
+    create policy "Service role full access"
+      on public.user_profiles
+      for all
+      using (auth.jwt() ->> 'role' = 'service_role')
+      with check (auth.jwt() ->> 'role' = 'service_role');
+  end if;
+end $$;
 
-CREATE POLICY "Users can view own profile" 
-  ON user_profiles FOR SELECT 
-  USING (auth.uid() = id);
+comment on function public.handle_new_user() is 'Creates or updates public.user_profiles when a new auth user is inserted.';
+comment on function public.sync_profile_from_auth() is 'Keeps public.user_profiles aligned with auth.users updates.';
 
-CREATE POLICY "Users can insert own profile" 
-  ON user_profiles FOR INSERT 
-  WITH CHECK (auth.uid() = id);
+-- If triggers were dropped by previous deployments, restore them
 
-CREATE POLICY "Users can update own profile" 
-  ON user_profiles FOR UPDATE 
-  USING (auth.uid() = id);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_trigger t
+    join pg_class c on c.oid = t.tgrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'auth'
+      and c.relname = 'users'
+      and t.tgname = 'on_auth_user_created'
+  ) then
+    create trigger on_auth_user_created
+      after insert on auth.users
+      for each row
+      execute function public.handle_new_user();
+  end if;
 
--- Service role policy for system operations
-CREATE POLICY "Service role full access" 
-  ON user_profiles 
-  USING (auth.jwt()->>'role' = 'service_role');
-
-COMMENT ON FUNCTION public.handle_new_user() IS 'Creates user profile and gamification record when new user registers';
+  if not exists (
+    select 1
+    from pg_trigger t
+    join pg_class c on c.oid = t.tgrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'auth'
+      and c.relname = 'users'
+      and t.tgname = 'on_auth_user_updated'
+  ) then
+    create trigger on_auth_user_updated
+      after update of email, phone, raw_user_meta_data, last_sign_in_at on auth.users
+      for each row
+      when (old.* is distinct from new.*)
+      execute function public.sync_profile_from_auth();
+  end if;
+end $$;

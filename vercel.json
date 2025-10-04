@@ -1,8 +1,9 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm ci",
+  "version": 2,
   "framework": "vite",
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ],
@@ -15,10 +16,5 @@
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
-  ],
-  "functions": {
-    "api/**/*.{js,ts}": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  ]
 }
