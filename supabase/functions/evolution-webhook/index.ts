@@ -94,6 +94,46 @@ async function findUserByPhone(client: SupabaseClient, originalPhone: string | n
   return data && data.length ? (data[0] as MatchedUser) : null;
 }
 
+async function detectContext(client: SupabaseClient, userMessage: string): Promise<{ cultural_context: string; spiritual_belief: string } | null> {
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!openaiKey) return null;
+
+  const detectionPrompt = `
+    Analise a seguinte mensagem de um usuário brasileiro e identifique o contexto cultural (região do Brasil) e a crença espiritual.
+    Responda APENAS com um objeto JSON contendo as chaves "cultural_context" e "spiritual_belief".
+    Se não for possível determinar, use "N/A".
+    Mensagem: "${userMessage}"
+  `;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "system", content: detectionPrompt }],
+        max_tokens: 50,
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Error detecting context:", await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (content) {
+      return JSON.parse(content);
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to detect context:", error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   const headers = cors(req.headers.get("origin"));
   if (req.method === "OPTIONS") {
@@ -156,21 +196,24 @@ serve(async (req) => {
 
     await supabase.from("whatsapp_messages").insert({
       user_id: matchedUser?.id ?? null,
-      phone_number: phoneNumber,
-      normalized_phone: normalizePhoneNumber(phoneNumber),
-      message_content: messageContent,
-      webhook_data: body,
-      received_at: new Date().toISOString(),
-      instance_id: instance,
+      phone: phoneNumber,
+      message: messageContent,
+      event: "messages.upsert",
+      timestamp: Date.now(),
     });
 
     if (isEmergency(messageContent)) {
       console.warn(`EMERGENCY DETECTED for phone: ${phoneNumber}.`);
-      await fetch("https://evolution.api/send-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: EMERGENCY_RESPONSE }),
-      }).catch((err) => console.error("Failed to send emergency response:", err));
+      const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
+      if (evolutionApiUrl) {
+        await fetch(`${evolutionApiUrl}/send-message`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: EMERGENCY_RESPONSE }),
+        }).catch((err) => console.error("Failed to send emergency response:", err));
+      } else {
+        console.error("EVOLUTION_API_URL environment variable not set");
+      }
 
       await supabase.from("emergency_alerts").insert({
         user_id: matchedUser?.id ?? null,
@@ -185,6 +228,26 @@ serve(async (req) => {
     }
 
     if (messageContent && messageContent !== "Mensagem nao suportada") {
+      if (matchedUser && (!matchedUser.cultural_context || !matchedUser.spiritual_belief)) {
+        const detected = await detectContext(supabase, messageContent);
+        if (detected) {
+          const { error: updateError } = await supabase
+            .from("user_profiles")
+            .update({
+              cultural_context: detected.cultural_context,
+              spiritual_belief: detected.spiritual_belief,
+            })
+            .eq("id", matchedUser.id);
+
+          if (updateError) {
+            console.error("Failed to update user context:", updateError);
+          } else {
+            matchedUser.cultural_context = detected.cultural_context;
+            matchedUser.spiritual_belief = detected.spiritual_belief;
+          }
+        }
+      }
+
       const openaiKey = Deno.env.get("OPENAI_API_KEY");
       if (openaiKey) {
         const systemPrompt = buildSystemPrompt(matchedUser);
@@ -206,11 +269,16 @@ serve(async (req) => {
           const aiData = await aiResponse.json();
           const aiMessage = aiData.choices?.[0]?.message?.content;
           if (aiMessage) {
-            await fetch("https://evolution.api/send-message", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: aiMessage }),
-            }).catch((err) => console.error("Failed to send AI response:", err));
+            const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
+            if (evolutionApiUrl) {
+              await fetch(`${evolutionApiUrl}/send-message`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: aiMessage }),
+              }).catch((err) => console.error("Failed to send AI response:", err));
+            } else {
+              console.error("EVOLUTION_API_URL environment variable not set");
+            }
           }
         } else {
           console.error("AI response error", await aiResponse.text());

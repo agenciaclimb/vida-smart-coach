@@ -47,6 +47,7 @@
     "dotenv": "^17.2.2",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.378.0",
+    "micro": "^10.0.0",
     "pm2": "^6.0.10",
     "postcss": "^8.4.31",
     "react": "^18.2.0",
@@ -56,6 +57,7 @@
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.16.0",
     "recharts": "^2.12.7",
+    "stripe": "^14.23.0",
     "tailwind-merge": "^1.1.4",
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
@@ -77,5 +79,9 @@
   },
   "config": {
     "supabase_ref": "SEU-PROJECT-REF"
-  }
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "packageManager": "npm@10.8.1"
 }
