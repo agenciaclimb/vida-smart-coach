@@ -7,134 +7,182 @@ export const config = { api: { bodyParser: false } };
 
 const API_VERSION: Stripe.LatestApiVersion = "2023-10-16";
 
-function getEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Env ausente: ${name}`);
-  return v;
+type LogLevel = "info" | "warn" | "error";
+
+type HandlerContext = {
+  stripe: Stripe;
+  event: Stripe.Event;
+  supabase: SupabaseClient | null;
+};
+
+type Handler = (ctx: HandlerContext) => Promise<void>;
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing env var: ${name}`);
+  }
+  return value;
 }
 
 function getStripe(): Stripe {
-  const key = getEnv("STRIPE_SECRET_KEY");
+  const key = requireEnv("STRIPE_SECRET_KEY");
   return new Stripe(key, { apiVersion: API_VERSION });
 }
 
 function maybeSupabase(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  if (!url || !key) {
+    return null;
+  }
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-function log(level: "info" | "warn" | "error", message: string, meta?: any) {
-  const line = JSON.stringify({ level, message, meta, ts: new Date().toISOString() });
+function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+  const payload = JSON.stringify({ level, message, meta, ts: new Date().toISOString() });
+  const consoleMethod = level === "error" ? "error" : level === "warn" ? "warn" : "log";
   // eslint-disable-next-line no-console
-  console[level === "error" ? "error" : level === "warn" ? "warn" : "log"](line);
+  console[consoleMethod](payload);
 }
 
-async function registerEventOnce(sb: SupabaseClient | null, eventId: string): Promise<boolean> {
-  if (!sb) return true;
-  const { error } = await sb.from("stripe_events").insert({ event_id: eventId }).select().single();
-  if (!error) return true;
-  if ((error as any)?.code === "23505") {
-    log("info", "Evento já processado (idempotência)", { eventId });
+async function registerEventOnce(client: SupabaseClient | null, eventId: string): Promise<boolean> {
+  if (!client) {
+    return true;
+  }
+  const { error } = await client
+    .from("stripe_events")
+    .insert({ event_id: eventId })
+    .select("id")
+    .maybeSingle();
+
+  if (!error) {
+    return true;
+  }
+
+  if (error.code === "23505") {
+    log("info", "Stripe event already processed", { eventId });
     return false;
   }
+
   throw error;
 }
 
-type Handler = (stripe: Stripe, event: Stripe.Event) => Promise<void>;
+async function upsertProfileFromSubscription(client: SupabaseClient, subscription: Stripe.Subscription) {
+  const customerId = String(subscription.customer);
+  const price = subscription.items?.data?.[0]?.price?.id ?? null;
+  const periodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : null;
 
-/* Handlers - SINTAXE CORRIGIDA */
+  const { error } = await client
+    .from("user_profiles")
+    .update({
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      stripe_subscription_status: subscription.status,
+      stripe_price_id: price,
+      stripe_current_period_end: periodEnd,
+    })
+    .eq("stripe_customer_id", customerId);
+
+  if (error) {
+    throw new Error(`Failed to sync subscription for customer ${customerId}: ${error.message}`);
+  }
+}
+
 const handlers: Record<string, Handler> = {
-  "checkout.session.completed": async (stripe, event) => {
+  "checkout.session.completed": async ({ stripe, event, supabase }) => {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.client_reference_id;
     const subscriptionId = session.subscription;
 
     if (!userId) {
-      log("error", "checkout.session.completed sem client_reference_id (userId)", { sessionId: session.id });
-      return; // Não é possível prosseguir sem o ID do usuário
+      log("error", "checkout.session.completed missing client_reference_id", { sessionId: session.id });
+      return;
     }
+
     if (typeof subscriptionId !== "string") {
-      log("error", "checkout.session.completed sem ID de assinatura", { sessionId: session.id });
-      return; // Ou lidar com pagamentos únicos
+      log("error", "checkout.session.completed without subscription id", { sessionId: session.id });
+      return;
     }
 
     log("info", "checkout.session.completed", { sessionId: session.id, userId, subscriptionId });
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-    const sb = maybeSupabase();
-    if (!sb) {
-      log("error", "Cliente Supabase não pôde ser inicializado no handler.");
+    if (!supabase) {
       throw new Error("Supabase client not available");
     }
 
-    const profileData = {
-      stripe_customer_id: subscription.customer,
-      stripe_subscription_id: subscription.id,
-      stripe_subscription_status: subscription.status,
-      stripe_price_id: subscription.items.data[0]?.price.id,
-      stripe_current_period_end: new Date(subscription.current_period_end! * 1000).toISOString(),
-    };
+    const price = subscription.items?.data?.[0]?.price?.id ?? null;
+    const periodEnd = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null;
 
-    const { error } = await sb
+    const { error } = await supabase
       .from("user_profiles")
-      .update(profileData)
+      .update({
+        stripe_customer_id: String(subscription.customer),
+        stripe_subscription_id: subscription.id,
+        stripe_subscription_status: subscription.status,
+        stripe_price_id: price,
+        stripe_current_period_end: periodEnd,
+      })
       .eq("id", userId);
 
     if (error) {
-      log("error", "Falha ao atualizar perfil do usuário com dados da assinatura", { userId, error });
-      throw new Error(`Failed to update user profile: ${error.message}`);
+      throw new Error(`Failed to update user profile ${userId}: ${error.message}`);
     }
 
-    log("info", "Perfil do usuário atualizado com sucesso após checkout.", { userId });
+    log("info", "User profile updated after checkout", { userId });
   },
 
-  "customer.subscription.created": async (_stripe, event) => {
+  "customer.subscription.created": async ({ event }) => {
     const sub = event.data.object as Stripe.Subscription;
-    log("info", "subscription.created", { subscriptionId: sub.id, status: sub.status });
+    log("info", "customer.subscription.created", { subscriptionId: sub.id, status: sub.status });
   },
 
-  "customer.subscription.updated": async (_stripe, event) => {
-    const supa = maybeSupabase(); 
-    if (!supa) throw new Error("SUPABASE_URL/SERVICE_ROLE ausentes");
+  "customer.subscription.updated": async ({ event, supabase }) => {
+    if (!supabase) {
+      throw new Error("Supabase client not available");
+    }
     const sub = event.data.object as Stripe.Subscription;
-    const customerId = String(sub.customer);
-    await supa.from("user_profiles").update({
-      stripe_customer_id: customerId,
-      stripe_subscription_id: sub.id,
-      stripe_subscription_status: sub.status,
-      stripe_price_id: sub.items?.data?.[0]?.price?.id ?? null,
-      stripe_current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
-    }).eq("stripe_customer_id", customerId);
-    
-    log("info", "subscription.updated", { subscriptionId: sub.id, customerId });
+    await upsertProfileFromSubscription(supabase, sub);
+    log("info", "customer.subscription.updated", { subscriptionId: sub.id });
   },
 
-  "customer.subscription.deleted": async (_stripe, event) => {
-    const supa = maybeSupabase(); 
-    if (!supa) throw new Error("SUPABASE_URL/SERVICE_ROLE ausentes");
+  "customer.subscription.deleted": async ({ event, supabase }) => {
+    if (!supabase) {
+      throw new Error("Supabase client not available");
+    }
     const sub = event.data.object as Stripe.Subscription;
     const customerId = String(sub.customer);
-    await supa.from("user_profiles").update({
-      stripe_subscription_id: null,
-      stripe_subscription_status: "canceled",
-      stripe_price_id: null,
-      stripe_current_period_end: null,
-    }).eq("stripe_customer_id", customerId);
-    
-    log("info", "subscription.deleted", { subscriptionId: sub.id, customerId });
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({
+        stripe_subscription_id: null,
+        stripe_subscription_status: sub.status ?? "canceled",
+        stripe_price_id: null,
+        stripe_current_period_end: null,
+      })
+      .eq("stripe_customer_id", customerId);
+
+    if (error) {
+      throw new Error(`Failed to clear subscription for customer ${customerId}: ${error.message}`);
+    }
+
+    log("info", "customer.subscription.deleted", { subscriptionId: sub.id, customerId });
   },
 
-  "invoice.payment_succeeded": async (_stripe, event) => {
-    const inv = event.data.object as Stripe.Invoice;
-    log("info", "invoice.payment_succeeded", { invoiceId: inv.id, amount_paid: inv.amount_paid });
+  "invoice.payment_succeeded": async ({ event }) => {
+    const invoice = event.data.object as Stripe.Invoice;
+    log("info", "invoice.payment_succeeded", { invoiceId: invoice.id, amountPaid: invoice.amount_paid });
   },
 
-  "invoice.payment_failed": async (_stripe, event) => {
-    const inv = event.data.object as Stripe.Invoice;
-    log("warn", "invoice.payment_failed", { invoiceId: inv.id });
+  "invoice.payment_failed": async ({ event }) => {
+    const invoice = event.data.object as Stripe.Invoice;
+    log("warn", "invoice.payment_failed", { invoiceId: invoice.id });
   },
 };
 
@@ -148,43 +196,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     stripe = getStripe();
   } catch (err: any) {
-    log("error", "Env faltante para Stripe", { error: err?.message });
-    return res.status(500).json({ error: err?.message ?? "Config error" });
+    log("error", "Stripe environment configuration error", { error: err?.message });
+    return res.status(500).json({ error: err?.message ?? "Configuration error" });
   }
 
   const signature = req.headers["stripe-signature"] as string | undefined;
   if (!signature) {
-    log("warn", "Header Stripe-Signature ausente");
+    log("warn", "Missing Stripe-Signature header");
     return res.status(400).json({ error: "Missing Stripe-Signature" });
   }
 
   const rawBody = await buffer(req);
+
   let event: Stripe.Event;
   try {
-    const webhookSecret = getEnv("STRIPE_WEBHOOK_SECRET");
+    const webhookSecret = requireEnv("STRIPE_WEBHOOK_SECRET");
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err: any) {
-    log("error", "Falha na verificação de assinatura do webhook", { error: err?.message });
+    log("error", "Webhook signature verification failed", { error: err?.message });
     return res.status(400).json({ error: `Webhook signature verification failed: ${err?.message}` });
   }
 
-  const sb = maybeSupabase();
+  const supabase = maybeSupabase();
 
   try {
-    const shouldProcess = await registerEventOnce(sb, event.id);
-    if (!shouldProcess) return res.status(200).json({ ok: true, skipped: true });
+    const shouldProcess = await registerEventOnce(supabase, event.id);
+    if (!shouldProcess) {
+      return res.status(200).json({ ok: true, skipped: true });
+    }
 
-    const h = handlers[event.type];
-    if (h) {
-      await h(stripe, event);
-      log("info", "Evento processado", { type: event.type, id: event.id });
+    const handlerFn = handlers[event.type];
+    if (handlerFn) {
+      await handlerFn({ stripe, event, supabase });
+      log("info", "Stripe event processed", { type: event.type, id: event.id });
       return res.status(200).json({ ok: true });
     }
 
-    log("info", "Evento não tratado (ignorando)", { type: event.type, id: event.id });
+    log("info", "Unhandled Stripe event type", { type: event.type, id: event.id });
     return res.status(200).json({ ok: true, ignored: true });
   } catch (err: any) {
-    log("error", "Falha no processamento do webhook", { error: err?.message, type: event?.type, id: event?.id });
+    log("error", "Stripe webhook handler failure", {
+      error: err?.message,
+      type: event?.type,
+      id: event?.id,
+    });
     return res.status(500).json({ error: "Internal webhook error" });
   }
 }
