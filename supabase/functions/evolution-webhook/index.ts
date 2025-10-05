@@ -205,14 +205,19 @@ serve(async (req) => {
     if (isEmergency(messageContent)) {
       console.warn(`EMERGENCY DETECTED for phone: ${phoneNumber}.`);
       const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
-      if (evolutionApiUrl) {
+      const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
+      if (evolutionApiUrl && evolutionApiKey) {
         await fetch(`${evolutionApiUrl}/send-message`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": evolutionApiKey,
+            "Authorization": `Bearer ${evolutionApiKey}`,
+          },
           body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: EMERGENCY_RESPONSE }),
         }).catch((err) => console.error("Failed to send emergency response:", err));
       } else {
-        console.error("EVOLUTION_API_URL environment variable not set");
+        console.error("EVOLUTION_API_URL or EVOLUTION_API_KEY environment variable not set");
       }
 
       await supabase.from("emergency_alerts").insert({
@@ -270,14 +275,19 @@ serve(async (req) => {
           const aiMessage = aiData.choices?.[0]?.message?.content;
           if (aiMessage) {
             const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
-            if (evolutionApiUrl) {
+            const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
+            if (evolutionApiUrl && evolutionApiKey) {
               await fetch(`${evolutionApiUrl}/send-message`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  "apikey": evolutionApiKey,
+                  "Authorization": `Bearer ${evolutionApiKey}`,
+                },
                 body: JSON.stringify({ phone: phoneNumber, instanceId: instance, message: aiMessage }),
               }).catch((err) => console.error("Failed to send AI response:", err));
             } else {
-              console.error("EVOLUTION_API_URL environment variable not set");
+              console.error("EVOLUTION_API_URL or EVOLUTION_API_KEY environment variable not set");
             }
           }
         } else {

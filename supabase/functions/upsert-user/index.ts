@@ -41,7 +41,14 @@ serve(async (req) => {
     });
 
     if (signUpError) {
-      if (signUpError.message.includes("User already registered")) {
+      // Verifica se o usuário já existe usando códigos de erro estáveis em vez de correspondência de string frágil.
+      // A verificação da mensagem de string é mantida como um fallback para compatibilidade.
+      if (
+        (signUpError as any).code === "user_already_registered" ||
+        (signUpError as any).status === 422 ||
+        (signUpError as any).status === 409 ||
+        signUpError.message.includes("User already registered")
+      ) {
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -85,9 +92,10 @@ serve(async (req) => {
 
     const referralCode = Math.random().toString(36).substring(2, 12);
     const { error: referralError } = await supabase.from("referrals").insert({
-      user_id: userId,
+      referrer_id: userId,
       referral_code: referralCode,
-      usage_count: 0,
+      status: 'pending',
+      points_earned: 0
     });
 
     if (referralError) {
