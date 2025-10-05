@@ -5,7 +5,7 @@
 create or replace view public.rewards_normalized as
 select
   r.id,
-  coalesce(r.name, r.title)                                       as name,
+  coalesce(r.title, '')                                       as name,
   r.description,
   coalesce(r.points, r.points_required)                           as points,
   coalesce(r.icon, r.image_url)                                   as icon,
@@ -18,7 +18,7 @@ from public.rewards r;
 create or replace view public.plans_normalized as
 select
   p.id,
-  coalesce(p.name, p.title)                                       as name,
+  coalesce(p.title, '')                                       as name,
   coalesce(p.description, p.details, '')                          as description,
   coalesce(p.price, p.amount, 0)::numeric                         as price,
   coalesce(p.is_active, p.is_available, true)                     as is_active,
