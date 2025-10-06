@@ -18,7 +18,7 @@ from public.rewards r;
 create or replace view public.plans_normalized as
 select
   p.id,
-  coalesce(p.title, '')                                       as name,
+  coalesce(p.title, p.name, '')                                   as name,
   coalesce(p.description, p.details, '')                          as description,
   coalesce(p.price, p.amount, 0)::numeric                         as price,
   coalesce(p.is_active, p.is_available, true)                     as is_active,

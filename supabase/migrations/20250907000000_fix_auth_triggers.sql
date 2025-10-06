@@ -1,35 +1,30 @@
--- Garantias básicas (idempotente)
+-- Idempotent guard to ensure canonical auth triggers stay in place
 create extension if not exists "pg_net" with schema extensions;
 create extension if not exists "supabase_vault" with schema vault;
 
 drop trigger if exists on_auth_user_created on auth.users;
 drop trigger if exists on_auth_user_updated on auth.users;
 
--- Ensure helper function exists before creating the trigger
-DO $$
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
+
+DO $
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
     SELECT 1
     FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
-      AND p.proname = 'handle_new_user'
-      AND p.prorettype = 'pg_catalog.trigger'::regtype
+    JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE n.nspname = 'public' AND p.proname = 'sync_profile_from_auth'
   ) THEN
-    RAISE EXCEPTION 'Function public.handle_new_user() must exist before running 20250907000000_fix_auth_triggers';
+    CREATE TRIGGER on_auth_user_updated
+      AFTER UPDATE OF email, phone, raw_user_meta_data, last_sign_in_at ON auth.users
+      FOR EACH ROW
+      WHEN (OLD.* IS DISTINCT FROM NEW.*)
+      EXECUTE FUNCTION public.sync_profile_from_auth();
+  ELSE
+    RAISE NOTICE 'Function public.sync_profile_from_auth() not found, skipping trigger on_auth_user_updated creation.';
   END IF;
 END;
-$$;
-
--- 2. Conectar o AFTER INSERT de auth.users -> public.handle_new_user()
-create trigger on_auth_user_created
-after insert on auth.users
-for each row
-execute function public.handle_new_user();
-
--- 3. Sincronizar updates essenciais do auth.users -> profiles
-create trigger on_auth_user_updated
-after update of email, phone, raw_user_meta_data, last_sign_in_at on auth.users
-for each row
-when (old.* is distinct from new.*)
-execute function public.sync_profile_from_auth();
+$;

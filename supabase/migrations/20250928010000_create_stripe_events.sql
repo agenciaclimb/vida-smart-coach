@@ -1,27 +1,22 @@
--- Idempotência de webhooks Stripe
+-- Stripe webhook idempotency log
 -- Date: 2025-09-28
--- Purpose: Rastreia eventos Stripe já processados para evitar duplicação
+-- Purpose: track Stripe events already processed to avoid duplicates
 
-CREATE TABLE IF NOT EXISTS public.stripe_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id text NOT NULL UNIQUE,
-  processed_at timestamptz DEFAULT now(),
-  created_at timestamptz DEFAULT now()
+create table if not exists public.stripe_events (
+  id uuid primary key default gen_random_uuid(),
+  event_id text not null unique,
+  processed_at timestamptz default now(),
+  created_at timestamptz default now()
 );
 
--- Índice para busca rápida por event_id
-CREATE INDEX IF NOT EXISTS idx_stripe_events_event_id ON public.stripe_events(event_id);
+create index if not exists idx_stripe_events_event_id on public.stripe_events(event_id);
 
--- Comentários para documentação
-COMMENT ON TABLE public.stripe_events IS 'Rastreia eventos Stripe já processados (idempotência)';
-COMMENT ON COLUMN public.stripe_events.event_id IS 'ID único do evento Stripe (evt_...)';
-COMMENT ON COLUMN public.stripe_events.processed_at IS 'Timestamp quando o evento foi processado';
-COMMENT ON COLUMN public.stripe_events.created_at IS 'Timestamp de criação do registro';
+comment on table public.stripe_events is 'Tracks processed Stripe events to guarantee idempotency.';
+comment on column public.stripe_events.event_id is 'Stripe event id (evt_...).';
+comment on column public.stripe_events.processed_at is 'Timestamp when the event was handled.';
+comment on column public.stripe_events.created_at is 'Creation timestamp.';
 
--- Habilitar RLS (Row Level Security)
--- Service role ignora RLS por definição, apenas webhooks server-side conseguem inserir
-ALTER TABLE public.stripe_events ENABLE ROW LEVEL SECURITY;
-
--- Opcional: Política para permitir apenas service role (redundante, mas explícita)
--- CREATE POLICY "Service role only" ON public.stripe_events
---   FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
+alter table public.stripe_events enable row level security;
+-- Service role bypasses RLS by default; explicit policy kept for clarity.
+-- create policy "Service role only" on public.stripe_events
+--   for all using (auth.jwt() ->> 'role' = 'service_role');
