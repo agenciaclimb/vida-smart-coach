@@ -454,3 +454,4 @@ ORDER BY g.total_points DESC, g.updated_at ASC;
 
 COMMIT;
 
+

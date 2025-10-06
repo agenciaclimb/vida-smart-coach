@@ -36,8 +36,8 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET
     name = COALESCE(EXCLUDED.name, user_profiles.name),
     email = COALESCE(EXCLUDED.email, user_profiles.email),
-    activity_level = COALESCE(EXCLUDED.activity_level, user_profiles.activity_level),
-    role = COALESCE(EXCLUDED.role, user_profiles.role),
+    activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', EXCLUDED.activity_level, user_profiles.activity_level),
+    role = COALESCE(NEW.raw_user_meta_data->>'role', EXCLUDED.role, user_profiles.role),
     onboarding_completed = COALESCE(EXCLUDED.onboarding_completed, user_profiles.onboarding_completed),
     updated_at = NOW();
 
@@ -63,8 +63,8 @@ BEGIN
   UPDATE public.user_profiles
      SET email = COALESCE(NEW.email, user_profiles.email),
          name = COALESCE(NEW.raw_user_meta_data->>'full_name', user_profiles.name),
-         role = COALESCE(NEW.raw_user_meta_data->>'role', user_profiles.role),
-         activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', user_profiles.activity_level),
+         role = COALESCE(NEW.raw_user_meta_data->>'role', EXCLUDED.role, user_profiles.role),
+         activity_level = COALESCE(NEW.raw_user_meta_data->>'activity_level', EXCLUDED.activity_level, user_profiles.activity_level),
          updated_at = NOW()
    WHERE id = NEW.id;
 
@@ -92,6 +92,4 @@ AFTER UPDATE OF email, phone, raw_user_meta_data, last_sign_in_at ON auth.users
 FOR EACH ROW
 WHEN (OLD.* IS DISTINCT FROM NEW.*)
 EXECUTE FUNCTION public.sync_profile_from_auth();
-
-
 
