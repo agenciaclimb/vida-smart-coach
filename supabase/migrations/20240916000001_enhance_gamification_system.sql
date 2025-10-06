@@ -358,6 +358,8 @@ DECLARE
     
     mission JSONB;
     mission_type_record RECORD;
+    selected_missions JSONB[];
+    mission_type_record RECORD;
 BEGIN
     -- Delete existing missions for the date
     DELETE FROM daily_missions WHERE user_id = p_user_id AND mission_date = p_date;
@@ -367,7 +369,11 @@ BEGIN
     LOOP
         SELECT value INTO mission 
         FROM jsonb_array_elements(missions_data) 
+<<<<<<< HEAD
+        WHERE value->>'type' = mission_type_record.mission_type_record.mission_type_record.mission_type_record.mission_type_record.mission_type 
+=======
         WHERE value->>'type' = mission_type_record.mission_type 
+>>>>>>> origin/main
         ORDER BY random() 
         LIMIT 1;
         
@@ -453,5 +459,4 @@ GROUP BY g.user_id, up.name, up.email, g.total_points, g.level, g.current_streak
 ORDER BY g.total_points DESC, g.updated_at ASC;
 
 COMMIT;
-
 

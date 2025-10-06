@@ -5,6 +5,7 @@ create extension if not exists "supabase_vault" with schema vault;
 drop trigger if exists on_auth_user_created on auth.users;
 drop trigger if exists on_auth_user_updated on auth.users;
 
+-- Ensure helper function exists before creating the trigger
 DO $$
 BEGIN
   IF NOT EXISTS (
