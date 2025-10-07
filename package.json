@@ -10,7 +10,7 @@
     "migrate": "node scripts/automated-migration.mjs",
     "migrate:supabase": "node scripts/supabase-migration-runner.mjs",
     "deploy": "node scripts/deploy-complete.mjs",
-    "deploy:full": "npm run migrate:supabase && npm run build && npm run deploy",
+    "deploy:full": "pnpm migrate:supabase && pnpm build && pnpm deploy",
     "supabase:login": "npx supabase login",
     "supabase:link": "npx supabase link --project-ref $npm_package_config_supabase_ref",
     "supabase:secrets": "npx supabase secrets set --env-file .env.functions",
@@ -81,7 +81,7 @@
     "supabase_ref": "SEU-PROJECT-REF"
   },
   "engines": {
-    "node": "22.x"
+    "node": ">=20.0.0"
   },
-  "packageManager": "npm@10.8.1"
+  "packageManager": "pnpm@9.12.0"
 }
