@@ -1,0 +1,4 @@
+Your branch and 'origin/main' have diverged,
+and have 2 and 22 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+Already on 'main'

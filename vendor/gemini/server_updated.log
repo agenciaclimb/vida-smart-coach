@@ -1,0 +1,12 @@
+10.12.131.218 - - [15/Sep/2025 14:34:12] "GET / HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:34:12] "GET /assets/index-DQ8GY5WF.css HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:34:12] "GET /assets/index-cdgogZUb.js HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:34:13] code 404, message File not found
+10.12.131.218 - - [15/Sep/2025 14:34:13] "GET /vite.svg HTTP/1.1" 404 -
+10.12.131.218 - - [15/Sep/2025 14:35:56] "GET / HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:35:56] "GET /assets/index-CWfSoyuP.js HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:35:56] "GET /assets/index-DQ8GY5WF.css HTTP/1.1" 200 -
+10.12.131.218 - - [15/Sep/2025 14:35:56] code 404, message File not found
+10.12.131.218 - - [15/Sep/2025 14:35:56] "GET /vite.svg HTTP/1.1" 404 -
+10.12.131.218 - - [15/Sep/2025 14:35:56] code 404, message File not found
+10.12.131.218 - - [15/Sep/2025 14:35:56] "GET /vite.svg HTTP/1.1" 404 -
