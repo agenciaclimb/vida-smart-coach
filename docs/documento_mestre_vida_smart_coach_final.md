@@ -1282,3 +1282,42 @@ Liberar a versão atual do Vida Smart Coach em produção com Stripe e agente es
     - **Tentativas Anteriores**: Falharam devido a `typecheck` ausente e `esbuild` não encontrado.
     - **Correção**: Executado `pnpm install --force` para reinstalar dependências corretamente.
     - **Resultado Final**: `pnpm run build` concluído com sucesso.
+
+---
+
+## Diagnóstico e Plano de Ação - 08/10/2025
+
+### Diagnóstico Geral
+
+O sistema foi diagnosticado em 08/10/2025. A seguir estão os resultados em ordem de prioridade.
+
+*   **[P0 - CRÍTICO] Vazamento de Segredos:** O arquivo `.env.local` contém múltiplas chaves de API e segredos de produção. **Estes devem ser considerados comprometidos e rotacionados imediatamente.**
+*   **[P1 - BLOQUEIO] CLI do Supabase Não Funcional:** A CLI do Supabase não pode ser executada devido a erros de sintaxe no arquivo `.env.local` (uso de `$env:`). Isso impede o desenvolvimento e teste do backend local.
+*   **[P0 - CORRIGIDO] Erros Críticos de TypeScript:** O projeto não compilava devido a múltiplos erros de tipo. Isso foi corrigido através da reconfiguração do `tsconfig.json` e da conversão de vários componentes de UI de `.jsx` para `.tsx` com a tipagem correta.
+*   **[P0 - CORRIGIDO] Build do Projeto:** O projeto agora compila com sucesso (`pnpm run build`).
+*   **[P1 - CORRIGIDO] Erros de Linting:** O projeto tinha mais de 6.000 problemas de linting. A configuração foi corrigida e os erros foram eliminados.
+*   **[P2 - AVISOS] Avisos de Linting:** Restam 80 avisos de linting, principalmente relacionados a variáveis não utilizadas e dependências de hooks.
+*   **[P1 - PENDENTE] Revisão de Pull Requests:** Análise do único PR aberto ("chore(dev): adiciona prompts completos + AUTOPILOT para o Gemini") concluiu que não há conflitos com as correções atuais.
+
+### Plano de Ação
+
+*   **[ ] [P0] Rotacionar Todos os Segredos:**
+    *   **O que:** Gerar novos valores para TODAS as chaves no arquivo `.env.local`.
+    *   **Chaves a serem rotacionadas:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` (ambas), `GOOGLE_API_KEY`, `EVOLUTION_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VERCEL_TOKEN`, `NEXTAUTH_SECRET`, `NEXT_PUBLIC_AGENT_KEY`.
+    *   **Onde:** No painel de cada serviço respectivo (Supabase, OpenAI, Google Cloud, Stripe, Vercel, etc.).
+    *   **IMPORTANTE:** Após a rotação, o arquivo `.env.local` deve ser atualizado com os novos valores, usando o formato `CHAVE=VALOR`.
+
+*   **[ ] [P1] Corrigir o arquivo `.env.local`:**
+    *   **O que:** Remover a sintaxe inválida (`$env:...`) e duplicatas.
+    *   **Ação:** Substituir linhas como `$env:GOOGLE_API_KEY = '...'` por `GOOGLE_API_KEY='...'`.
+    *   **Ação:** Consolidar as chaves duplicadas (`OPENAI_API_KEY`, `VITE_APP_ENV`) para ter apenas uma definição para cada.
+    *   **Resultado Esperado:** O comando `pnpm exec supabase status` deve funcionar corretamente.
+
+*   **[ ] [P2] Corrigir Avisos de Linting:**
+    *   **O que:** Corrigir os 80 avisos de linting restantes.
+    *   **Ação:** Executar `pnpm exec eslint . --ext .js,.jsx,.ts,.tsx --fix` para corrigir automaticamente o que for possível.
+    *   **Ação:** Corrigir manualmente os avisos restantes, principalmente `no-unused-vars` e `react-hooks/exhaustive-deps`.
+
+*   **[ ] [P2] Continuar a conversão dos Componentes de UI:**
+    *   **O que:** Converter os componentes restantes em `src/components/ui` de `.jsx` para `.tsx` com tipagem adequada.
+    *   **Motivo:** Embora o build esteja passando, a tipagem completa melhora a manutenibilidade e a segurança do código.
