@@ -1,0 +1,7 @@
+﻿{
+  "workspace": "C:\\Users\\JE\\vida-smart-coach",
+  "documento_mestre": "C:\\Users\\JE\\vida-smart-coach\\docs\\documento_mestre_vida_smart_coach_final.md",
+  "rotina": [
+    {"titulo":"0) Fixar contexto","prompt":"Use APENAS \"C:\\\\Users\\\\JE\\\\vida-smart-coach\" como workspace. Confirme com:\n git -C \"C:\\\\Users\\\\JE\\\\vida-smart-coach\" rev-parse --abbrev-ref HEAD\n if exist \"C:\\\\Users\\\\JE\\\\vida-smart-coach\\\\pnpm-lock.yaml\" echo LOCKFILE_OK || echo LOCKFILE_MISSING\nResponda só com: BRANCH=<x> e LOCKFILE=<OK|MISSING>."}
+  ]
+}
