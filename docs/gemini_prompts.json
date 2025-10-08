@@ -1,0 +1,13 @@
+﻿{
+  "about": "Prompts fixos para o Gemini no projeto Vida Smart Coach. Mantenha este arquivo versionado.",
+  "workspace": "C:\\Users\\JE\\vida-smart-coach",
+  "remote": "https://github.com/agenciaclimb/vida-smart-coach",
+  "prompts": {
+    "CHECK_WORKSPACE": "Execute: git rev-parse --show-toplevel. Se o caminho for diferente de C:\\\\Users\\\\JE\\\\vida-smart-coach, responda apenas 'WRONG_WORKSPACE' e pare.",
+    "IMPORTS_PLANS_REWARDS_FIND": "Rode: git grep -n \"PlansRewardsContext\"; cole a lista no documento-mestre em 'Correção de imports quebrados (v1)' como Passo 1 [x] com Log/Resultado.",
+    "IMPORTS_PLANS_REWARDS_RESTORE": "Para cada arquivo listado: git restore -s origin/main -- <arquivo>; depois pnpm run build. Atualize o documento: Passo 2 [x] com log; se falhar, marque [!], pare e cole o erro.",
+    "STUB_PLANS_REWARDS": "Criar arquivo src/contexts/data/PlansRewardsContext.jsx (stub temporário) com provider/hook vazios e repetir pnpm run build. Atualize documentação Passo 3 [x] com log.",
+    "PNPM_BUILD": "corepack prepare pnpm@9.12.0 --activate && pnpm install && pnpm typecheck && pnpm run build. Se houver erro, cole log completo no documento-mestre.",
+    "OPEN_PR": "git add -A && git commit -m \"fix: remove stub e corrige imports PlansRewardsContext\" && git push -u origin fix/remove-stub-plansrewards; abra PR base=main compare=fix/remove-stub-plansrewards e registre no documento."
+  }
+}
