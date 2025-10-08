@@ -2,12 +2,30 @@
   "about": "Prompts fixos para o Gemini no projeto Vida Smart Coach. Mantenha este arquivo versionado.",
   "workspace": "C:\\Users\\JE\\vida-smart-coach",
   "remote": "https://github.com/agenciaclimb/vida-smart-coach",
+  "documento_mestre": "docs/documento_mestre_vida_smart_coach_final.md",
+
   "prompts": {
-    "CHECK_WORKSPACE": "Execute: git rev-parse --show-toplevel. Se o caminho for diferente de C:\\\\Users\\\\JE\\\\vida-smart-coach, responda apenas 'WRONG_WORKSPACE' e pare.",
-    "IMPORTS_PLANS_REWARDS_FIND": "Rode: git grep -n \"PlansRewardsContext\"; cole a lista no documento-mestre em 'Correção de imports quebrados (v1)' como Passo 1 [x] com Log/Resultado.",
-    "IMPORTS_PLANS_REWARDS_RESTORE": "Para cada arquivo listado: git restore -s origin/main -- <arquivo>; depois pnpm run build. Atualize o documento: Passo 2 [x] com log; se falhar, marque [!], pare e cole o erro.",
-    "STUB_PLANS_REWARDS": "Criar arquivo src/contexts/data/PlansRewardsContext.jsx (stub temporário) com provider/hook vazios e repetir pnpm run build. Atualize documentação Passo 3 [x] com log.",
-    "PNPM_BUILD": "corepack prepare pnpm@9.12.0 --activate && pnpm install && pnpm typecheck && pnpm run build. Se houver erro, cole log completo no documento-mestre.",
-    "OPEN_PR": "git add -A && git commit -m \"fix: remove stub e corrige imports PlansRewardsContext\" && git push -u origin fix/remove-stub-plansrewards; abra PR base=main compare=fix/remove-stub-plansrewards e registre no documento."
+    "STARTUP": "Sempre que iniciar: 1) Verifique que o repositório raiz é C:\\\\Users\\\\JE\\\\vida-smart-coach (git rev-parse --show-toplevel). 2) Confirme o remoto origin=https://github.com/agenciaclimb/vida-smart-coach.git. 3) Nunca altere arquivos .env* e nunca edite migrações antigas; se necessário, crie novas com prefixo fix_. 4) Use PNPM (corepack prepare pnpm@9.12.0 --activate). 5) O documento-guia é docs/documento_mestre_vida_smart_coach_final.md — escreva TODO o progresso nele usando checkboxes [ ], [>], [x], [!].",
+
+    "GUARDRAILS": "Limites: trabalhar APENAS dentro de C:\\\\Users\\\\JE\\\\vida-smart-coach; não criar novos repositórios/pastas; não mover o documento-mestre; não tocar em .env*; não alterar migrações antigas; parar imediatamente e registrar [!] quando houver erro que exija intervenção; nunca executar comandos fora do workspace.",
+
+    "RUNBOOK": "Fluxo padrão: (a) Diagnosticar (comando mínimo que reproduz o erro + coletar versões); (b) Planejar (8±2 passos atômicos); (c) Executar passo a passo em branch fix/<slug>, registrando Log/Resultado no documento; (d) Abrir PR (base=main, compare=fix/<slug>) com resumo do documento; (e) Encerrar com próximos passos.",
+
+    "AUTOPILOT": "Modo autônomo. Entrada: Objetivo curto do trabalho. Proceda: 1) STARTUP e GUARDRAILS. 2) DIAGNÓSTICO: rodar o cenário mínimo (ex.: pnpm run build), capturar erro principal, node -v, pnpm -v, branch atual e git status -s. Criar seção 'Diagnóstico — <objetivo>' no documento com [>] e colar logs. 3) PLANO: gerar plano de 6–10 passos atômicos, cada passo com comandos Shell claros; anexar como 'Plano — <objetivo>' no documento. 4) EXECUÇÃO: criar/usar branch fix/<slug>; para cada passo, executar, registrar Log/Resultado e marcar [x]. Se algum passo falhar, marcar [!] e PARAR. 5) PR: git add/commit/push e abrir PR (base=main, compare=fix/<slug>) com título e descrição vindos do documento. 6) FINALIZAÇÃO: escrever 'Encerramento — <objetivo>' com próximos passos.",
+
+    "CHECK_WORKSPACE": "Execute: git rev-parse --show-toplevel && git remote -v && git branch --show-current. Se o caminho não for C:\\\\Users\\\\JE\\\\vida-smart-coach, pare com [!].",
+
+    "IMPORTS_PLANS_REWARDS_FIND": "Rode: git grep -n \"@/contexts/data/PlansRewardsContext\"; cole apenas a lista (caminho:linha:trecho).",
+
+    "IMPORTS_PLANS_REWARDS_RESTORE": "Para cada caminho listado, execute: git restore -s origin/main -- <caminho>; depois rode pnpm run build. Atualize o documento na seção 'Correção de imports quebrados (v1)': marque Passo 2 como [x] com Log/Resultado ou [!] com o erro.",
+
+    "PNPM_BUILD": "corepack prepare pnpm@9.12.0 --activate && pnpm install --force && pnpm run build",
+
+    "FIX_ESBUILD": "Checar/garantir esbuild no ambiente PNPM. Comandos: corepack prepare pnpm@9.12.0 --activate && pnpm install --force && pnpm ls esbuild --depth -1 || pnpm add -D esbuild@^0.24.2 && pnpm rebuild esbuild && pnpm run build. Registrar no documento Passo 2 com logs.",
+
+    "OPEN_PR": "git add -A && git commit -m \"<mensagem>\" && git push -u origin <branch> — Abrir PR no GitHub (base=main, compare=<branch>) usando o resumo/logs do documento.",
+
+    "STRIPE_CHECKLIST": "Homologação Stripe: 1) chave publishable e secret em ambiente (NÃO editar .env local); 2) npm script de webhook de teste (se existir); 3) fluxo de checkout: criação de sessão, retorno de sucesso, registro em banco; 4) Vercel envs; 5) Registrar verificação e prints no documento."
   }
 }
+

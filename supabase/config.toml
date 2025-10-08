@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "SEU-PROJECT-REF"  # substitua depois com 'xyz...' do seu Supabase
+project_id = "zzugbgoylwbaojdnunuz"  # substitua depois com 'xyz...' do seu Supabase
 
 [api]
 enabled = true

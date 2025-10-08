@@ -11,7 +11,6 @@ export function getSupabase(): SupabaseClient {
   if (!url || !anon) {
     console.error('[Supabase] VITE_SUPABASE_URL/ANON_KEY ausentes')
     // devolve um objeto falso pra evitar crash (o Provider já lida com isso)
-    // @ts-expect-error
     return null
   }
   
