@@ -479,7 +479,7 @@ ROBÓTICO ❌:
 NATURAL ✅:
 "Percebi que você tá meio pra baixo hoje... 
 Quer conversar sobre isso? Às vezes só desabafar 
-já ajuda a clarear a mente. Estou aqui pra te ouvir! 💙"
+ já ajuda a clarear a mente. Estou aqui pra te ouvir! 💙"
 ```
 
 #### **🎯 CONDUÇÃO ENCANTADORA PARA OBJETIVOS**
@@ -519,7 +519,7 @@ USUÁRIO DESMOTIVADO:
 👤: "Não tô conseguindo, quero desistir"
 🤖: "Ei, para um pouquinho... Respira comigo. 
 Olha, eu entendo que tá difícil. Sabe quantas pessoas 
-já passaram por isso? TODAS! Inclusive eu já me senti assim.
+ já passaram por isso? TODAS! Inclusive eu já me senti assim.
 Mas sabe o que aprendi? Que desistir é fácil, 
 o difícil é recomeçar depois.
 Que tal a gente ajustar o plano? Fazer algo mais leve hoje?
@@ -1265,40 +1265,20 @@ Liberar a versão atual do Vida Smart Coach em produção com Stripe e agente es
 
 
 
+## 14. TAREFAS TÉCNICAS EM ANDAMENTO
 
+### Correção de imports quebrados (v1)
 
+- **Passo 1: Mapear consumidores do contexto antigo** [x]
+  - **Log/Resultado:**
+    ```
+    src/contexts/DataContext.jsx:8:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    src/contexts/DataContext_OLD.jsx:9:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    src/legacy/DataContext.jsx:9:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- **Passo 2: Restaurar consumidores e tentar build** [x]
+  - **Log/Resultado:**
+    - **Tentativas Anteriores**: Falharam devido a `typecheck` ausente e `esbuild` não encontrado.
+    - **Correção**: Executado `pnpm install --force` para reinstalar dependências corretamente.
+    - **Resultado Final**: `pnpm run build` concluído com sucesso.
