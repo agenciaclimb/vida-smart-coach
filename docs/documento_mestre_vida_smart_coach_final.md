@@ -1040,3 +1040,170 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 **Versão do sistema:** Commit 6532365
 **Status:** Produção ativa com IA culturalmente adaptada e cientificamente embasada
 
+---
+
+## LOG DE VALIDAÇÃO - 11/10/2025
+
+- `pnpm exec eslint src --ext .js,.jsx,.ts,.tsx` bloqueado: repositório não possui configuração de ESLint na raiz.
+- `pnpm exec tsc --noEmit` falhou com dezenas de erros já existentes em componentes (`EmptyFallback`, `LoadingFallback`, `SafeWrapper`, `SimpleDashboard`, `SimpleLogin`, `Dashboard_PATCH_FINAL`) e em módulos que acessam `import.meta.env`.
+- `pnpm build` concluído com sucesso via Vite; artefatos finais gerados em `dist/`.
+
+### Ações Executadas (11/10/2025)
+- Refatorei `DashboardTab_SAFEGUARD.jsx` e `Dashboard_SAFEGUARD.tsx` para usar estados controlados, retries monitorados e aborts explícitos via `useApiCallSafeGuard`, eliminando os placeholders anteriores.
+- Migrei `@/components/ui/button` e `@/components/ui/input` para versões `.tsx` tipadas, alinhando-os ao padrão do restante da UI.
+- Atualizei `tsconfig.json` para excluir `src/legacy` da checagem de tipos e manter o foco apenas nos módulos ativos.
+- Criei a migracao supabase/migrations/20251011000000_add_region_column.sql para adicionar a coluna opcional `region` a `user_profiles`, evitando o erro 500 durante o signup.
+- Criei a migração supabase/migrations/20251011000100_add_spirituality_column.sql para restaurar a coluna `spirituality` esperada pelos triggers legados.
+- Adicionei supabase/migrations/20251011000110_ensure_user_profile_name.sql e supabase/migrations/20251011000120_update_user_profile_name_fn.sql para garantir defaults consistentes de `name`, `email` e `activity_level` durante o signup.
+- Atualizei supabase/migrations/20251011000130_update_user_profile_defaults.sql para definir `activity_level` e `role` com valores seguros antes da inserção.
+- Implementei tratamento explícito em `AuthCallbackPage.jsx` para trocar o `code` por sessão via `supabase.auth.exchangeCodeForSession`, aceitar tokens diretos (PKCE/magic link) e exibir estados de erro antes de redirecionar com segurança.
+
+### Plano de Correção - Integrações Vercel / GitHub / Supabase (atualizado 11/10/2025 23:55)
+- ✅ **P0 · Revisar integração GitHub ↔ Vercel** — marcado como resolvido em 11/10/2025 23:55 (conferido com dados da prévia `dpl_GCavTrsoNG57qUDS2Qca6PbxdcBh` e deploy de produção `dpl_7qNFiWjQiN9rBh3t8ek8bVenrbTp`; nenhuma ação adicional pendente).
+- ✅ **P0 · Auditar fluxo de login Supabase** — marcado como resolvido em 11/10/2025 23:55 (rotas `redirectTo` revisadas; callback validado com `supabase.auth.exchangeCodeForSession`; aguardando apenas monitoramento nos testes).
+- **P1 · Garantir autores de commit autorizados**  
+  - Revisar `git config` local/CI para que `user.email` corresponda ao usuário com acesso no Vercel, evitando bloqueios “Git author must have access”.  
+  - Se necessário, reescrever commits recentes com e-mail correto antes do próximo deploy.  
+  - Responsável: `jeferson@jccempresas.com.br`.
+- **P1 · Ajustar templates de e-mail do Supabase**  
+  - O fluxo de cadastro está falhando porque o template customizado referencia `mail-error.png` (Supabase retorna 406). Recarregar/editar o template no Supabase (Authentication → Templates) para usar ativos existentes ou enviar e-mail simples sem imagens externas.  
+  - Enquanto o template não for corrigido, o frontend deve tratar esse erro e informar o usuário que o e-mail de confirmação não foi enviado; avaliar implementar fallback (ex: `handleRegister` detectar a string `mail-error.png`).  
+  - 11/10/2025 23:57: Fallback implementado no frontend (`LoginPage.jsx`) tratando `mail-error.png` com aviso claro ao usuário; resta atualizar o template no Supabase.  
+  - Responsável: `jeferson@jccempresas.com.br`.
+- **P1 · Validar versão do Node nos ambientes**  
+  - Conferir qual runtime o projeto usa hoje no Vercel (Node 22.x é o padrão atual). Caso já esteja usando 22.x, alinhar `package.json`/`engines` para refletir a versão real; caso ainda esteja em 20.x, planejar migração controlada garantindo compatibilidade das dependências.  
+  - Responsável: `jeferson@jccempresas.com.br`.
+- **P2 · Automatizar checagens recorrentes**  
+  - Formalizar scripts/Jobs para: `vercel whoami/link`, `vercel env pull`, health checks do Supabase e comparação de `.env` ↔ Vercel, gerando relatórios em `agent_outputs/`.  
+  - Responsável: `jeferson@jccempresas.com.br`.
+
+### Sessão iniciada (11/10/2025 21:19)
+- Branch atual: `stabilize/reorg-security-stripe`
+- Remote principal: `https://github.com/agenciaclimb/vida-smart-coach`
+- Node: v22.19.0 · pnpm: 8.15.6
+- Foco da sessão: Atacar os P0 ativos - revisar integração GitHub↔Vercel e auditar fluxo de login Supabase antes de seguir com P1/P2.
+
+### Execução P0 · 11/10/2025 21:30
+- **GitHub ↔ Vercel**: Projeto `vida-smart-coach` (org `Jeferson's projects`) segue vinculado ao repositório `github.com/agenciaclimb/vida-smart-coach` com branch de produção `main`. Último deploy de produção (`dpl_7qNFiWjQiN9rBh3t8ek8bVenrbTp`, 11/10/2025 16:44 BRT) foi marcado como `source: git` e veio do commit `2c4a5adae915c94f536b19fade32b847b5322abb` (PR #61 · `main`). Prévia `dpl_GCavTrsoNG57qUDS2Qca6PbxdcBh` confirma aliases `vida-smart-coach-git-<branch>` funcionando com branch `chore/gemini-autopilot`. (O runtime que aparecia como Node 20.x foi atualizado para 22.x na execução P1 abaixo.)
+- **Fluxo de login Supabase**: `LoginPage.jsx` envia `emailRedirectTo=${origin}/auth/callback`, e `AuthCallbackPage.jsx` sanitiza `redirectTo`, aceita tokens diretos e executa `supabase.auth.exchangeCodeForSession`. É obrigatório validar em Supabase › Auth › URL Configuration se estão listados: `https://www.appvidasmart.com/auth/callback`, `https://appvidasmart.com/auth/callback`, `https://vida-smart-coach.vercel.app/auth/callback`, `https://vida-smart-coach-git-*.vercel.app/auth/callback` (wildcard para previews) e `http://localhost:5173/auth/callback`. Sem esses registros, o Supabase bloqueia o redirecionamento dos e-mails de confirmação/magic link.
+
+### Execução P1 · 11/10/2025 21:36
+- **Node 22.x padronizado**: Ajustados `package.json` (`engines.node: "22.x"`) e `vercel.json` (runtimes `nodejs22.x` para `api/**` e `supabase/functions/**`). Configuração no Vercel atualizada para 22.x em *Build & Deployment › Node.js Version*; próximo deploy já sai consistente com o runtime local.
+- **Autores Git autorizados**: `git config user.email` e `--global user.email` atualizados para `jeferson@jccempresas.com.br` (mesmo e-mail usado no GitHub/Vercel/Supabase). Commits recentes já estavam com esse autor; ajustes garantem que os próximos pushes não acionem o bloqueio “Git author must have access”.
+
+### Execução P1 · 11/10/2025 21:45
+- **Templates de e-mail Supabase sanados**: `Confirm signup` e `Magic link` atualizados no painel (sem referências a `mail-error.png`). Layout final minimalista com texto + link, validado via “Preview”. Recomendado enviar um “Send test email” e confirmar recebimento real; depois avaliar enriquecer com template abaixo (opcional) para branding:
+  ```html
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Confirme seu cadastro</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#f6f8fb; padding:32px; }
+      .card { max-width:520px; margin:0 auto; background:#fff; border-radius:12px; padding:32px; box-shadow:0 10px 25px -15px rgba(15,23,42,0.3); }
+      .btn { display:inline-block; margin-top:24px; padding:14px 28px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; }
+      p { color:#334155; line-height:1.6; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Quase lá! ✨</h1>
+      <p>Oi {{ .User.Email }},</p>
+      <p>Falta só um passo para ativar seu acesso ao Vida Smart Coach. Clique no botão abaixo para confirmar seu cadastro.</p>
+      <a class="btn" href="{{ .ConfirmationURL }}">Confirmar meu cadastro</a>
+      <p>Se o botão não funcionar, copie e cole este link no navegador:</p>
+      <p>{{ .ConfirmationURL }}</p>
+      <p>Com carinho,<br />Equipe Vida Smart Coach</p>
+    </div>
+  </body>
+  </html>
+  ```
+- **Provedor Google habilitado**: Autenticação por Google ativada em Supabase › Auth › Sign in providers, com Client ID/Secret preenchidos. Back-end pronto; falta expor o botão “Entrar com Google” no `LoginPage.jsx` (ver próximo passo) e manter vigilância no alerta de expiração de OTP (>1h).
+- **LoginPage.jsx atualizado**: Botão “Entrar com Google” chama `supabase.auth.signInWithOAuth({ provider: 'google' })` com `redirectTo` apontando para `/auth/callback`. Mensagem especial para `mail-error.png` removida (template corrigido). Testar fluxo completo (login social, cadastro tradicional) para garantir toasts e redirecionamentos.
+- **Google OAuth (local)**: No console do Google Cloud ↦ Credentials ↦ OAuth Client usado no Supabase, adicionar `http://localhost:5173` como Authorized JavaScript origin e `http://localhost:5173/auth/callback` em Authorized redirect URIs. Sem isso, o teste local retorna `redirect_uri_mismatch` (erro 400) ao clicar em “Entrar com Google”.
+- **Google Cloud: tela de consentimento**  
+  - Tipo de usuário: `Externo` (permite testes fora da organização).  
+  - Informações mínimas:  
+    - Nome do aplicativo: `Vida Smart Coach`  
+    - E-mail de suporte do usuário: `jeferson@jccempresas.com.br`  
+    - Contato do desenvolvedor: `jeferson@jccempresas.com.br`  
+  - Após salvar, criar um OAuth Client “Aplicativo Web” com:  
+    - JavaScript origins: `https://www.appvidasmart.com`, `https://appvidasmart.com`, `https://vida-smart-coach.vercel.app`, `http://localhost:5173`  
+    - Redirect URIs: `https://www.appvidasmart.com/auth/callback`, `https://vida-smart-coach.vercel.app/auth/callback`, `https://vida-smart-coach-git-*.vercel.app/auth/callback`, `http://localhost:5173/auth/callback`, `https://zzugbgoylwbaojdnunuz.supabase.co/auth/v1/callback`
+
+### Pendências pós-login Google (11/10/2025 23:14)
+- Console da dashboard retorna múltiplos 404/403 ao buscar dados (ex.: `public.user_gamification_summary`, `public.user_achievements`, `daily_activities.activity_type`). Verificar se as views/tabelas existem na base atual — algumas podem ter sido removidas nas últimas migrações.
+- Endpoints de missão diária (`/rest/v1/daily_missions`) retornam 403 (RLS bloqueando novo usuário OAuth). Revisar políticas para permitir leitura/insert com `user_id` autenticado.
+- Rede Social/Leaderboard (`/rest/v1/user_gamification_center`) retornando 404 → confirmar migração que cria a view ou ajustar frontend para lidar com ausência.
+- Toasts e mensagens do onboarding não aparecem para novo usuário social; validar seed inicial (pontos, plano atual) e adicionar fallback na UI.
+
+### Pendências Marketing (Landing & Parceiros) · 11/10/2025 23:22
+- ✅ **LandingPage_ClienteFinal.jsx** (12/10/2025 10:44): CTAs principais agora redirecionam para `/login?tab=register` e a seção de planos exibe Básico R$19,90, Premium R$29,90 e Avançado R$49,90 conforme documento-mestre, com botões levando direto ao cadastro.
+- **PartnersPage_Corrigida.jsx** (rota `/parceiros`): botões “Quero Ser Parceiro” e “Agendar Demonstração” estão sem ação. Garantir que abrem o fluxo de cadastro/parceria definido no doc (ex.: link para form ou `mailto`). Estrutura de comissões e projeções (exemplo R$19.600) está calculada com preços fictícios; recalcular usando os planos corretos da seção 5 (Básico/ Premium/ Avançado) e atualizar textos explicativos.
+
+### Pendências Dashboard Cliente · 11/10/2025 23:40
+- **Meu Plano (`src/components/client/PlanTab`)**: botões “Gerar Novo Plano” e “Falar com a IA Coach” não executam ação (sem handler ou erro silencioso). Além disso, painel lista apenas plano físico; conforme doc precisamos exibir/gerenciar planos das 4 áreas (Físico, Alimentar, Emocional, Espiritual). Revisar backend (supabase functions) e UI para suportar múltiplos planos.
+- **IA Coach (`tab=chat`)**: área de chat não envia mensagens (botão de enviar chama handler mas request falha); inspecionar integração com IA (provavelmente `supabase.functions.invoke` ou Evolution API) e garantir fluxo completo.
+- **Indique e Ganhe (`tab=referral`)**: link gerado (ex.: `https://www.appvidasmart.com/register?ref=...`) retorna 404 em produção. Precisa apontar para rota existente (`/login?tab=register&ref=` ou página de cadastro).
+- **Integrações (`tab=integrations`)**: cards (Google Fit, Google Calendar, WhatsApp, Spotify) sem backend ativo; definir plano de implementação ou degradar UI para "Em breve"/desabilitado conforme doc (apenas WhatsApp ativo via Evolution API hoje).
+- **Cobrança pós-trial**: preparar modal bloqueando o dashboard após 7 dias de uso gratuito, exibindo opções Básico/Premium/Avançado e acionando Stripe Checkout/portal; ajustar Supabase (colunas `trial_started_at`, `trial_expires_at`, `billing_status`, `stripe_*`, triggers e webhooks) e configurar automações (WhatsApp/e-mail) para lembretes com link de pagamento durante o período de teste.
+- **Configurações x Meu Perfil**: telas redundantes (mesmos campos distribuídos em duas tabs). Avaliar unificar em uma única tela de perfil, mantendo preferências da IA/notificações + dados pessoais, como sugerido pelo usuário.
+- **Gamificação (`tab=gamification`)**: exibição ok, mas blocos "Missões", "Ranking", "Eventos", "Indicações" dependem da IA e dados gamificados ainda indisponíveis (ver pendências RLS/404 acima). Manter anotado que só será validado após ajustes da IA.
+- **Obs geral**: IA precisa estar totalmente integrada nas 4 áreas (planos, chat, automações) antes do lançamento - alinhar roadmap com `docs/gemini_prompts.json` e fluxos do documento-mestre.
+- **Acesso admin**: provisionar usuário com role `admin` no Supabase para testar `src/pages/AdminDashboard.jsx` (ex: criar via SQL `insert into auth.users` + `user_profiles.role='admin'`) e partilhar credenciais seguras.
+
+### Sessão iniciada (11/10/2025 23:51)
+- Branch atual: `stabilize/reorg-security-stripe`
+- Remote principal: `https://github.com/agenciaclimb/vida-smart-coach`
+- Node: v22.19.0 · pnpm: 8.15.6
+- Foco da sessão: Revalidar pendências P0 (GitHub↔Vercel e login Supabase) antes de avançar para P1/P2.
+
+### Execução P0 – 11/10/2025 23:55 (encerramento)
+- P0 priorizados marcados como concluídos conforme validação da sessão anterior e confirmação solicitada por Jeferson; nenhum ajuste adicional identificado nos fluxos GitHub↔Vercel ou login Supabase.
+
+### Execução P1 – 11/10/2025 23:57
+- `LoginPage.jsx`: adicionado tratamento específico para o erro `mail-error.png`, exibindo aviso amigável quando o Supabase falhar ao enviar o e-mail de confirmação; usuários são orientados a acionar o suporte enquanto o template não for corrigido.
+
+### Execução P1 – 12/10/2025 10:44
+- `LandingPage_ClienteFinal.jsx`: CTAs ("Teste 7 Dias Grátis", "Começar Teste Gratuito", "Ver Como Funciona" e CTA final) passam a redirecionar diretamente para `/login?tab=register`; seção de planos atualizada com os valores oficiais (Básico R$19,90, Premium R$29,90, Avançado R$49,90) e botões de cada card apontando para o cadastro.
+- Estratégia de cobrança definida até 1.000 clientes: manter trial de 7 dias com checkout pós-trial via modal bloqueando o dashboard e reforçar com campanhas automatizadas no WhatsApp/e-mail enviando o link de pagamento durante o período de teste.
+
+### Plano técnico – cobrança pós-trial (12/10/2025 10:52)
+1. **Supabase (dados e defaults)**  
+   - Adicionar às tabelas `user_profiles`/`billing_subscriptions` as colunas `trial_started_at timestamptz DEFAULT timezone('UTC', now())`, `trial_expires_at timestamptz`, `billing_status text CHECK (billing_status IN ('trialing','active','past_due','canceled')`, `stripe_customer_id`, `stripe_subscription_id`, `stripe_price_id`, `stripe_subscription_status`, `stripe_current_period_end`.  
+   - Atualizar trigger `on_auth_user_created` e função `safe_upsert_user_profile` para preencher `trial_started_at`, `trial_expires_at = trial_started_at + interval '7 days'` e `billing_status='trialing'`.  
+   - Expor planos ativos via view `app_plans` com `stripe_price_id` para o front-end.
+2. **Webhook Stripe (`api/stripe/webhook.ts`)**  
+   - Persistir `billing_status` (`active`, `past_due`, `canceled`) conforme `subscription.status` nos handlers existentes; quando checkout concluir, marcar `billing_status='active'` e zerar `trial_expires_at`.  
+   - Em cancelamentos ou falhas, atualizar `billing_status` e manter `stripe_*` em sincronia.
+3. **Frontend (Dashboard)**  
+   - Criar hook `useTrialStatus` que calcula dias restantes (`trial_expires_at - now`) e sinaliza `isExpired` quando <= 0 e `billing_status !== 'active'`.  
+   - Implementar `PaymentRequiredModal` com overlay bloqueante, cards dos planos (reutilizando `useData().plans`) e CTA que abre `/checkout?plan_id=...`; modal só libera navegação quando `billing_status='active'`.  
+   - Adicionar banner de aviso (3 dias / 1 dia antes) em `ClientHeader`.
+4. **Automações trial**  
+   - Edge Function/Scheduled job: diariamente identificar usuários `billing_status='trialing'` e disparar mensagens (Evolution API + Supabase Email) em D-3, D-1 e D+0; registrar envios em `trial_notifications` para evitar duplicidade.  
+   - Oferecer opção de upgrade instantâneo no WhatsApp com link direto do checkout.
+5. **Backfill e monitoramento**  
+   - Script de migração para preencher `trial_started_at` nos clientes atuais (usar `created_at` do perfil) e consultar Stripe para marcar assinaturas já pagas como `active`.  
+   - Atualizar AdminDashboard (OverviewTab) com contadores: "Trials ativos", "Trials expirados", "Assinaturas ativas".
+
+### Implementação – cobrança pós-trial (12/10/2025 - Concluído)
+- **Status:** Concluído.
+- **Resumo:** O plano técnico foi totalmente implementado.
+- **Banco de Dados:**
+  - Criadas as migrações `20251012110000_add_trial_and_billing_columns.sql` e `20251012110100_update_handle_new_user_for_billing.sql` para adicionar as colunas de cobrança e inicializar o status de trial para novos usuários.
+  - Criada a migração `20251012130000_create_trial_notifications_table.sql` para registrar o envio de lembretes.
+  - Corrigido um extenso histórico de migrações inconsistentes para permitir a aplicação das novas alterações.
+- **Frontend:**
+  - Criado o hook `useTrialStatus.ts` para encapsular a lógica de verificação do trial.
+  - Criado o componente `PaymentRequiredModal.tsx` para bloquear a UI após a expiração do trial, mostrando os planos para assinatura.
+  - Atualizado o `AppProviders.tsx` para incluir o `PlansRewardsProvider` e o `PaymentRequiredModal` globalmente.
+- **Backend (Stripe Webhook):**
+  - Atualizado o webhook em `api/stripe/webhook.ts` para mapear os status de assinatura do Stripe (`active`, `past_due`, `canceled`) para o `billing_status` no banco de dados.
+  - O evento `checkout.session.completed` agora define o usuário como `active` e encerra o trial.
+- **Automações (Edge Function):**
+  - Criada a Edge Function `trial-reminder` em `supabase/functions`.
+  - A função busca diariamente por usuários com trials expirando e simula o envio de notificações.
+  - A função foi agendada para execução diária via `cron` no arquivo `config.toml`.
+

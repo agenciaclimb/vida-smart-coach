@@ -33,7 +33,7 @@ function log(level: "info" | "warn" | "error", message: string, meta?: any) {
 
 async function registerEventOnce(sb: SupabaseClient | null, eventId: string): Promise<boolean> {
   if (!sb) return true;
-  const { error } = await sb.from("stripe_events").insert({ event_id: eventId }).select().single();
+  const { error } = await sb.from("stripe_events").insert({ event_id: eventId });
   if (!error) return true;
   if ((error as any)?.code === "23505") {
     log("info", "Evento já processado (idempotência)", { eventId });
@@ -41,6 +41,20 @@ async function registerEventOnce(sb: SupabaseClient | null, eventId: string): Pr
   }
   throw error;
 }
+
+// Helper to map Stripe status to our internal billing_status
+const toBillingStatus = (stripeStatus: Stripe.Subscription.Status): 'active' | 'past_due' | 'canceled' | null => {
+  if (stripeStatus === 'active' || stripeStatus === 'trialing') {
+    return 'active';
+  }
+  if (stripeStatus === 'past_due' || stripeStatus === 'unpaid') {
+    return 'past_due';
+  }
+  if (stripeStatus === 'canceled' || stripeStatus === 'incomplete_expired') {
+    return 'canceled';
+  }
+  return null; // Ignore 'incomplete' and any other statuses
+};
 
 type Handler = (stripe: Stripe, event: Stripe.Event) => Promise<void>;
 const handlers: Record<string, Handler> = {
@@ -69,6 +83,8 @@ const handlers: Record<string, Handler> = {
     }
 
     const profileData = {
+      billing_status: 'active', // User has paid
+      trial_expires_at: null, // Trial is over
       stripe_customer_id: subscription.customer,
       stripe_subscription_id: subscription.id,
       stripe_subscription_status: subscription.status,
@@ -92,58 +108,64 @@ const handlers: Record<string, Handler> = {
     const sub = event.data.object as Stripe.Subscription;
     log("info", "subscription.created", { subscriptionId: sub.id, status: sub.status });
   },
-              case 'customer.subscription.updated': {
-                const subscription = event.data.object as Stripe.Subscription;
-                const supabase = createClient(
-                  process.env.SUPABASE_URL!,
-                  process.env.SUPABASE_SERVICE_ROLE_KEY!
-                );
+  "customer.subscription.updated": async (_stripe, event) => {
+    const subscription = event.data.object as Stripe.Subscription;
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-                const { error } = await supabase
-                  .from('user_profiles')
-                  .update({
-                    stripe_subscription_id: subscription.id,
-                    stripe_subscription_status: subscription.status,
-                    stripe_price_id: subscription.items.data[0].price.id,
-                    stripe_current_period_end: new Date(
-                      subscription.current_period_end * 1000
-                    ).toISOString(),
-                  })
-                  .eq('stripe_customer_id', subscription.customer);
+    const newBillingStatus = toBillingStatus(subscription.status);
+    const updateData: any = {
+      stripe_subscription_id: subscription.id,
+      stripe_subscription_status: subscription.status,
+      stripe_price_id: subscription.items.data[0].price.id,
+      stripe_current_period_end: new Date(
+        subscription.current_period_end * 1000
+      ).toISOString(),
+    };
 
-                if (error) {
-                  console.error('Supabase error during subscription update:', error);
-                  return new Response(JSON.stringify({ error: 'Supabase update failed' }), { status: 500 });
-                }
+    if (newBillingStatus) {
+      updateData.billing_status = newBillingStatus;
+    }
 
-                console.log(`Subscription updated for customer: ${subscription.customer}`);
-                break;
-              }
-              case 'customer.subscription.deleted': {
-                const subscription = event.data.object as Stripe.Subscription;
-                const supabase = createClient(
-                  process.env.SUPABASE_URL!,
-                  process.env.SUPABASE_SERVICE_ROLE_KEY!
-                );
+    const { error } = await supabase
+      .from('user_profiles')
+      .update(updateData)
+      .eq('stripe_customer_id', subscription.customer);
 
-                const { error } = await supabase
-                  .from('user_profiles')
-                  .update({
-                    stripe_subscription_status: subscription.status,
-                    stripe_subscription_id: null,
-                    stripe_price_id: null,
-                    stripe_current_period_end: null,
-                  })
-                  .eq('stripe_customer_id', subscription.customer);
+    if (error) {
+      log("error", "Supabase error during subscription update:", { error });
+      throw new Error(`Supabase error during subscription update: ${error.message}`);
+    }
 
-                if (error) {
-                  console.error('Supabase error during subscription deletion:', error);
-                  return new Response(JSON.stringify({ error: 'Supabase update failed' }), { status: 500 });
-                }
+    log("info", `Subscription updated for customer: ${subscription.customer}`);
+  },
+  "customer.subscription.deleted": async (_stripe, event) => {
+    const subscription = event.data.object as Stripe.Subscription;
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-                console.log(`Subscription deleted for customer: ${subscription.customer}`);
-                break;
-              }
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        billing_status: 'canceled',
+        stripe_subscription_status: subscription.status,
+        stripe_subscription_id: null,
+        stripe_price_id: null,
+        stripe_current_period_end: null,
+      })
+      .eq('stripe_customer_id', subscription.customer);
+
+    if (error) {
+      log("error", "Supabase error during subscription deletion:", { error });
+      throw new Error(`Supabase error during subscription deletion: ${error.message}`);
+    }
+
+    log("info", `Subscription deleted for customer: ${subscription.customer}`);
+  },
   "invoice.payment_succeeded": async (_stripe, event) => {
     const inv = event.data.object as Stripe.Invoice;
     log("info", "invoice.payment_succeeded", { invoiceId: inv.id, amount_paid: inv.amount_paid });
