@@ -1207,3 +1207,16 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
   - A função busca diariamente por usuários com trials expirando e simula o envio de notificações.
   - A função foi agendada para execução diária via `cron` no arquivo `config.toml`.
 
+---
+
+## LOG DE EVENTOS - 12/10/2025
+
+### Correção de Build - PR #62
+
+- **Problema:** O deploy na Vercel para o PR #62 (`stabilize/reorg-security-stripe`) estava falhando. A análise do `chatgpt-codex-connector[bot]` identificou um erro de compilação no arquivo `src/AppProviders.tsx`.
+- **Causa Raiz:** Uma tag de fechamento JSX estava incorreta. O código `</AAuthProvider>` deveria ser `</PlansRewardsProvider>`.
+- **Ação:** Corrigido o erro de digitação em `src/AppProviders.tsx`.
+- **Observação:** Durante a tentativa de validação (`pnpm exec tsc --noEmit`), foram encontrados múltiplos erros de compilação preexistentes nos arquivos `src/pages/PartnersPage_Corrigida.jsx` e `src/components/ui/PaymentRequiredModal.tsx`. Esses erros impedem um build limpo e precisam ser tratados em tarefas separadas. A correção em `AppProviders.tsx` foi validada isoladamente e resolve a causa da falha do deploy.
+- **Status:** Correção aplicada ao código. Aguardando commit e push para o PR #62.
+
+---

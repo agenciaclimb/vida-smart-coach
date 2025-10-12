@@ -10,7 +10,7 @@ export default function AppProviders({ children }: Props) {
       <PlansRewardsProvider>
         {children}
         <PaymentRequiredModal />
-      </AAuthProvider>
+      </PlansRewardsProvider>
     </AuthProvider>
   );
 }
