@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'react-hot-toast';
-import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react';
+import { Heart, Mail, Lock, User, Phone, ArrowLeft, Loader2, LogIn } from 'lucide-react';
 import { supabase } from '@/core/supabase';
 
 const LoginPage = () => {
@@ -82,11 +82,12 @@ const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error("As senhas não coincidem");
+      toast.error('As senhas nao coincidem');
       return;
     }
-    
+
     setLocalLoading(true);
     const toastId = toast.loading('Criando sua conta...');
 
@@ -106,26 +107,64 @@ const LoginPage = () => {
       });
 
       if (error) {
-        toast.error(error.message || 'Não foi possível realizar o cadastro.', { id: toastId });
-      } else {
-        // Se não criou sessão, precisa confirmar email
-        if (!data.session) {
-          toast.success('Cadastro realizado! Verifique seu e-mail para confirmar a conta.', { id: toastId, duration: 5000 });
-          setActiveTab('login');
-          setLoginData({ email: registerData.email, password: '' });
+        const message = error.message || 'Nao foi possivel realizar o cadastro.';
+        console.error('[signup] erro supabase', message);
+
+        if (message?.includes('mail-error.png')) {
+          toast.error('Nao conseguimos enviar o email de confirmacao agora. Ja estamos ajustando o template; solicite suporte se precisar ativar o acesso imediatamente.', {
+            id: toastId,
+            duration: 6000,
+          });
         } else {
-          toast.success('Cadastro realizado com sucesso!', { id: toastId });
-          navigate('/dashboard', { replace: true });
+          toast.error(message, { id: toastId });
         }
+        return;
+      }
+
+      if (!data.session) {
+        console.info('[signup] registro criado, aguardando confirmacao de email', data?.user?.email);
+        toast.success('Cadastro realizado! Verifique seu email para confirmar a conta.', { id: toastId, duration: 5000 });
+        setActiveTab('login');
+        setLoginData({ email: registerData.email, password: '' });
+      } else {
+        console.info('[signup] registro criado com sessao ativa', data?.user?.email);
+        toast.success('Cadastro realizado com sucesso!', { id: toastId });
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
-      toast.error("Ocorreu um erro inesperado durante o cadastro.", { id: toastId });
+      console.error('[signup] excecao inesperada', error);
+      toast.error('Ocorreu um erro inesperado durante o cadastro.', { id: toastId });
     } finally {
       setLocalLoading(false);
     }
   };
   
   const isLoading = localLoading;
+
+  const handleLoginWithGoogle = async () => {
+    if (localLoading) return;
+
+    setLocalLoading(true);
+    const toastId = toast.loading('Abrindo Google para login...');
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Redirecionando para o Google...', { id: toastId, duration: 2000 });
+    } catch (err) {
+      toast.error(err?.message ?? 'Não foi possível iniciar o login com Google.', { id: toastId });
+      setLocalLoading(false);
+    }
+    // Supabase redireciona automaticamente em caso de sucesso, então o loading permanece ativo.
+  };
 
   return (
     <>
@@ -215,6 +254,25 @@ const LoginPage = () => {
                     {isLoading ? 'Aguarde...' : 'Entrar'}
                   </Button>
                 </form>
+
+                <div className="mt-6">
+                  <div className="relative flex items-center">
+                    <span className="flex-grow border-t border-slate-200" />
+                    <span className="px-3 text-xs uppercase tracking-wide text-slate-400">ou continue com</span>
+                    <span className="flex-grow border-t border-slate-200" />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full gap-2"
+                    onClick={handleLoginWithGoogle}
+                    disabled={isLoading}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Google
+                  </Button>
+                </div>
               </TabsContent>
 
               <TabsContent value="register">
@@ -327,3 +385,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

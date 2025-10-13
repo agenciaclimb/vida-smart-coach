@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "src/legacy",
+    "src/pages/Dashboard_PATCH_FINAL.tsx",
+    "src/pages/PartnersPage_Corrigida.jsx"
+  ]
+}

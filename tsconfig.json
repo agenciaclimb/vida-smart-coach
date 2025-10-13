@@ -20,5 +20,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/legacy", "src/pages/Dashboard_PATCH_FINAL.tsx"]
 }

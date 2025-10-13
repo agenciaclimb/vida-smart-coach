@@ -37,22 +37,23 @@ export const GamificationProvider = ({ children }) => {
                 .eq('user_id', user.id)
                 .single();
 
-            if (error && error.code !== 'PGRST116') throw error;
-            
-            setGamificationData(data || {
-                user_id: user.id,
-                total_points: 0,
-                level: 1,
-                current_streak: 0,
-                longest_streak: 0,
-                physical_points: 0,
-                nutrition_points: 0,
-                emotional_points: 0,
-                spiritual_points: 0,
-                referral_points: 0,
-                achievement_points: 0,
-                badges: []
-            });
+            if (error && error.code !== 'PGRST116') {
+                throw error;
+            }
+
+            if (!data) {
+                // New user detected, run the onboarding function
+                const { data: newUserGamificationData, error: onboardError } = await supabase.rpc('handle_new_user_onboarding');
+
+                if (onboardError) {
+                    throw onboardError;
+                }
+                
+                setGamificationData(newUserGamificationData);
+                toast.success('Boas-vindas! Você ganhou seus primeiros pontos! 🎉');
+            } else {
+                setGamificationData(data);
+            }
         } catch (error) {
             console.error('Error fetching gamification data:', error);
             toast.error('Erro ao carregar dados de gamificação');

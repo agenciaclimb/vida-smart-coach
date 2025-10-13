@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2, Shield } from 'lucide-react';
@@ -42,25 +42,35 @@ const SafeGuardDailyCheckInCard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 🛡️ PROTEÇÃO: Verificar check-in do dia com SafeGuard
-  const { call: todayCheckInCall } = useApiCallSafeGuard();
-  
-  const todayCheckInAPI = {
-    loading: false,
+  const { call: todayCheckInCall, abortAll: abortTodayCheckIn } = useApiCallSafeGuard();
+  const [todayCheckInState, setTodayCheckInState] = useState({
+    loading: true,
     data: null,
     error: null,
-    retryCount: 0,
-    refetch: () => {},
-    abort: () => {}
-  };
-  
-  // Função para verificar check-in (simplificada)
-  const checkTodayCheckIn = useCallback(async () => {
-    if (!user?.id) return null;
-    
+    retryCount: 0
+  });
+
+  const fetchTodayCheckIn = useCallback(async () => {
+    if (!user?.id) {
+      setTodayCheckInState({
+        loading: false,
+        data: null,
+        error: null,
+        retryCount: 0
+      });
+      return;
+    }
+
+    setTodayCheckInState(prev => ({
+      ...prev,
+      loading: true,
+      error: null
+    }));
+
     try {
       const today = new Date().toISOString().split('T')[0];
-      
-      return await todayCheckInCall(async () => {
+
+      const result = await todayCheckInCall(async () => {
         const supabase = getSupabase();
         const { data, error } = await supabase
           .from('daily_metrics')
@@ -69,18 +79,50 @@ const SafeGuardDailyCheckInCard = () => {
           .gte('created_at', `${today}T00:00:00`)
           .lt('created_at', `${today}T23:59:59`)
           .single();
-        
-        if (error && error.code !== 'PGRST116') { // PGRST116 = não encontrado
+
+        if (error && error.code !== 'PGRST116') {
           throw new Error('Erro ao verificar check-in: ' + error.message);
         }
-        
-        return data;
+
+        return data ?? null;
+      }, { maxRetries: 1, timeout: 8000, enabled: true });
+
+      setTodayCheckInState({
+        loading: false,
+        data: result ?? null,
+        error: null,
+        retryCount: 0
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao verificar check-in';
+
+      if (message === 'API call too frequent') {
+        setTimeout(() => fetchTodayCheckIn(), 600);
+        return;
+      }
+
       console.error('❌ Erro ao verificar check-in:', error);
-      return null;
+      setTodayCheckInState(prev => ({
+        ...prev,
+        loading: false,
+        error: message,
+        retryCount: prev.retryCount + 1
+      }));
     }
-  }, [user?.id, todayCheckInCall]);
+  }, [todayCheckInCall, user?.id]);
+
+  useEffect(() => {
+    fetchTodayCheckIn();
+    return () => {
+      abortTodayCheckIn();
+    };
+  }, [fetchTodayCheckIn, abortTodayCheckIn]);
+
+  const todayCheckInAPI = useMemo(() => ({
+    ...todayCheckInState,
+    refetch: fetchTodayCheckIn,
+    abort: abortTodayCheckIn
+  }), [todayCheckInState, fetchTodayCheckIn, abortTodayCheckIn]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,8 +154,8 @@ const SafeGuardDailyCheckInCard = () => {
 
       toast.success("Check-in registrado com sucesso!");
       
-      // Forçar refresh do check-in
-      todayCheckInAPI.refetch();
+      // Forçar refresh do check-in respeitando o debounce do SafeGuard
+      setTimeout(() => fetchTodayCheckIn(), 600);
       
       // Limpar formulário
       setMood('');
@@ -121,7 +163,8 @@ const SafeGuardDailyCheckInCard = () => {
       
     } catch (error) {
       console.error('❌ Erro no check-in:', error);
-      toast.error(`Erro ao registrar check-in: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao registrar check-in: ${message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -280,38 +323,83 @@ const SafeGuardUserStats = () => {
   const navigate = useNavigate();
 
   // 🛡️ PROTEÇÃO: Buscar stats do usuário com SafeGuard
-  const { call: userStatsCall } = useApiCallSafeGuard();
-  
-  const userStatsAPI = {
-    loading: false,
+  const { call: userStatsCall, abortAll: abortUserStats } = useApiCallSafeGuard();
+  const [userStatsState, setUserStatsState] = useState({
+    loading: true,
     data: null,
     error: null,
-    refetch: () => {}
-  };
-    useCallback(async () => {
-      if (!user?.id) return null;
+    retryCount: 0
+  });
 
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+  const fetchUserStats = useCallback(async () => {
+    if (!user?.id) {
+      setUserStatsState({
+        loading: false,
+        data: null,
+        error: null,
+        retryCount: 0
+      });
+      return;
+    }
 
-      if (error) {
-        throw new Error('Erro ao carregar perfil: ' + error.message);
+    setUserStatsState(prev => ({
+      ...prev,
+      loading: true,
+      error: null
+    }));
+
+    try {
+      const result = await userStatsCall(async () => {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          throw new Error('Erro ao carregar perfil: ' + error.message);
+        }
+
+        return data ?? null;
+      }, { maxRetries: 2, timeout: 10000, enabled: true });
+
+      setUserStatsState({
+        loading: false,
+        data: result ?? null,
+        error: null,
+        retryCount: 0
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar perfil';
+
+      if (message === 'API call too frequent') {
+        setTimeout(() => fetchUserStats(), 600);
+        return;
       }
 
-      return data;
-    }, [user?.id]),
-    [user?.id],
-    {
-      maxRetries: 2,
-      retryDelay: 1000,
-      timeout: 10000,
-      enabled: !!user?.id
+      console.error('❌ Erro ao carregar perfil:', error);
+      setUserStatsState(prev => ({
+        ...prev,
+        loading: false,
+        error: message,
+        retryCount: prev.retryCount + 1
+      }));
     }
-  );
+  }, [userStatsCall, user?.id]);
+
+  useEffect(() => {
+    fetchUserStats();
+    return () => {
+      abortUserStats();
+    };
+  }, [fetchUserStats, abortUserStats]);
+
+  const userStatsAPI = useMemo(() => ({
+    ...userStatsState,
+    refetch: fetchUserStats,
+    abort: abortUserStats
+  }), [userStatsState, fetchUserStats, abortUserStats]);
 
   if (userStatsAPI.loading) {
     return (

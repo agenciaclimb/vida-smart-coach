@@ -13,13 +13,13 @@ export default function AuthRedirection({ children }: { children: React.ReactNod
     location.hash.includes("safe") ||
     new URLSearchParams(location.search).has("safe");
 
-  if (loading) return <>{children}</>;
-
   useEffect(() => {
     if (loading || inSafe) return;
     if (user && onLogin) navigate("/dashboard", { replace: true });
     if (!user && !onLogin) navigate("/login", { replace: true });
   }, [user, onLogin, inSafe, loading, navigate]);
+
+  if (loading) return <>{children}</>;
 
   return <>{children}</>;
 }

@@ -17,3 +17,4 @@ codex_*/
 .codex_*
 audit/
 sandbox/
+.vercel

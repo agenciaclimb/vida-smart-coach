@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -107,7 +108,13 @@ const NoPlanState = () => {
 
 const PlanDisplay = ({ planData }) => {
   const [activeWeek, setActiveWeek] = useState(0);
+  const navigate = useNavigate();
+  const { generatePersonalizedPlan, generatingPlan } = usePlans();
   const plan = planData.plan_data;
+
+  // NOTA: O sistema atualmente suporta apenas um plano (Físico).
+  // A expansão para 4 áreas (Alimentar, Emocional, Espiritual) requer alterações
+  // no backend (Supabase) e uma refatoração da UI, conforme documento mestre.
 
   return (
     <div className="space-y-6">
@@ -233,11 +240,24 @@ const PlanDisplay = ({ planData }) => {
       <Card className="bg-gray-50">
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-3 justify-center">
-            <Button variant="outline" className="flex items-center">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Gerar Novo Plano
+            <Button 
+              variant="outline" 
+              className="flex items-center"
+              onClick={generatePersonalizedPlan}
+              disabled={generatingPlan}
+            >
+              {generatingPlan ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              {generatingPlan ? 'Gerando...' : 'Gerar Novo Plano'}
             </Button>
-            <Button variant="outline" className="flex items-center">
+            <Button 
+              variant="outline" 
+              className="flex items-center"
+              onClick={() => navigate('/dashboard?tab=chat')}
+            >
               <MessageCircle className="w-4 h-4 mr-2" />
               Falar com IA Coach
             </Button>
