@@ -16,7 +16,6 @@ import CommunityTab from '@/components/client/CommunityTab';
 import ProfileTab from '@/components/client/ProfileTab';
 import ReferralTab from '@/components/client/ReferralTab';
 import IntegrationsTab from '@/components/client/IntegrationsTab';
-import SettingsTab from '@/components/client/SettingsTab';
 import { Loader2 } from 'lucide-react';
 
 const LoadingScreen = () => (
@@ -86,8 +85,6 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
         return <ReferralTab />;
       case 'integrations':
         return <IntegrationsTab />;
-      case 'settings':
-        return <SettingsTab />;
       default:
         return <DashboardTab />;
     }
@@ -110,10 +107,9 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
                 <TabsTrigger value="chat">IA Coach</TabsTrigger>
                 <TabsTrigger value="gamification">Gamificação</TabsTrigger>
                 <TabsTrigger value="community">Comunidade</TabsTrigger>
-                <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
+                <TabsTrigger value="profile">Perfil & Configurações</TabsTrigger>
                 <TabsTrigger value="referral">Indique e Ganhe</TabsTrigger>
                 <TabsTrigger value="integrations">Integrações</TabsTrigger>
-                <TabsTrigger value="settings">Configurações</TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
