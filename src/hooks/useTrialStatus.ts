@@ -1,53 +1,69 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../components/auth/AuthProvider'; // Corrected path
+import { useAuth } from '../components/auth/AuthProvider';
+import { useEffect, useState } from 'react';
 
-export const useTrialStatus = () => {
-  const { user, loading } = useAuth(); // Use the main AuthProvider
-  const [trialStatus, setTrialStatus] = useState({
-    daysRemaining: null,
+interface TrialStatus {
+  isActive: boolean;
+  isTrialing: boolean;
+  isExpired: boolean;
+  daysRemaining: number | null;
+}
+
+const useTrialStatus = (): TrialStatus => {
+  const { user } = useAuth(); // Use the user object from the auth context
+  const [status, setStatus] = useState<TrialStatus>({
+    isActive: false,
+    isTrialing: false,
     isExpired: false,
-    billingStatus: null,
-    isLoading: true,
+    daysRemaining: null,
   });
 
   useEffect(() => {
-    if (loading) {
-      setTrialStatus(prev => ({ ...prev, isLoading: true }));
+    if (!user?.profile) { // Check for user and user.profile
       return;
     }
 
-    const profile = user?.profile; // Profile is nested inside the user object
+    const { billing_status, trial_expires_at } = user.profile;
 
-    if (!profile) {
-      setTrialStatus({
-        daysRemaining: null,
+    const isActive = billing_status === 'active';
+    const isTrialing = billing_status === 'trialing';
+
+    if (isActive) {
+      setStatus({
+        isActive: true,
+        isTrialing: false,
         isExpired: false,
-        billingStatus: null,
-        isLoading: false,
+        daysRemaining: null,
       });
       return;
     }
 
-    const { trial_expires_at, billing_status } = profile;
-    const now = new Date();
-    const expiryDate = trial_expires_at ? new Date(trial_expires_at) : null;
+    if (isTrialing && trial_expires_at) {
+      const now = new Date();
+      const expiresAt = new Date(trial_expires_at);
+      const diffTime = expiresAt.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    let daysRemaining = null;
-    if (expiryDate) {
-      const diffTime = expiryDate.getTime() - now.getTime();
-      daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const isExpired = diffDays <= 0;
+
+      setStatus({
+        isActive: false,
+        isTrialing: true,
+        isExpired: isExpired,
+        daysRemaining: isExpired ? 0 : diffDays,
+      });
+    } else {
+        // Se não está ativo nem em trial, considera expirado (ex: cancelado, não pago)
+        setStatus({
+            isActive: false,
+            isTrialing: false,
+            isExpired: true,
+            daysRemaining: 0,
+        });
     }
 
-    const isExpired = billing_status === 'trialing' && daysRemaining !== null && daysRemaining <= 0;
+  }, [user?.profile]); // Depend on user.profile
 
-    setTrialStatus({
-      daysRemaining,
-      isExpired,
-      billingStatus: billing_status,
-      isLoading: false,
-    });
-
-  }, [user, loading]); // Depend on user and loading from useAuth
-
-  return trialStatus;
+  return status;
 };
+
+export default useTrialStatus;

@@ -25,24 +25,16 @@ port = 54323
 [functions]
   # Configuração para a função 'trial-reminder'
   [functions.trial-reminder]
-    # Rota do handler da função
-    handler = "file://./supabase/functions/trial-reminder/index.ts"
-    # Política de verificação de JWT
+    entrypoint = "./functions/trial-reminder/index.ts"
     verify_jwt = false
-    # Agendamento da execução (cron-like), corrigido de 'cron' para 'schedule'
-    # Executa todo dia à 1h da manhã (UTC)
-    schedule = "0 1 * * *"
+    schedule = "0 0 * * *"
 
   # Configuração para a função 'evolution-webhook'
   [functions.evolution-webhook]
-    # Rota do handler da função
-    handler = "file://./supabase/functions/evolution-webhook/index.ts"
-    # Política de verificação de JWT
+    entrypoint = "./functions/evolution-webhook/index.ts"
     verify_jwt = false
 
   # Configuração para a função 'ia-coach-chat'
   [functions.ia-coach-chat]
-    # Rota do handler da função
-    handler = "file://./supabase/functions/ia-coach-chat/index.ts"
-    # Política de verificação de JWT
+    entrypoint = "./functions/ia-coach-chat/index.ts"
     verify_jwt = true # Requer autenticação

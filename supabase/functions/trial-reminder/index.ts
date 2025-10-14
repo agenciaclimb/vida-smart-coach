@@ -1,120 +1,151 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from '@supabase/supabase-js';
 
-// Main function logic
-async function handleTrialReminders() {
-  // 1. Initialize Supabase Admin Client
-  const supabaseAdmin = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-  const in3Days = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
-  const in2Days = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
-  const in1Day = new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000);
-  const yesterday = new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000);
-
-  // 2. Define queries for different notification types
-  const queries = {
-    trial_ending_3_days: supabaseAdmin
-      .from('user_profiles')
-      .select('id, email, phone')
-      .eq('billing_status', 'trialing')
-      .gte('trial_expires_at', in2Days.toISOString())
-      .lt('trial_expires_at', in3Days.toISOString()),
-    trial_ending_1_day: supabaseAdmin
-      .from('user_profiles')
-      .select('id, email, phone')
-      .eq('billing_status', 'trialing')
-      .gte('trial_expires_at', today.toISOString())
-      .lt('trial_expires_at', in1Day.toISOString()),
-    trial_expired_day_0: supabaseAdmin
-      .from('user_profiles')
-      .select('id, email, phone')
-      .eq('billing_status', 'trialing')
-      .gte('trial_expires_at', yesterday.toISOString())
-      .lt('trial_expires_at', today.toISOString()),
-  };
-
-  // 3. Execute queries and collect users to notify
-  const notificationsToSend = [];
-  for (const [type, query] of Object.entries(queries)) {
-    const { data: users, error } = await query;
-    if (error) {
-      console.error(`Error fetching users for ${type}:`, error.message);
-      continue;
-    }
-    if (users) {
-      users.forEach(u => notificationsToSend.push({ user: u, type }));
-    }
-  }
-
-  if (notificationsToSend.length === 0) {
-    return { message: 'No trial reminders to send today.' };
-  }
-
-  // 4. Filter out users who have already received a notification of the same type
-  const { data: sentNotifications, error: sentErr } = await supabaseAdmin
-    .from('trial_notifications')
-    .select('user_id, notification_type')
-    .in('user_id', notificationsToSend.map(n => n.user.id));
-
-  if (sentErr) {
-    throw new Error(`Could not fetch sent notifications: ${sentErr.message}`);
-  }
-
-  const sentSet = new Set(sentNotifications.map(n => `${n.user_id}-${n.notification_type}`));
-  const filteredNotifications = notificationsToSend.filter(n => !sentSet.has(`${n.user.id}-${n.type}`));
-
-  if (filteredNotifications.length === 0) {
-    return { message: 'All potential reminders have already been sent.' };
-  }
-
-  // 5. Send notifications and log them
-  const logsToInsert = [];
-  for (const { user, type } of filteredNotifications) {
-    // TODO: Implement actual email sending via Supabase/Resend
-    console.log(`Simulating sending EMAIL for ${type} to ${user.email}`);
-    logsToInsert.push({ user_id: user.id, notification_type: type, channel: 'email' });
-
-    // TODO: Implement actual WhatsApp sending via Evolution API
-    if (user.phone) {
-      console.log(`Simulating sending WHATSAPP for ${type} to ${user.phone}`);
-      logsToInsert.push({ user_id: user.id, notification_type: type, channel: 'whatsapp' });
-    }
-  }
-
-  const { error: insertErr } = await supabaseAdmin
-    .from('trial_notifications')
-    .insert(logsToInsert);
-
-  if (insertErr) {
-    throw new Error(`Could not log sent notifications: ${insertErr.message}`);
-  }
-
-  return { message: `Processed and logged ${logsToInsert.length} notifications.` };
+// Tipos para clareza
+interface UserProfile {
+  id: string;
+  email: string;
+  trial_expires_at: string;
 }
 
-// Deno Deploy entry point
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+// Tipos de notificação alinhados com o banco de dados
+type NotificationType = 'trial_expiring_3_days' | 'trial_expiring_1_day' | 'trial_expired_today';
+
+// Configuração do Supabase Admin Client
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// Função principal da Edge Function
+// eslint-disable-next-line no-restricted-globals
+addEventListener('fetch', (event) => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request: Request): Promise<Response> {
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
   }
 
   try {
-    const result = await handleTrialReminders();
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Adicionar verificação de bearer token para segurança
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader !== `Bearer ${process.env.SUPABASE_FUNCTION_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    // Lembrete de 3 dias
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setUTCDate(threeDaysFromNow.getUTCDate() + 3);
+    await processUsersForDate(threeDaysFromNow, 'trial_expiring_3_days');
+
+    // Lembrete de 1 dia
+    const oneDayFromNow = new Date();
+    oneDayFromNow.setUTCDate(oneDayFromNow.getUTCDate() + 1);
+    await processUsersForDate(oneDayFromNow, 'trial_expiring_1_day');
+
+    // Lembrete de expiração no dia e passados
+    await processExpiredUsers('trial_expired_today');
+
+    return new Response(JSON.stringify({ success: true, message: 'Trial reminders processed.' }), {
       status: 200,
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.error('Error processing trial reminders:', error);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
-});
+}
+
+// Processa usuários para uma data específica no futuro (lembretes de 3 e 1 dia)
+async function processUsersForDate(date: Date, notificationType: NotificationType) {
+  const startDate = new Date(date);
+  startDate.setUTCHours(0, 0, 0, 0);
+  const endDate = new Date(date);
+  endDate.setUTCHours(23, 59, 59, 999);
+
+  const { data: users, error } = await supabaseAdmin
+    .from('user_profiles')
+    .select('id, email, trial_expires_at')
+    .eq('billing_status', 'trialing')
+    .gte('trial_expires_at', startDate.toISOString())
+    .lte('trial_expires_at', endDate.toISOString());
+
+  if (error) {
+    throw new Error(`Failed to fetch users for ${notificationType}: ${error.message}`);
+  }
+
+  if (!users || users.length === 0) {
+    console.log(`No users found for notification type ${notificationType} on ${startDate.toISOString().slice(0, 10)}`);
+    return;
+  }
+
+  for (const user of users) {
+    await sendNotificationIfNotSent(user, notificationType);
+  }
+}
+
+// Processa usuários cujo trial já expirou
+async function processExpiredUsers(notificationType: NotificationType) {
+    const now = new Date();
+
+    const { data: users, error } = await supabaseAdmin
+        .from('user_profiles')
+        .select('id, email, trial_expires_at')
+        .eq('billing_status', 'trialing')
+        .lt('trial_expires_at', now.toISOString());
+
+    if (error) {
+        throw new Error(`Failed to fetch expired users: ${error.message}`);
+    }
+
+    if (!users || users.length === 0) {
+        console.log(`No expired users found needing notification.`);
+        return;
+    }
+
+    for (const user of users) {
+        await sendNotificationIfNotSent(user, notificationType);
+    }
+}
+
+
+async function sendNotificationIfNotSent(user: UserProfile, notificationType: NotificationType) {
+  // 1. Verificar se a notificação já foi enviada
+  const { data: existingNotification, error: checkError } = await supabaseAdmin
+    .from('trial_notifications')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('notification_type', notificationType)
+    .single();
+
+  if (checkError && checkError.code !== 'PGRST116') { // PGRST116: No rows found
+    console.error(`Error checking notification for user ${user.id}:`, checkError);
+    return; // Pula este usuário em caso de erro
+  }
+
+  if (existingNotification) {
+    console.log(`Notification ${notificationType} already sent to user ${user.id}. Skipping.`);
+    return;
+  }
+
+  // 2. Simular o envio da notificação (Email/WhatsApp)
+  // TODO: Integrar com a Evolution API (WhatsApp) para enviar uma mensagem real.
+  // TODO: Integrar com o Supabase Auth (Email) para enviar um email real.
+  console.log(`SIMULATING: Sending ${notificationType} notification to user ${user.id} (${user.email})`);
+
+  // 3. Registrar que a notificação foi enviada
+  const { error: insertError } = await supabaseAdmin
+    .from('trial_notifications')
+    .insert({
+      user_id: user.id,
+      notification_type: notificationType,
+      channel: 'email' // Defaulting to email, can be 'whatsapp'
+    });
+
+  if (insertError) {
+    console.error(`Failed to record notification for user ${user.id}:`, insertError);
+  }
+}

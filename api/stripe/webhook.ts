@@ -1,96 +1,144 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { Readable } from 'node:stream';
+import { Buffer } from 'buffer';
 
-// Função para ler o corpo da requisição como um buffer
-async function buffer(readable: Readable) {
-  const chunks = [];
-  for await (const chunk of readable) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks);
-}
-
-// Inicializa o cliente Stripe com a chave secreta e a versão da API
+// Configuração do Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2024-04-10',
+  typescript: true,
 });
 
-// Segredo do endpoint do webhook, usado para verificar a assinatura do evento
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-// Handler principal da função Edge
-export default async function handler(req: Request) {
+// Configuração do Supabase
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// Configuração da Vercel Edge Function
+export const config = {
+  runtime: 'edge',
+};
+
+const handler = async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') {
-    return new Response(null, { status: 405, headers: { 'Allow': 'POST' } });
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', 'Allow': 'POST' },
+    });
   }
 
   const sig = req.headers.get('stripe-signature');
   if (!sig) {
-    console.error('Missing stripe-signature header');
-    return new Response('Webhook Error: Missing stripe-signature header', { status: 400 });
+    return new Response(JSON.stringify({ error: 'No stripe-signature header' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
+
+  const reqBuffer = Buffer.from(await req.arrayBuffer());
 
   let event: Stripe.Event;
-  const body = await buffer(req.body as any);
 
   try {
-    // Verifica a assinatura do webhook para garantir que o evento veio do Stripe
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-  } catch (err: any) { // 'any' para capturar a propriedade 'message'
-    console.error(`Webhook signature verification failed: ${err.message}`);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    event = stripe.webhooks.constructEvent(reqBuffer, sig, webhookSecret);
+  } catch (err: any) {
+    console.error(`Stripe webhook signature error: ${err.message}`);
+    return new Response(JSON.stringify({ error: `Webhook Error: ${err.message}` }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  // Inicializa o cliente Supabase para interagir com o banco de dados
-  const supabase = new SupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  console.log(`Received Stripe event: ${event.type}`);
 
   try {
-    // Trata os diferentes tipos de eventos do Stripe
     switch (event.type) {
-      case 'customer.subscription.created':
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        await supabase
-          .from('billing_subscriptions')
-          .update({
-            stripe_subscription_status: subscription.status,
-            stripe_price_id: subscription.items.data[0]?.price.id,
-            stripe_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          })
-          .eq('stripe_subscription_id', subscription.id);
+      case 'customer.subscription.deleted':
+        await handleSubscriptionChange(event.data.object as Stripe.Subscription);
         break;
-      }
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        if (session.mode === 'subscription' && session.customer) {
-          await supabase
-            .from('billing_subscriptions')
-            .update({
-              billing_status: 'active', // Marca a assinatura como ativa
-              stripe_customer_id: session.customer.toString(),
-              stripe_subscription_id: session.subscription!.toString(),
-              stripe_price_id: session.line_items?.data[0]?.price?.id,
-              trial_expires_at: null, // Finaliza o período de trial
-            })
-            .eq('user_id', session.client_reference_id);
-        }
-        break;
-      }
       default:
-        // Log para eventos não tratados
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    // Retorna uma resposta de sucesso
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
-
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
-    console.error('Error processing webhook event:', error.message);
-    return new Response(`Webhook handler failed: ${error.message}`, { status: 500 });
+    console.error(`Error processing webhook ${event.type}:`, error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-}
+};
+
+const handleCheckoutCompleted = async (session: Stripe.Checkout.Session) => {
+  const { client_reference_id: userId, customer, subscription } = session;
+
+  if (!userId) {
+    throw new Error('Missing client_reference_id (user_id) in checkout session');
+  }
+
+  const subscriptionData = await stripe.subscriptions.retrieve(subscription as string);
+
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({
+      stripe_customer_id: customer as string,
+      stripe_subscription_id: subscription as string,
+      stripe_price_id: subscriptionData.items.data[0]?.price.id,
+      stripe_subscription_status: subscriptionData.status,
+      billing_status: 'active', // User is now active
+      trial_expires_at: null, // Clear trial expiration
+    })
+    .eq('id', userId);
+
+  if (error) {
+    throw new Error(`Supabase error updating profile for user ${userId}: ${error.message}`);
+  }
+
+  console.log(`Successfully activated subscription for user: ${userId}`);
+};
+
+const handleSubscriptionChange = async (subscription: Stripe.Subscription) => {
+  const { customer } = subscription;
+
+  const { data: profile, error: profileError } = await supabase
+    .from('user_profiles')
+    .select('id')
+    .eq('stripe_customer_id', customer)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error(`Could not find user profile for stripe_customer_id: ${customer}`);
+  }
+
+  const { id: userId } = profile;
+
+  const newStatus = subscription.status === 'active' ? 'active' : subscription.status;
+
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: subscription.items.data[0]?.price.id,
+      stripe_subscription_status: subscription.status,
+      billing_status: newStatus,
+      stripe_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    })
+    .eq('id', userId);
+
+  if (error) {
+    throw new Error(`Supabase error updating subscription for user ${userId}: ${error.message}`);
+  }
+
+  console.log(`Successfully updated subscription status to "${newStatus}" for user: ${userId}`);
+};
+
+export default handler;
