@@ -1,1 +1,8 @@
+node_modules
+dist
+**/*.mjs
+**/*.js
+**/*_SAFEGUARD.jsx
+**/*_SAFEGUARD.tsx
+src/legacy
 src/pages/PartnersPage_Corrigida.jsx

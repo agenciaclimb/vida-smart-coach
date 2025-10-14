@@ -1,7 +1,8 @@
-# supabase/config.toml
-
-# Configurações gerais do projeto Supabase
-project_id = "zzugbgoylwbaojdnunuz"
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
+project_id = "zzugbgoylwbaojdnunuz"  # substitua depois com 'xyz...' do seu Supabase
 
 [api]
 # Porta da API local
@@ -12,9 +13,12 @@ schemas = ["public", "storage", "graphql"]
 max_rows = 1000
 
 [db]
-# Porta do banco de dados local
-port = 54322
-# Usar o Major Version do Postgres que o Supabase usa.
+# Port to use for the local database URL.
+port = 54328
+# Port used by db diff command to initialize the shadow database.
+shadow_port = 54320
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
 major_version = 15
 
 [studio]

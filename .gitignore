@@ -1,12 +1,14 @@
 # Node / build
 node_modules/
 dist/
+tsconfig.tsbuildinfo
 .vercel/
 .vscode/
 coverage/
 
-# Ambientes
-.env*
+# Environment variables
+.env
+.env.*
 !.env.example
 
 # Logs e temporários

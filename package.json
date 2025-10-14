@@ -7,8 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "test": "vitest"
+    "preview": "vite preview --port 4173",
+    "test": "vitest",
+    "migrate": "node scripts/automated-migration.mjs",
+    "migrate:supabase": "node scripts/supabase-migration-runner.mjs",
+    "deploy": "node scripts/deploy-complete.mjs",
+    "deploy:full": "pnpm migrate:supabase && pnpm build && pnpm deploy",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link --project-ref $npm_package_config_supabase_ref",
+    "supabase:secrets": "npx supabase secrets set --env-file .env.functions",
+    "supabase:deploy": "npx supabase functions deploy agent-create agent-report agent-apply-patch",
+    "supabase:serve": "npx supabase functions serve"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -26,18 +35,33 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.75.0",
-    "class-variance-authority": "^0.7.0",
+    "autoprefixer": "^10.4.16",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^3.0.6",
+    "dotenv": "^17.2.2",
     "framer-motion": "^11.2.10",
     "lucide-react": "^0.394.0",
+    "micro": "^10.0.0",
+    "pm2": "^6.0.10",
+    "postcss": "^8.4.31",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.23.1",
+    "recharts": "^2.12.7",
+    "stripe": "^14.23.0",
     "tailwind-merge": "^2.3.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss": "^3.4.4",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.22.10",
+    "@babel/generator": "^7.22.10",
+    "@babel/parser": "^7.22.10",
+    "@babel/traverse": "^7.22.10",
+    "@babel/types": "^7.22.10",
     "@types/node": "^20.14.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -60,7 +84,17 @@
     "vitest": "^1.6.0",
     "ws": "^8.17.0"
   },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "config": {
+    "supabase_ref": "SEU-PROJECT-REF"
+  },
   "engines": {
     "node": "22.x"
-  }
+  },
+  "packageManager": "pnpm@9.12.0"
 }
