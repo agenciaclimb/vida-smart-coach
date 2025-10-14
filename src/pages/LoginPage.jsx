@@ -19,6 +19,7 @@ const LoginPage = () => {
   const params = new URLSearchParams(location.search);
   const roleFromQuery = params.get('role') || 'client';
   const tabFromQuery = params.get('tab') || 'login';
+  const refFromQuery = params.get('ref'); // Read referral code
   const [activeTab, setActiveTab] = useState(tabFromQuery);
 
   const [loginData, setLoginData] = useState({
@@ -32,12 +33,13 @@ const LoginPage = () => {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: roleFromQuery
+    role: roleFromQuery,
+    ref_code: refFromQuery || '' // Add ref_code to state
   });
   
   useEffect(() => {
-    setRegisterData(prev => ({ ...prev, role: roleFromQuery }));
-  }, [roleFromQuery]);
+    setRegisterData(prev => ({ ...prev, role: roleFromQuery, ref_code: refFromQuery || '' }));
+  }, [roleFromQuery, refFromQuery]);
 
   useEffect(() => {
     setActiveTab(tabFromQuery);
@@ -101,6 +103,7 @@ const LoginPage = () => {
             full_name: registerData.full_name,
             whatsapp: registerData.phone,
             role: registerData.role,
+            referred_by: registerData.ref_code, // Pass referral code to Supabase
           },
           emailRedirectTo: `${origin}/auth/callback`,
         },
