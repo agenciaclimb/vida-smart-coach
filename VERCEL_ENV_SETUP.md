@@ -17,6 +17,16 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 SUPABASE_ANON_KEY=eyJhbGc...
 ```
 
+⚠️ **IMPORTANTE**: Se `SUPABASE_SERVICE_ROLE_KEY` estiver configurada como `${SB_SECRET_KEY}`, isso é uma **referência de variável**. Você precisa:
+
+1. **Opção A**: Substituir por valor direto
+   - Copie o valor real da Service Role Key do Supabase
+   - Cole diretamente no campo (sem `${}`)
+
+2. **Opção B**: Configurar a variável `SB_SECRET_KEY`
+   - Crie uma nova variável `SB_SECRET_KEY` com o valor real
+   - Mantenha `SUPABASE_SERVICE_ROLE_KEY=${SB_SECRET_KEY}`
+
 ### 🌐 Vercel (Opcional)
 ```
 VERCEL_ENV=production
@@ -35,6 +45,16 @@ VERCEL_ENV=production
 - Use `STRIPE_SECRET_KEY` de **live** apenas para produção
 - `STRIPE_WEBHOOK_SECRET` deve corresponder ao endpoint configurado no dashboard do Stripe
 - `SUPABASE_SERVICE_ROLE_KEY` é diferente da `SUPABASE_ANON_KEY`
+- **Se usar `${SB_SECRET_KEY}`, certifique-se que essa variável existe e tem o valor correto**
+
+## 🔧 Correção Específica Atual
+
+Baseado na sua configuração, você tem:
+```
+SUPABASE_SERVICE_ROLE_KEY=${SB_SECRET_KEY}
+```
+
+**Ação necessária**: Verificar se `SB_SECRET_KEY` existe e tem o valor correto da Service Role Key do Supabase.
 
 ## 🔍 Verificação
 
