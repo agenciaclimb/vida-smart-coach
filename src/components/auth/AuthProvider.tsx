@@ -162,7 +162,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         p_target_weight: profileData.target_weight ? parseFloat(profileData.target_weight.toString()) : null,
         p_gender: profileData.gender?.toString() || null,
         p_activity_level: activityLevel, // SEMPRE slug válido ou null
-        p_goal_type: goalType // SEMPRE slug válido ou null
+        p_goal_type: goalType, // SEMPRE slug válido ou null
+        p_wants_reminders: profileData.wants_reminders !== undefined ? Boolean(profileData.wants_reminders) : null,
+        p_wants_quotes: profileData.wants_quotes !== undefined ? Boolean(profileData.wants_quotes) : null
       };
 
       console.log('Validated profile data:', validatedData);
@@ -189,6 +191,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             gender: validatedData.p_gender,
             activity_level: activityLevel, // JÁ normalizado e validado acima
             goal_type: goalType, // JÁ normalizado e validado acima
+            wants_reminders: validatedData.p_wants_reminders,
+            wants_quotes: validatedData.p_wants_quotes,
             updated_at: new Date().toISOString()
           };
           

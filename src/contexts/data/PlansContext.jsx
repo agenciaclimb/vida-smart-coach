@@ -155,6 +155,12 @@ export const PlansProvider = ({ children }) => {
       
       if (data && data.length > 0) {
         const plansByType = data.reduce((acc, plan) => {
+          // Validar se o plano tem dados válidos
+          if (!plan.plan_data || typeof plan.plan_data !== 'object') {
+            console.warn(`Plano ${plan.id} tem plan_data inválido, ignorando`, plan);
+            return acc;
+          }
+
           // Mapeia o plan_type do banco para as chaves do nosso objeto
           const typeMap = {
             'hypertrophy': 'physical',
@@ -168,8 +174,13 @@ export const PlansProvider = ({ children }) => {
           acc[planKey] = plan;
           return acc;
         }, {});
+        
+        // Log para debug - ver quantos planos válidos temos
+        console.log('Planos carregados:', Object.keys(plansByType), plansByType);
+        
         setCurrentPlans(plansByType);
       } else {
+        console.log('Nenhum plano encontrado, exibindo estado vazio');
         setCurrentPlans({});
       }
     } catch (error) {

@@ -182,9 +182,14 @@ const PlanTab = () => {
     );
   }
 
+  const hasValidPlans = currentPlans && Object.keys(currentPlans).length > 0 && 
+    Object.values(currentPlans).some(plan => 
+      plan && plan.plan_data && typeof plan.plan_data === 'object'
+    );
+
   return (
     <TabsContent value="plan" className="mt-6">
-      {currentPlans && Object.keys(currentPlans).length > 0 ? (
+      {hasValidPlans ? (
         <MultiPlanDisplay />
       ) : (
         <NoPlanState />
