@@ -6,16 +6,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/api/stripe/webhook",
-      "destination": "/api/stripe/webhook"
-    },
-    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
-    },
-    {
-      "source": "/supabase/:path*",
-      "destination": "/supabase/:path*"
     },
     {
       "source": "/(.*)",
@@ -23,11 +15,8 @@
     }
   ],
   "functions": {
-    "api/stripe/webhook.ts": {
-      "runtime": "nodejs20.x"
-    },
-    "supabase/functions/**/*.ts": {
-      "runtime": "nodejs20.x"
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
     }
   }
 }
