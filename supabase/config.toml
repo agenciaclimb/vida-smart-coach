@@ -31,7 +31,6 @@ port = 54323
   [functions.trial-reminder]
     entrypoint = "./functions/trial-reminder/index.ts"
     verify_jwt = false
-    schedule = "0 0 * * *"
 
   # Configuração para a função 'evolution-webhook'
   [functions.evolution-webhook]

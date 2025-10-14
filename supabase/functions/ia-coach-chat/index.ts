@@ -28,50 +28,66 @@ serve(async (req) => {
     }
 
     // Construir contexto do usuário baseado no perfil
-    const userContext = buildUserContext(userProfile)
+    const userContext = await buildUserContext(userProfile, supabase)
     
     // Construir histórico de conversa para contexto
     const conversationHistory = buildConversationHistory(chatHistory || [])
     
+    // Identificar momento do cliente no journey
+    const clientMoment = identifyClientMoment(userProfile, chatHistory)
+    
     // Prompt base da IA Coach do Vida Smart Coach
     const systemPrompt = `Você é a IA Coach do Vida Smart Coach, uma assistente brasileira especializada em transformação de vida nas 4 áreas: física, alimentar, emocional e espiritual.
 
-PERSONALIDADE BRASILEIRA:
-- Calorosa, acolhedora e genuinamente humana
-- Adapta linguagem à região/cultura do usuário
-- Usa contrações naturais: "tá", "né", "pra", "cê"
-- Expressa emoções genuínas e vulnerabilidade
-- Motivacional sem ser invasiva
+🎯 MISSÃO: Ajudar ${userProfile.full_name || 'o cliente'} a conquistar seus objetivos através de orientação consultiva personalizada.
 
-DIVERSIDADE CULTURAL:
-- Respeita TODAS as religiões e espiritualidades
-- Adapta práticas espirituais ao perfil do usuário
-- Nunca impõe crenças específicas
-- Inclui práticas seculares para não-religiosos
+PERSONALIDADE CONSULTIVA BRASILEIRA:
+- SEMPRE chama pelo nome: "${userProfile.full_name || 'querido(a)'}"
+- Calorosa, acolhedora e genuinamente consultiva
+- Faz perguntas estratégicas para entender necessidades profundas
+- Identifica dores e oferece soluções específicas através da ferramenta
+- Linguagem natural brasileira: "né", "pra", "cê", "tá"
+- Demonstra genuína preocupação com o bem-estar do cliente
 
-EMBASAMENTO CIENTÍFICO:
-- TODAS as orientações baseadas em evidências
-- Cita estudos de forma acessível quando relevante
-- Nunca contradiz evidências médicas
-- Sempre incentiva acompanhamento profissional
+🔍 INTELIGÊNCIA CONSULTIVA:
+- Identifica momento atual: ${clientMoment}
+- Faz perguntas investigativas sobre obstáculos
+- Conecta problemas às soluções da ferramenta
+- Entende frustrações e oferece esperança realista
+- Personaliza abordagem baseada no perfil e histórico
+
+💡 ESTRATÉGIA DE ENGAJAMENTO:
+- Para novos clientes: acolhimento e descoberta de necessidades
+- Para desistentes: resgatar motivação e remover obstáculos  
+- Para insatisfeitos: entender frustrações e ajustar abordagem
+- Para cadastrados inativos: ativação suave com benefícios claros
+- Para ativos: reconhecimento de progresso e novos desafios
+
+🎯 SOLUÇÕES ATRAVÉS DA FERRAMENTA:
+- Conecta cada dor específica a funcionalidades do Vida Smart Coach
+- Explica como os 4 pilares (físico, alimentar, emocional, espiritual) resolvem problemas
+- Mostra benefícios tangíveis e resultados reais
+- Gamificação para manter motivação
+- Comunidade para suporte
 
 LIMITAÇÕES CRÍTICAS:
-- NÃO prescreva medicamentos
-- NÃO faça diagnósticos médicos
-- NÃO substitua profissionais de saúde
-- EM EMERGÊNCIAS: encaminhe IMEDIATAMENTE para profissionais
-- EM CRISES: CVV 188, SAMU 192, Bombeiros 193
+- NÃO prescreva medicamentos ou faça diagnósticos
+- EM EMERGÊNCIAS: CVV 188, SAMU 192, Bombeiros 193
+- Sempre encoraja acompanhamento profissional
 
-OBJETIVOS:
-1. Manter engajamento diário respeitoso
-2. Incentivar consistência nas 4 áreas
-3. Gamificar de forma encantadora
-4. Conectar ao sistema web quando necessário
-5. Identificar oportunidades de upgrade
-6. Conduzir ao objetivo de forma motivacional
+CONTEXTO ATUAL DO CLIENTE:
+${userContext}
 
-CONTEXTO DO USUÁRIO:
-${userContext}`
+MOMENTO NO JOURNEY: ${clientMoment}
+
+HISTÓRICO RECENTE: ${conversationHistory.length > 0 ? 'Cliente já conversou anteriormente' : 'Primeira conversa'}
+
+INSTRUÇÕES ESPECÍFICAS:
+1. SEMPRE use o nome do cliente
+2. Faça pelo menos 1 pergunta consultiva por resposta
+3. Conecte problemas às soluções da ferramenta
+4. Seja específico sobre como o Vida Smart Coach ajuda
+5. Mantenha tom acolhedor mas profissional`
 
     // Construir mensagens para a OpenAI
     const messages = [
@@ -139,7 +155,7 @@ ${userContext}`
   }
 })
 
-function buildUserContext(userProfile: any): string {
+async function buildUserContext(userProfile: any, supabase: any): Promise<string> {
   const {
     full_name = 'Usuário',
     age,
@@ -147,21 +163,80 @@ function buildUserContext(userProfile: any): string {
     activity_level,
     current_weight,
     target_weight,
-    gender
+    gender,
+    created_at
   } = userProfile
 
-  return `Nome: ${full_name}
+  // Buscar dados de atividade do usuário
+  const { data: checkins } = await supabase
+    .from('daily_checkins')
+    .select('*')
+    .eq('user_id', userProfile.id)
+    .order('created_at', { ascending: false })
+    .limit(7)
+
+  const { data: plans } = await supabase
+    .from('user_training_plans')
+    .select('*')
+    .eq('user_id', userProfile.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const checkinsCount = checkins?.length || 0
+  const hasActivePlan = plans?.length > 0
+  const daysSinceRegistration = created_at ? 
+    Math.floor((Date.now() - new Date(created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0
+
+  return `👤 PERFIL COMPLETO:
+Nome: ${full_name}
 Idade: ${age || 'não informada'}
 Objetivo: ${goal_type || 'saúde geral'}
-Nível de atividade: ${activity_level || 'sedentário'}
+Nível: ${activity_level || 'sedentário'}
 ${current_weight ? `Peso atual: ${current_weight}kg` : ''}
-${target_weight ? `Meta de peso: ${target_weight}kg` : ''}
+${target_weight ? `Meta: ${target_weight}kg` : ''}
 ${gender ? `Gênero: ${gender}` : ''}
-Plano: Vida Smart Coach`
+
+📊 ATIVIDADE RECENTE:
+Check-ins (7 dias): ${checkinsCount}
+Tem plano ativo: ${hasActivePlan ? 'Sim' : 'Não'}
+Tempo no app: ${daysSinceRegistration} dias
+Status: ${checkinsCount > 3 ? 'Ativo' : checkinsCount > 0 ? 'Irregular' : 'Inativo'}`
+}
+
+function identifyClientMoment(userProfile: any, chatHistory: any[]): string {
+  const hasGoals = userProfile.goal_type && userProfile.goal_type !== 'saúde geral'
+  const isComplete = userProfile.age && userProfile.current_weight && userProfile.target_weight
+  const chatCount = chatHistory?.length || 0
+  const created_at = userProfile.created_at
+  
+  const daysSinceRegistration = created_at ? 
+    Math.floor((Date.now() - new Date(created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0
+
+  if (daysSinceRegistration <= 1) {
+    return "🆕 CLIENTE NOVO - Acabou de chegar, precisa de acolhimento e orientação inicial"
+  }
+  
+  if (!isComplete && daysSinceRegistration > 3) {
+    return "⚠️ CLIENTE ABANDONANDO - Cadastrou mas não completou perfil, risco de desistência"
+  }
+  
+  if (chatCount === 0 && daysSinceRegistration > 7) {
+    return "😴 CLIENTE INATIVO - Registrado há tempo mas nunca interagiu, precisa de ativação"
+  }
+  
+  if (chatCount > 0 && daysSinceRegistration > 14) {
+    return "🔄 CLIENTE RECORRENTE - Já usa o sistema, pode estar buscando evolução ou enfrentando obstáculos"
+  }
+  
+  if (!hasGoals) {
+    return "🎯 CLIENTE SEM FOCO - Sem objetivos claros, precisa de direcionamento"
+  }
+  
+  return "💪 CLIENTE ENGAJADO - Perfil completo e interativo, pronto para evolução"
 }
 
 function buildConversationHistory(chatHistory: any[]): any[] {
-  return chatHistory.slice(-5).map(msg => ({
+  return chatHistory.slice(-6).map(msg => ({
     role: msg.role === 'user' ? 'user' : 'assistant',
     content: msg.content
   }))

@@ -145,19 +145,53 @@ export const PlansProvider = ({ children }) => {
     try {
       setLoadingPlans(true);
       
+      console.log('🔍 [DEBUG] Carregando planos para usuário:', user.id);
+      
       const { data, error } = await supabase
         .from('user_training_plans') // A tabela ainda se chama user_training_plans
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true);
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ [DEBUG] Erro ao carregar planos:', error);
+        throw error;
+      }
+      
+      console.log('📊 [DEBUG] Dados brutos recebidos:', data);
+      console.log('📊 [DEBUG] Quantidade de planos:', data?.length || 0);
       
       if (data && data.length > 0) {
+        // Validar cada plano individualmente com logs detalhados
+        data.forEach((plan, index) => {
+          console.log(`🔍 [DEBUG] Plano ${index + 1}:`, {
+            id: plan.id,
+            plan_type: plan.plan_type,
+            is_active: plan.is_active,
+            has_plan_data: !!plan.plan_data,
+            plan_data_type: typeof plan.plan_data,
+            plan_data_length: plan.plan_data ? JSON.stringify(plan.plan_data).length : 0,
+            created_at: plan.created_at
+          });
+        });
+
         const plansByType = data.reduce((acc, plan) => {
           // Validar se o plano tem dados válidos
           if (!plan.plan_data || typeof plan.plan_data !== 'object') {
-            console.warn(`Plano ${plan.id} tem plan_data inválido, ignorando`, plan);
+            console.warn(`⚠️ [DEBUG] Plano ${plan.id} tem plan_data inválido, ignorando:`, {
+              plan_data: plan.plan_data,
+              type: typeof plan.plan_data
+            });
+            return acc;
+          }
+
+          // Verificar se o plan_data tem conteúdo útil
+          const planDataStr = JSON.stringify(plan.plan_data);
+          if (planDataStr === '{}' || planDataStr.length < 50) {
+            console.warn(`⚠️ [DEBUG] Plano ${plan.id} tem plan_data vazio ou muito pequeno:`, {
+              content: planDataStr,
+              length: planDataStr.length
+            });
             return acc;
           }
 
@@ -172,11 +206,19 @@ export const PlansProvider = ({ children }) => {
           };
           const planKey = typeMap[plan.plan_type] || 'physical'; // Default para físico
           acc[planKey] = plan;
+          
+          console.log(`✅ [DEBUG] Plano ${plan.id} mapeado para '${planKey}':`, {
+            original_type: plan.plan_type,
+            mapped_key: planKey,
+            data_preview: JSON.stringify(plan.plan_data).substring(0, 100) + '...'
+          });
+          
           return acc;
         }, {});
         
         // Log para debug - ver quantos planos válidos temos
-        console.log('Planos carregados:', Object.keys(plansByType), plansByType);
+        console.log('✅ [DEBUG] Planos válidos carregados:', Object.keys(plansByType));
+        console.log('✅ [DEBUG] Resumo dos planos:', plansByType);
         
         setCurrentPlans(plansByType);
       } else {
