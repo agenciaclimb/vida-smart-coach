@@ -1,22 +1,12 @@
 {
   "version": 2,
-  "framework": "vite",
   "buildCommand": "pnpm run build",
-  "installCommand": "pnpm i --frozen-lockfile",
+  "installCommand": "pnpm install",
   "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
     {
       "source": "/(.*)",
       "destination": "/"
     }
-  ],
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
