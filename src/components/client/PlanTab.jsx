@@ -187,6 +187,31 @@ const PlanTab = () => {
       plan && plan.plan_data && typeof plan.plan_data === 'object'
     );
 
+  // DEBUG TEMPORÁRIO - Adicionar logs detalhados
+  console.log('🔍 [PlanTab DEBUG] Estado atual:', {
+    currentPlans,
+    hasCurrentPlans: !!currentPlans,
+    currentPlansKeys: currentPlans ? Object.keys(currentPlans) : [],
+    currentPlansValues: currentPlans ? Object.values(currentPlans) : [],
+    hasValidPlans,
+    loadingPlans,
+    user: user?.id
+  });
+
+  // Log detalhado de cada plano
+  if (currentPlans) {
+    Object.entries(currentPlans).forEach(([key, plan]) => {
+      console.log(`🔍 [PlanTab DEBUG] Plano ${key}:`, {
+        plan_id: plan?.id,
+        plan_type: plan?.plan_type,
+        is_active: plan?.is_active,
+        has_plan_data: !!plan?.plan_data,
+        plan_data_type: typeof plan?.plan_data,
+        plan_data_preview: plan?.plan_data ? JSON.stringify(plan.plan_data).substring(0, 200) : 'NULL'
+      });
+    });
+  }
+
   return (
     <TabsContent value="plan" className="mt-6">
       {hasValidPlans ? (

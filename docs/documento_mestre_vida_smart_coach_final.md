@@ -104,6 +104,150 @@
 
 **3 BUGS CRÍTICOS P0 CORRIGIDOS E EM PRODUÇÃO** ✅
 
+---
+
+## 🚀 PLANO ESTRATÉGICO - IA COACH TRANSFORMADORA
+
+### Análise Crítica da Situação Atual (14/10/2025)
+
+#### ❌ PROBLEMAS IDENTIFICADOS:
+1. **IA Muito "Robótica"**: Respostas longas, formatadas como lista, sem emoção
+2. **Falta de Memória Contextual**: Não "lembra" conversas anteriores, repete perguntas
+3. **Follow-ups Genéricos**: Não detecta "sinais de compra", timing inadequado
+4. **Sem Sistema de Objeções**: Não antecipa nem trata objeções comuns
+5. **Falta de Micro-Conversões**: Pede teste de 7 dias diretamente (baixa conversão)
+6. **Menu "Meu Plano"**: Ainda apresentando dados vazios para usuários
+
+### 🎯 ESTRATÉGIA DE IMPLEMENTAÇÃO - IA CONSULTIVA
+
+#### FASE 1: PERSONALIZAÇÃO E MEMÓRIA (P0 - Executar imediatamente)
+
+1. **Sistema de Psicologia do Cliente**
+   - Implementar perfis comportamentais (analytical, driver, amiable, expressive)
+   - Adaptar comunicação ao perfil identificado
+   - Target: 40-60% aumento na taxa de conversão
+
+2. **Memória Emocional e Contextual**
+   - Banco vetorial para histórico completo de interações
+   - Timeline de estado emocional do cliente
+   - Registro de conquistas e dificuldades mencionadas
+   - Resumo da última conversa sempre disponível
+
+3. **Tom de Voz Humanizado**
+   ```
+   ANTES: "- Boa tarde! Seja bem-vindo ao Vida Smart Coach..."
+   DEPOIS: "Opa, boa tarde! 😊 Que massa ter você aqui! Me conta, o que tá te incomodando hoje?"
+   ```
+
+#### FASE 2: SISTEMA DE MICRO-CONVERSÕES (P1 - Após Fase 1)
+
+1. **Funil de Micro-Conversões**
+   - Etapa 1: "Responda 3 perguntas sobre objetivos" (85% conversão)
+   - Etapa 2: "Receba diagnóstico personalizado" (70% conversão) 
+   - Etapa 3: "Veja seu plano de 7 dias grátis" (60% conversão)
+   - Etapa 4: "Iniciar teste grátis" (45% conversão)
+   - **Resultado**: 16% conversão final vs 5-8% atual
+
+2. **Sistema de "Momento de Compra"**
+   - Score de propensão de compra (0-100)
+   - Sinais positivos: visualizou preços (+15), completou perfil (+20), mencionou dores (+30)
+   - Sinais negativos: objeção de preço (-20), "preciso pensar" (-15)
+   - Ações baseadas no score: QUENTE (>80), MORNO (50-80), FRIO (<50)
+
+#### FASE 3: INTELIGÊNCIA AVANÇADA (P2 - Médio prazo)
+
+1. **Sistema de Objeções Inteligente**
+   - "Muito caro": Mostrar ROI antes do preço, comparar com academia
+   - "Não tenho tempo": Enfatizar "apenas 15min/dia"
+   - "Preciso pensar": Urgência genuína + garantia 7 dias
+   - "Já tentei antes": Destacar diferenciais únicos (IA + gamificação)
+
+2. **Prova Social Automatizada**
+   - Gatilhos contextuais: after_pain_point, during_pricing, after_objection
+   - Contador em tempo real: "247 pessoas transformando vidas agora"
+   - Depoimentos em vídeo no momento certo
+
+### 🔧 IMPLEMENTAÇÃO TÉCNICA
+
+#### MODIFICAÇÕES NA IA COACH:
+
+1. **Nova Estrutura de Dados**
+```typescript
+interface ClientPsychology {
+  profile_type: 'analytical' | 'driver' | 'amiable' | 'expressive';
+  pain_points: string[];
+  motivators: string[];
+  objections_history: string[];
+  communication_style: 'detailed' | 'direct' | 'emotional';
+  engagement_score: number;
+  micro_conversions_completed: string[];
+  buying_signals_score: number;
+}
+```
+
+2. **Sistema de Memória Vetorial**
+```typescript
+interface ClientMemory {
+  interactions_history: ConversationEntry[];
+  emotional_state_timeline: EmotionalState[];
+  achievements: Achievement[];
+  struggles: Struggle[];
+  preferences: UserPreferences;
+  last_interaction_summary: string;
+}
+```
+
+3. **Prompt Estratégico Atualizado**
+- Identificação de perfil psicológico
+- Detecção de sinais de compra
+- Sistema de micro-objetivos por conversa
+- Tratamento preventivo de objeções
+
+#### CORREÇÃO DO "MEU PLANO":
+
+1. **Investigação Prioritária**
+   - Executar scripts de diagnóstico criados
+   - Identificar dados corrompidos na tabela user_training_plans
+   - Validar plan_data com logs detalhados
+
+2. **Migração de Dados**
+   - Limpar registros inválidos
+   - Regenerar planos para usuários afetados
+   - Implementar validação mais rigorosa
+
+### 📊 MÉTRICAS DE SUCESSO
+
+#### KPIs Principais:
+- **Taxa de Conversão**: De 5-8% para 16%+ 
+- **Tempo de Primeira Compra**: Reduzir de 7+ dias para 3 dias
+- **Engagement WhatsApp**: Aumentar tempo médio de conversa em 200%
+- **Retenção**: 70%+ após implementação de memória emocional
+- **NPS da IA**: Target 9+ (atualmente indefinido)
+
+#### Marcos de Implementação:
+- **Semana 1**: Fase 1 completa (personalização + memória)
+- **Semana 2**: Teste A/B com novo tom de voz
+- **Semana 3**: Sistema de micro-conversões ativo
+- **Semana 4**: Sistema de objeções implementado
+- **Semana 5**: Prova social automatizada
+
+### 🚨 PRÓXIMAS AÇÕES CRÍTICAS
+
+#### HOJE (P0):
+1. **Corrigir "Meu Plano"**: Executar diagnósticos SQL, limpar dados corrompidos
+2. **Executar migração de notificações**: `manual_notification_migration.sql`
+3. **Começar Fase 1**: Atualizar prompt da IA com perfis psicológicos
+
+#### ESTA SEMANA (P1):
+1. **Implementar memória contextual**: Banco vetorial para histórico
+2. **Tom humanizado**: Testar nova abordagem conversacional
+3. **Sistema de micro-conversões**: Primeira etapa (3 perguntas diagnóstico)
+
+#### PRÓXIMAS 2 SEMANAS (P2):
+1. **Sistema de momento de compra**: Score de propensão
+2. **Tratamento de objeções**: Respostas preventivas e reativas
+3. **Prova social automatizada**: Gatilhos contextuais
+
 ### Prioridades P0 (CRÍTICAS - executar imediatamente)
 
 1. **✅ CORRIGIDO - Bug IA Coach - Edge Function**
