@@ -24,10 +24,10 @@
   ],
   "functions": {
     "api/stripe/webhook.ts": {
-      "runtime": "nodejs22.x"
+      "runtime": "nodejs20.x"
     },
     "supabase/functions/**/*.ts": {
-      "runtime": "nodejs22.x"
+      "runtime": "nodejs20.x"
     }
   }
 }
