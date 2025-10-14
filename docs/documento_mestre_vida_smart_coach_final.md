@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # HEADER DE ESTADO DO AGENTE
 - **Sincronizacao_Startup:** `LOCAL -> REMOTO` (Versão local detectada como mais recente).
 - **Data_Hora_UTC:** `2025-10-14T18:15:00Z`
@@ -21,6 +22,8 @@
 - **Observação:** A discrepância foi resolvida. O agente está pronto para a próxima tarefa funcional.
 ---
 
+=======
+>>>>>>> origin/main
 # DOCUMENTO MESTRE - VIDA SMART COACH
 ## Mapa Completo e Definitivo do Sistema
 
@@ -55,6 +58,7 @@
 
 ### Arquitetura Geral
 
+<<<<<<< HEAD
 **Estrutura de Componentes:**
 ```
 src/
@@ -94,6 +98,29 @@ src/
 
     3.  **Regeneração do Lockfile:** O arquivo `pnpm-lock.yaml` será regenerado com o comando `pnpm install` para garantir a consistência das dependências.
 
+=======
+**Estrutura de Código Atual (Frontend):**
+```
+src/
+├── App.tsx
+├── components/
+│   ├── admin/            # Painel administrativo completo
+│   ├── auth/             # Providers e formulários de login
+│   ├── client/           # Dashboard do cliente (tabs Gamification*, Planos)
+│   ├── aurora/           # (planejado) Arquiteto de Vida Pessoal
+│   ├── gamification/     # Widgets de gamificação compartilhados
+│   ├── landing/          # Seções públicas da landing page
+│   └── ui/               # Componentes base (Radix wrappers, badges)
+├── contexts/             # DataContext+, Auth e providers Supabase
+├── hooks/                # Hooks para gamificação, WhatsApp, integrações
+├── pages/                # Rotas principais (Landing, Checkout, Painéis)
+├── core/                 # Cliente Supabase canônico
+├── domain/               # Tipos e enums de domínio (ex.: perfil)
+├── lib/                  # Helpers (edgeFetch, logging, singletons)
+├── utils/                # Utilitários de check-in e debug
+├── legacy/               # Código antigo mantido para referência
+└── api/                  # Clientes REST (ex.: EcommerceApi.js)
+>>>>>>> origin/main
 ```
 
 **Banco de Dados (Supabase):**
@@ -103,6 +130,18 @@ src/
 - whatsapp_messages: Mensagens WhatsApp
 - whatsapp_gamification_log: Log de gamificação
 - subscription_plans: Planos de assinatura
+<<<<<<< HEAD
+=======
+- agents: Registro dos agentes autônomos e status atual
+- agent_versions: Histórico de versões aplicadas com changelog
+- prompt_patches: Patches propostos pela IA (tests_json, risco)
+- issue_reports: Relatórios de incidentes e decisões
+- life_values: (planejado) Valores declarados do usuário com peso de importância
+- life_goals: (planejado) Metas de vida por área/horizonte com scoring
+- life_milestones: (planejado) Marcos com due_date e `calendar_event_id`
+- life_actions: (planejado) Micro-passos semanais vinculados a milestones
+- life_reviews: (planejado) Revisões periódicas com métricas de clareza/momentum
+>>>>>>> origin/main
 
 ### Segurança e Automações
 
@@ -110,13 +149,27 @@ src/
 - Row Level Security (RLS) no Supabase
 - Autenticação via Supabase Auth
 - Políticas de acesso por perfil de usuário
+<<<<<<< HEAD
 - Edge Functions para webhooks seguros
+=======
+- Edge Functions protegidas com cabeçalho x-agent-key e validação AGENT_ADMIN_KEY
+>>>>>>> origin/main
 
 **Automações Ativas:**
 - Webhook evolution-webhook para WhatsApp
 - Scripts de migração automatizada
+<<<<<<< HEAD
 - Pipeline E2E de deploy
 
+=======
+- Ciclo de geração/aplicação de patches via funções agent-create/report/apply (com cabeçalho x-agent-key)
+- Pipeline E2E de deploy
+
+**Automações Planejadas (Projeto Aurora):**
+- Edge Function `aurora-plan-sync` para manter milestones/actions no Google Calendar
+- Edge Function `aurora-weekly-review` para compilar progresso e enviar resumo no WhatsApp
+
+>>>>>>> origin/main
 ---
 
 ## 2. ESTRUTURA DE PAINÉIS
@@ -336,6 +389,15 @@ NOITE: Diário espiritual, gratidões, reflexão
 - AutomationsTab: Automações
 - GamificationManagementTab: Gestão da gamificação
 
+<<<<<<< HEAD
+=======
+### 2.5 Aurora – Arquiteto de Vida (planejado)
+**Status:** inicia logo após o go-live atual, com rollout controlado (feature flag `AURORA_V1`).
+**Componentes planejados:** `AuroraTab`, `DiscoveryWizard`, `PlanBoard`, `WeeklyReview`.
+**Fluxo previsto:** onboarding → planejamento → ritual semanal → relatórios.
+**Dependências:** tabelas `life_*`, Google Calendar, Evolution API (nudges WhatsApp).
+
+>>>>>>> origin/main
 ---
 
 ## 3. COMPORTAMENTO DA IA, PROMPTS E AUTOMAÇÕES
@@ -500,7 +562,11 @@ ROBÓTICO ❌:
 NATURAL ✅:
 "Percebi que você tá meio pra baixo hoje... 
 Quer conversar sobre isso? Às vezes só desabafar 
+<<<<<<< HEAD
 já ajuda a clarear a mente. Estou aqui pra te ouvir! 💙"
+=======
+ já ajuda a clarear a mente. Estou aqui pra te ouvir! 💙"
+>>>>>>> origin/main
 ```
 
 #### **🎯 CONDUÇÃO ENCANTADORA PARA OBJETIVOS**
@@ -540,7 +606,11 @@ USUÁRIO DESMOTIVADO:
 👤: "Não tô conseguindo, quero desistir"
 🤖: "Ei, para um pouquinho... Respira comigo. 
 Olha, eu entendo que tá difícil. Sabe quantas pessoas 
+<<<<<<< HEAD
 já passaram por isso? TODAS! Inclusive eu já me senti assim.
+=======
+ já passaram por isso? TODAS! Inclusive eu já me senti assim.
+>>>>>>> origin/main
 Mas sabe o que aprendi? Que desistir é fácil, 
 o difícil é recomeçar depois.
 Que tal a gente ajustar o plano? Fazer algo mais leve hoje?
@@ -992,15 +1062,28 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 - 🧘 Experiências Bem-estar (3.000-10.000 pontos)
 - 💰 Cashback (1.000-8.500 pontos)
 
+<<<<<<< HEAD
+=======
+### 6.4 Gamificação Aurora (planejado)
+- Badges: Propósito Definido, Primeiro Marco, 4 Semanas Consistentes, 100 Micro-Passos.
+- Pontuação: +10 definir valor, +25 concluir marco, +5 micro-passo diário, bônus streak semanal.
+- Integrações: sincroniza com Ritual Semanal e notificações WhatsApp.
+
+>>>>>>> origin/main
 ---
 
 ## 7. ROADMAP ESTRATÉGICO
 
+<<<<<<< HEAD
 ### Fase 1: Fundação (ATUAL)
+=======
+### Fase 1: Fundação (concluída)
+>>>>>>> origin/main
 ✅ IA básica culturalmente adaptada implementada
 ✅ Check-ins via WhatsApp com sensibilidade cultural
 ✅ Gamificação completa
 ✅ Sistema de usuários com perfis culturais
+<<<<<<< HEAD
 
 ### Fase 2: Crescimento
 🔄 Parcerias com profissionais regionais
@@ -1011,6 +1094,24 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 ⏳ Comunidade integrada por regiões
 ⏳ Versão corporativa
 ⏳ Expansão internacional
+=======
+✅ Ciclo inicial do agente (`agent-create/report/apply`) protegido por AGENT_ADMIN_KEY (2025/10)
+
+### Fase 2: Crescimento (em andamento)
+🔄 Homologar Stripe (checkout ativo + webhooks de confirmação)
+🔄 Parcerias com profissionais regionais
+🔄 Consolidação do console do agente (`agents-console/`) e dashboards de patches
+🔄 Monitoramento 24/7 com alertas para novos `prompt_patches` e issues
+🔄 Automatizar avaliação de `prompt_patches` e permitir auto-aplicação segura
+🔄 Projeto Aurora V1: DiscoveryWizard + tabelas + AuroraTab básica (pós-lançamento imediato)
+
+### Fase 3: Escala (planejado)
+⏳ Comunidade integrada por regiões
+⏳ Integração com Git/CI para rodar os testes descritos em `tests_json` antes do apply
+⏳ Projeto Aurora V2/V3: sync Calendar, check-ins automatizados e relatórios avançados
+⏳ Atualização automática do documento mestre a cada ciclo do agente
+⏳ Versão corporativa e expansão internacional
+>>>>>>> origin/main
 
 ---
 
@@ -1018,7 +1119,11 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 
 ### Implementadas
 ✅ Supabase (banco + auth + functions)
+<<<<<<< HEAD
 ✅ Stripe (pagamentos)
+=======
+✅ Stripe (checkout via Stripe.js; webhooks Supabase em validação)
+>>>>>>> origin/main
 ✅ Evolution API WhatsApp
 ✅ Vercel (deploy)
 ✅ GitHub (versionamento)
@@ -1030,13 +1135,21 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 
 ---
 
+<<<<<<< HEAD
 ## 9. SEGURANça E LIMITES DA IA
+=======
+## 9. SEGURANÇA E LIMITES DA IA
+>>>>>>> origin/main
 
 ### Protocolos de Segurança Culturalmente Sensíveis
 - Não prescrição médica (sempre encaminhar para profissionais)
 - Respeito absoluto à diversidade religiosa e cultural
 - Encaminhamento para profissionais em emergências
 - Limites claros de atuação respeitando crenças
+<<<<<<< HEAD
+=======
+- Edge Functions críticas exigem cabeçalho x-agent-key (AGENT_ADMIN_KEY)
+>>>>>>> origin/main
 - Dados protegidos por RLS
 
 ### O que a IA Pode Fazer
@@ -1055,6 +1168,7 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 - Impor crenças religiosas específicas
 - Desrespeitar diversidade cultural
 
+<<<<<<< HEAD
 ---
 
 ## ESTADO ATUAL DO SISTEMA
@@ -1076,10 +1190,212 @@ AÇÃO NO WEB → REFLETE NO WHATSAPP:
 - Métricas avançadas
 - **Adaptação cultural automática da IA**
 - **Sistema de detecção de emergências**
+=======
+## 10. OPERAÇÃO DO AGENTE AUTÔNOMO (2025/10)
+
+### 10.1 Fluxo operacional das funções Edge
+1. `POST /functions/v1/agent-create` → cria registro em `agents`, gera versão 1 em `agent_versions` e define `current_version`; exige header `x-agent-key` com `AGENT_ADMIN_KEY`.
+2. `POST /functions/v1/agent-report` → registra incidentes em `issue_reports` e gera proposta em `prompt_patches` com `tests_json` e `risk_level` (auto_apply padrão = false).
+3. `POST /functions/v1/agent-apply-patch` → aplica `patch_yaml` sobre o config atual, insere nova versão e marca o issue associado como `patched`.
+
+### 10.2 Persistência e monitoramento
+- Tabelas dedicadas: `agents` (status/versão ativa), `agent_versions` (histórico JSON), `prompt_patches` (patches propostos) e `issue_reports` (incidentes).
+- `scripts/supabase-migration-runner.mjs` garante provisionamento das tabelas em ambientes novos.
+- `package.json` inclui o script `supabase:deploy` para publicar `agent-create`, `agent-report` e `agent-apply-patch`.
+
+### 10.3 Operação diária
+- Validação das chamadas exclusivamente via header `x-agent-key` (`AGENT_ADMIN_KEY`).
+- Revisão humana ainda necessária: `prompt_patches.auto_apply` não dispara atualizações automáticas.
+- Observabilidade atual via consultas SQL/Logflare; o console Next.js em `agents-console/` está em bootstrap aguardando integração com Supabase.
+
+### 10.4 Próximos aprimoramentos
+- Automação para aplicar patches com `auto_apply=true` após validação automática.
+- Dashboards no `agents-console` com métricas de versões, patches e incidentes.
+- Integração com Git/CI para executar os testes descritos em `tests_json` antes de aplicar patches.
+- Rotina para atualizar o documento mestre ao final de cada ciclo do agente.
+
+## 11. PROJETO AURORA – ARQUITETO DE VIDA PESSOAL
+
+### Conceito Central
+Módulo integrado ao Vida Smart Coach que atua como um **Arquiteto de Vida Digital**: ajuda o usuário a descobrir propósito, definir objetivos de vida significativos e construir um plano de ação prático acompanhado pela IA.
+
+### A Dor que Resolve
+- Falta de autoconhecimento: “O que eu realmente quero da vida?”
+- Paralisia da análise diante de muitas opções (carreira, relacionamentos, estilo de vida).
+- Dificuldade em transformar objetivos em micro-passos executáveis.
+- Perda de motivação sem acompanhamento, pequenas vitórias e ajustes constantes.
+
+### Jornada Em Três Fases guiadas pela IA
+1. **Descoberta**: inventário de valores/forças/contexto via questionários e conversas (WhatsApp/Web) que resultam em Mapa de Propósito, Áreas de Foco e Princípios de Vida.
+2. **Planejamento**: metas de vida (anuais/trimensais) com critérios SMART, roadmaps por área (Física, Alimentar, Emocional, Espiritual, Carreira/Finanças, Relacionamentos) e plano de ação semanal com lembretes (Google Calendar).
+3. **Acompanhamento**: check-ins dinâmicos, replanejamento adaptativo, celebração de vitórias, remoção de bloqueios e relatórios de clareza/momentum/satisfação.
+
+### Integrações com o Sistema (sem bloquear o lançamento atual)
+- Painel do Cliente: nova aba **Aurora – Arquiteto de Vida** (`src/components/client/aurora/*`).
+- IA Coach: prompts adicionais para propósito de vida, replanejamento e motivação de longo prazo.
+- Gamificação: badges e pontos específicos (ex.: Propósito Claro, Primeiro Marco, 100 Micro-Passos).
+- Google Calendar: criação/atualização automática de milestones e micro-passos.
+- WhatsApp (Evolution API): onboarding de Descoberta, check-ins semanais e nudges de micro-passos.
+
+### UX Resumida
+- **Onboarding Aurora (Descoberta)**: 6–8 perguntas → Mapa de Propósito + Áreas de Foco.
+- **Planner (Planejamento)**: metas → marcos → micro-passos → sincronização com calendário.
+- **Ritual Semanal (Acompanhamento)**: revisar progresso, destravar bloqueios, ajustar próximos 7 dias.
+- **Relatórios**: Clareza (0–10), Momentum (% micro-passos concluídos), Satisfação (NPS de vida), Consistência (streak).
+
+### Dados e Migrações (Supabase)
+- Tabelas planejadas: `life_values`, `life_goals`, `life_milestones`, `life_actions`, `life_reviews` (todas com RLS por `user_id` e views para progresso agregado).
+
+### Edge Functions sugeridas
+- `aurora-plan-sync`: mantém milestones/actions sincronizados com o Google Calendar.
+- `aurora-weekly-review`: job semanal que compila progresso e envia resumo no WhatsApp.
+
+### Componentes/Arquitetura (Frontend)
+- `src/components/client/aurora/AuroraTab.jsx`
+- `src/components/client/aurora/DiscoveryWizard.jsx`
+- `src/components/client/aurora/PlanBoard.jsx`
+- `src/components/client/aurora/WeeklyReview.jsx`
+- `src/contexts/data/AuroraContext.jsx`
+
+### Prompts de IA (exemplos)
+- Descoberta: “Quais momentos te deixaram orgulhoso nos últimos 12 meses? Que atividades fazem o tempo voar?”
+- Planejamento: “Vamos transformar sua visão em 1 meta trimestral e 3 micro-passos para esta semana.”
+- Acompanhamento: “O que travou seu micro-passo? Quer diminuir o escopo ou mover para outro dia?”
+
+### Gamificação (exemplos)
+- Badges: Propósito Definido, Primeiro Marco, 4 Semanas Consistentes, 100 Micro-Passos.
+- Pontos: +10 definir valor, +25 concluir marco, +5 micro-passo diário, bônus streak semanal.
+
+### KPIs do Módulo
+- Conclusão de micro-passos (%), streak semanal, tempo médio até o 1º marco, NPS de Vida, clareza média.
+
+### Roadmap de Entrega (alinhado ao pós-lançamento)
+1. **V1 (2–3 dias úteis)**: DiscoveryWizard, tabelas e AuroraTab com lista simples de metas/ações.
+2. **V2**: sincronização com Google Calendar, check-ins WhatsApp e gamificação básica.
+3. **V3**: WeeklyReview completo, relatórios e gráficos.
+
+### Plano Técnico V1 (detalhado, executar logo após o lançamento atual)
+- **Migrations:** criar script `20251005xxxx_aurora_core_tables.sql` com tabelas `life_values`, `life_goals`, `life_milestones`, `life_actions`, `life_reviews`, índices e RLS por `user_id`.
+- **Edge Functions:** stub `aurora-plan-sync` (POST calendar) e `aurora-weekly-review` (cron weekly) com validação `AGENT_ADMIN_KEY`.
+- **Frontend:** habilitar feature flag `AURORA_V1` carregando `AuroraTab` básico (listagem metas/ações) + `DiscoveryWizard` com formulário multi-step.
+- **Contextos:** implementar `AuroraContext` para fetch/cache das tabelas e expor métricas (clareza, momentum, streak).
+- **IA/Prompts:** adicionar prompts de Descoberta/Planejamento em storage (`prompt_templates`) e mapear no Admin → AiConfigTab.
+- **Integrações:** preparar serviço Google Calendar (token refresh + criação de eventos) e templates de notificações WhatsApp (Evolution API).
+
+### Checklist de Go-Live Aurora V1
+- [ ] Migrations executadas em desenvolvimento e produção (com rollback validado).
+- [ ] Edge Functions deployadas (`aurora-plan-sync`, `aurora-weekly-review`) com secrets configurados.
+- [ ] Feature flag `AURORA_V1` ligada apenas para beta testers (grupo interno).
+- [ ] IA prompts revisados e versionados em `agent_versions`.
+- [ ] Fluxos WhatsApp testados (onboarding, check-in semanal, nudge micro-passos).
+- [ ] Monitoramento (logs, métricas) configurado no Supabase e Logflare.
+
+### Riscos e Mitigações
+- **Google Calendar indisponível:** fallback local (salvar `calendar_event_id` null) + retry job.
+- **Sobrecarga de prompts:** versionar no Admin antes de liberar ao público.
+- **Engajamento baixo:** gamificação Aurora + lembretes semanais; acompanhamento manual nas primeiras semanas.
+- **Conflitos com agentes atuais:** segregar `aurora_*` em schemas isolados e validar policies.
+
+---
+
+## 12. Sequenciamento Pós-Lançamento (Agente + Aurora)
+
+### Sprint 0 (Semana pós-go-live)
+- Consolidar feedback do lançamento (Stripe, agente, documentação).
+- Preparar migrations Aurora em branch dedicado (`feat/aurora-schema`).
+- Definir prompts finais com time de conteúdo.
+
+### Sprint 1 (Aurora V1)
+- Entregar DiscoveryWizard + tabelas + AuroraTab (lista metas/ações).
+- Testes integrados (Supabase + Calendar sandbox + WhatsApp sandbox).
+- Ativar beta fechado.
+
+### Sprint 2 (Aurora V2)
+- Implementar sincronização Calendar, check-ins automáticos WhatsApp, pontos/badges Aurora.
+- Criar dashboards no Admin para progresso Aurora.
+
+### Sprint 3 (Aurora V3)
+- Entregar WeeklyReview completo, relatórios avançados (clareza/momentum/satisfação).
+- Avaliar expansão para todos os usuários e documentar resultados.
+
+## 13. Plano de Ação – Lançamento (Prioridade Máxima)
+
+### Objetivo
+Liberar a versão atual do Vida Smart Coach em produção com Stripe e agente estabilizados antes de iniciar novas frentes (Aurora V1, automações avançadas).
+
+### Prioridades P0 (bloqueiam o lançamento)
+1. Fechar PRs críticas de Stripe/Auth (`fix/db stripe events`, `stabilize/reorg security stripe`, `fix(db): recreate on_auth_user_created trigger idempotently`, `guard auth policy and trigger against duplicates`).
+2. Garantir migrações canônicas (`npm run migrate:supabase`) aplicadas em staging e produção, com rollback testado.
+3. Homologar fluxos Stripe end-to-end (checkout → webhook → atualização de planos) e onboarding Supabase (triggers de perfil).
+
+### Prioridades P1 (executar logo após P0)
+1. Consolidar `generate_daily_missions` e jobs de gamificação; rodar testes de regressão.
+2. Finalizar ajustes Vercel (`api/*` roteamento) e smoke tests do frontend.
+3. Atualizar documentação operacional (`README`, `PRODUCTION_DEPLOYMENT_GUIDE.md`) com o processo final.
+
+### Procedimento Operacional
+1. **Triagem & Rebase:** alinhar todas as PRs na branch `fix/db-stripe`, resolver conflitos, rodar testes locais (`npm run migrate:supabase`, `npm run build`).
+2. **Validação Integrada:** em staging, executar checkout Stripe (modo teste), conferir webhooks e logs do agente.
+3. **Checklist Go/No-Go:** só liberar deploy final quando todos os itens P0/P1 estiverem concluídos e o CI estiver verde.
+4. **Comunicação:** avisar stakeholders com janela de deploy e plano de rollback documentado.
+
+### Métricas de Sucesso
+- 0 PRs críticas abertas ou falhando no CI.
+- 100% dos testes de checkout, webhook, login e agente concluídos em staging.
+- Go-live realizado sem incidentes, com monitoramento ativo (Logflare + Supabase logs).
+
+### Acompanhamento e Responsáveis
+| Item | Responsável inicial | Prazo alvo | Status | Observações |
+| --- | --- | --- | --- | --- |
+| Consolidar PRs Stripe/Auth | Jeferson / squad backend | 04/10/2025 | Em andamento | Consolidacao em release/stripe-auth-consolidation; migra\u00e7\u00f5es locais rodadas (npm run migrate:supabase) e npm run build ok; aguarda homologacao Stripe. |
+| Homologação checkout Stripe + webhooks | Produto + QA | 05/10/2025 | Pendente | Executar em staging com chaves de teste |
+| Revisão documentação operacional | Debora (Ops) | 06/10/2025 | Pendente | Atualizar README + guia de deploy |
+| Comunicação janela de deploy | Product Owner | 06/10/2025 | Pendente | Enviar comunicado + plano de rollback |
+
+### Cronograma Alvo
+- **D-2 (03/10)**: PRs críticas aprovadas e mergeadas; migrations executadas em staging.
+- **D-1 (04/10)**: Homologação completa Stripe/Supabase; checklist Go/No-Go assinado.
+- **D-day (05/10)**: Deploy em produção (janela 08h–10h); monitoramento ativo com time de prontidão.
+- **D+1 (06/10)**: Revisão pós-deploy e relatório de status enviado ao time.
+
+### Ritmo de Acompanhamento
+- Daily stand-up rápido com responsáveis P0/P1 até o Go/No-Go.
+- Atualizar este plano (status/prazos) ao final de cada dia útil.
+- Registrar incidentes ou impedimentos no documento mestre e abrir issue correspondente.
+
+### Acompanhamento e Responsáveis
+| Item | Responsável inicial | Prazo alvo | Status | Observações |
+| --- | --- | --- | --- | --- |
+| Consolidar PRs Stripe/Auth | Jeferson / squad backend | 04/10/2025 | Em andamento | Consolidacao em release/stripe-auth-consolidation; migra\u00e7\u00f5es locais rodadas (npm run migrate:supabase) e npm run build ok; aguarda homologacao Stripe. |
+| Homologação checkout Stripe + webhooks | Produto + QA | 05/10/2025 | Pendente | Executar em staging com chaves de teste |
+| Revisão documentação operacional | Debora (Ops) | 06/10/2025 | Pendente | Atualizar README + guia de deploy |
+| Comunicação janela de deploy | Product Owner | 06/10/2025 | Pendente | Enviar comunicado + plano de rollback |
+
+---
+## ESTADO ATUAL DO SISTEMA
+
+### ✅ IMPLEMENTADO E FUNCIONANDO
+- Sistema de gamificação completo (`GamificationTabEnhanced.jsx` ~740 linhas)
+- Dashboard do cliente com 4 áreas detalhadas
+- Painel administrativo unificado
+- Webhook WhatsApp via Evolution (Edge Function `evolution-webhook`)
+- Sistema de autenticação Supabase com RLS
+- Banco de dados estruturado com `agents`, `agent_versions`, `prompt_patches`, `issue_reports`
+- Edge Functions do agente (`agent-create/report/apply`) protegidas por `AGENT_ADMIN_KEY`
+- Scripts de migração automatizada e pipeline de deploy
+
+### 🔄 EM DESENVOLVIMENTO
+- Homologação dos webhooks Stripe e mensageria de faturas
+- Console Next.js (`agents-console/`) para monitoramento do agente
+- Automação de auto-aplicação segura (`prompt_patches.auto_apply`)
+- Métricas avançadas e relatórios culturais
+- Gestão completa de parceiros e comissões
+>>>>>>> origin/main
 
 ### ⏳ PLANEJADO
 - Análise de imagens/voz
 - Comunidade integrada
+<<<<<<< HEAD
 - Versão mobile nativa
 - **Expansão para outras culturas latino-americanas**
 
@@ -1616,3 +1932,77 @@ Seu objetivo é avançar sistematicamente o projeto, utilizando o arquivo `docum
 - **Resultado da sincronização:** LOCAL → REMOTO
 
 ---
+=======
+- Integração com Git/CI para validação dos patches
+- Projeto Aurora – Arquiteto de Vida (V2/V3 após estabilização do agente)
+- Versão mobile nativa
+- Expansão para outras culturas latino-americanas
+
+---
+
+**Documento gerado em:** 03/10/2025
+**Versão do sistema:** Commit 2d5dde7 (fix/db-stripe)
+**Status:** Produção ativa com IA culturalmente adaptada; agente autônomo monitorando patches; Stripe em homologação de webhooks
+
+
+
+
+
+
+## 14. TAREFAS TÉCNICAS EM ANDAMENTO
+
+### Correção de imports quebrados (v1)
+
+- **Passo 1: Mapear consumidores do contexto antigo** [x]
+  - **Log/Resultado:**
+    ```
+    src/contexts/DataContext.jsx:8:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    src/contexts/DataContext_OLD.jsx:9:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    src/legacy/DataContext.jsx:9:import { PlansRewardsProvider, usePlansRewards } from '@/contexts/data/PlansRewardsContext';
+    ```
+
+- **Passo 2: Restaurar consumidores e tentar build** [x]
+  - **Log/Resultado:**
+    - **Tentativas Anteriores**: Falharam devido a `typecheck` ausente e `esbuild` não encontrado.
+    - **Correção**: Executado `pnpm install --force` para reinstalar dependências corretamente.
+    - **Resultado Final**: `pnpm run build` concluído com sucesso.
+
+---
+
+## Diagnóstico e Plano de Ação - 08/10/2025
+
+### Diagnóstico Geral
+
+O sistema foi diagnosticado em 08/10/2025. A seguir estão os resultados em ordem de prioridade.
+
+*   **[P0 - CRÍTICO] Vazamento de Segredos:** O arquivo `.env.local` contém múltiplas chaves de API e segredos de produção. **Estes devem ser considerados comprometidos e rotacionados imediatamente.**
+*   **[P1 - BLOQUEIO] CLI do Supabase Não Funcional:** A CLI do Supabase não pode ser executada devido a erros de sintaxe no arquivo `.env.local` (uso de `$env:`). Isso impede o desenvolvimento e teste do backend local.
+*   **[P0 - CORRIGIDO] Erros Críticos de TypeScript:** O projeto não compilava devido a múltiplos erros de tipo. Isso foi corrigido através da reconfiguração do `tsconfig.json` e da conversão de vários componentes de UI de `.jsx` para `.tsx` com a tipagem correta.
+*   **[P0 - CORRIGIDO] Build do Projeto:** O projeto agora compila com sucesso (`pnpm run build`).
+*   **[P1 - CORRIGIDO] Erros de Linting:** O projeto tinha mais de 6.000 problemas de linting. A configuração foi corrigida e os erros foram eliminados.
+*   **[P2 - AVISOS] Avisos de Linting:** Restam 80 avisos de linting, principalmente relacionados a variáveis não utilizadas e dependências de hooks.
+*   **[P1 - PENDENTE] Revisão de Pull Requests:** Análise do único PR aberto ("chore(dev): adiciona prompts completos + AUTOPILOT para o Gemini") concluiu que não há conflitos com as correções atuais.
+
+### Plano de Ação
+
+*   **[ ] [P0] Rotacionar Todos os Segredos:**
+    *   **O que:** Gerar novos valores para TODAS as chaves no arquivo `.env.local`.
+    *   **Chaves a serem rotacionadas:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` (ambas), `GOOGLE_API_KEY`, `EVOLUTION_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VERCEL_TOKEN`, `NEXTAUTH_SECRET`, `NEXT_PUBLIC_AGENT_KEY`.
+    *   **Onde:** No painel de cada serviço respectivo (Supabase, OpenAI, Google Cloud, Stripe, Vercel, etc.).
+    *   **IMPORTANTE:** Após a rotação, o arquivo `.env.local` deve ser atualizado com os novos valores, usando o formato `CHAVE=VALOR`.
+
+*   **[ ] [P1] Corrigir o arquivo `.env.local`:**
+    *   **O que:** Remover a sintaxe inválida (`$env:...`) e duplicatas.
+    *   **Ação:** Substituir linhas como `$env:GOOGLE_API_KEY = '...'` por `GOOGLE_API_KEY='...'`.
+    *   **Ação:** Consolidar as chaves duplicadas (`OPENAI_API_KEY`, `VITE_APP_ENV`) para ter apenas uma definição para cada.
+    *   **Resultado Esperado:** O comando `pnpm exec supabase status` deve funcionar corretamente.
+
+*   **[ ] [P2] Corrigir Avisos de Linting:**
+    *   **O que:** Corrigir os 80 avisos de linting restantes.
+    *   **Ação:** Executar `pnpm exec eslint . --ext .js,.jsx,.ts,.tsx --fix` para corrigir automaticamente o que for possível.
+    *   **Ação:** Corrigir manualmente os avisos restantes, principalmente `no-unused-vars` e `react-hooks/exhaustive-deps`.
+
+*   **[ ] [P2] Continuar a conversão dos Componentes de UI:**
+    *   **O que:** Converter os componentes restantes em `src/components/ui` de `.jsx` para `.tsx` com tipagem adequada.
+    *   **Motivo:** Embora o build esteja passando, a tipagem completa melhora a manutenibilidade e a segurança do código.
+>>>>>>> origin/main

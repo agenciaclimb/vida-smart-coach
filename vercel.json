@@ -1,4 +1,9 @@
 {
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm i --frozen-lockfile",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/stripe/webhook",
@@ -13,8 +18,8 @@
       "destination": "/supabase/:path*"
     },
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "destination": "/"
     }
   ],
   "functions": {

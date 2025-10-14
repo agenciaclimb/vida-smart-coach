@@ -259,3 +259,17 @@
 2025-09-16 21:45:04 +00:00: 9:45:04 PM [vite] hmr update /src/components/demo/GamificationDemo.jsx, /src/index.css
 2025-09-16 21:45:08 +00:00: 9:45:08 PM [vite] hmr update /src/components/demo/GamificationDemo.jsx, /src/index.css
 2025-09-16 21:45:17 +00:00: 9:45:17 PM [vite] hmr update /src/components/client/GamificationTabEnhanced.jsx, /src/index.css
+2025-10-03 21:21:47 +00:00: 
+2025-10-03 21:21:47 +00:00: > vida-smart-coach@0.0.0 dev
+2025-10-03 21:21:47 +00:00: > vite
+2025-10-03 21:21:47 +00:00: 
+2025-10-03 21:21:48 +00:00: 
+2025-10-03 21:21:48 +00:00:   VITE v5.4.20  ready in 829 ms
+2025-10-03 21:21:48 +00:00: 
+2025-10-03 21:21:48 +00:00:   ➜  Local:   http://localhost:5173/
+2025-10-03 21:21:48 +00:00:   ➜  Network: use --host to expose
+2025-10-04 11:04:07 +00:00: 11:04:07 AM [vite] page reload vida-smart-coach/index.html
+2025-10-04 11:04:07 +00:00: 11:04:07 AM [vite] changed tsconfig file detected: /home/user/webapp/vida-smart-coach/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+2025-10-04 11:04:07 +00:00: 11:04:07 AM [vite] changed tsconfig file detected: /home/user/webapp/vida-smart-coach/agents-console/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+2025-10-06 19:11:50 +00:00: 7:11:50 PM [vite] .env changed, restarting server...
+2025-10-06 19:11:53 +00:00: 7:11:53 PM [vite] server restarted.
