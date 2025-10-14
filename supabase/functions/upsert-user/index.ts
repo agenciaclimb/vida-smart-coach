@@ -1,5 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
+<<<<<<< HEAD
+import { corsHeaders } from "../_shared/cors.ts";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!}` },
+        },
+      },
+    );
+
+    const {
+      email,
+      password,
+      full_name,
+      phone,
+      metadata,
+    } = await req.json();
+
+    let userId;
+    let session = null;
+
+    // First, try to sign up the user
+=======
 import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
@@ -29,6 +61,7 @@ serve(async (req) => {
     let userId: string | undefined;
     let session = null;
 
+>>>>>>> origin/main
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -41,6 +74,10 @@ serve(async (req) => {
     });
 
     if (signUpError) {
+<<<<<<< HEAD
+      if (signUpError.message.includes("User already registered")) {
+        // If user exists, try to sign in
+=======
       // Verifica se o usuário já existe usando códigos de erro estáveis em vez de correspondência de string frágil.
       // A verificação da mensagem de string é mantida como um fallback para compatibilidade.
       if (
@@ -49,6 +86,7 @@ serve(async (req) => {
         (signUpError as any).status === 409 ||
         signUpError.message.includes("User already registered")
       ) {
+>>>>>>> origin/main
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -57,7 +95,10 @@ serve(async (req) => {
         if (signInError) {
           throw new Error(`Authentication failed: ${signInError.message}`);
         }
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
         userId = signInData.user.id;
         session = signInData.session;
       } else {
@@ -69,19 +110,32 @@ serve(async (req) => {
     }
 
     if (!userId) {
+<<<<<<< HEAD
+      throw new Error("Could not determine user ID.");
+    }
+
+    // Upsert profile
+=======
       throw new Error("Could not determine user id");
     }
 
+>>>>>>> origin/main
     const { data: profile, error: profileError } = await supabase
       .from("user_profiles")
       .upsert({
         id: userId,
         full_name,
+<<<<<<< HEAD
+        phone,
+        email,
+        ...metadata,
+=======
         name: full_name,
         phone,
         whatsapp: phone,
         email,
         ...(metadata ?? {}),
+>>>>>>> origin/main
       })
       .select()
       .single();
@@ -89,6 +143,18 @@ serve(async (req) => {
     if (profileError) {
       throw new Error(`Profile upsert failed: ${profileError.message}`);
     }
+<<<<<<< HEAD
+    
+    // Generate referral link
+    const referralCode = Math.random().toString(36).substring(2, 12);
+    const { error: referralError } = await supabase
+      .from("referrals")
+      .insert({
+        user_id: userId,
+        referral_code: referralCode,
+        usage_count: 0,
+      });
+=======
 
     const referralCode = Math.random().toString(36).substring(2, 12);
     const { error: referralError } = await supabase.from("referrals").insert({
@@ -97,20 +163,35 @@ serve(async (req) => {
       status: 'pending',
       points_earned: 0
     });
+>>>>>>> origin/main
 
     if (referralError) {
       console.error("Failed to create referral code:", referralError.message);
     }
 
     return new Response(JSON.stringify({ user: profile, session }), {
+<<<<<<< HEAD
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+=======
       headers: { ...headers, "Content-Type": "application/json" },
+>>>>>>> origin/main
       status: 200,
     });
   } catch (error) {
     console.error("Error in upsert-user:", error);
+<<<<<<< HEAD
+    return new Response(
+      JSON.stringify({ error: "An internal error occurred." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+=======
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...headers, "Content-Type": "application/json" },
     });
+>>>>>>> origin/main
   }
 });

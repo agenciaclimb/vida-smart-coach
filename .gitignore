@@ -1,9 +1,22 @@
+# Node / build
 node_modules/
 dist/
 tsconfig.tsbuildinfo
-.vercel
+.vercel/
+.vscode/
+coverage/
 
 # Environment variables
 .env
 .env.*
 !.env.example
+
+# Logs e temporários
+logs/
+*.log
+.tmp/
+codex_*/
+.codex_*
+audit/
+sandbox/
+.vercel

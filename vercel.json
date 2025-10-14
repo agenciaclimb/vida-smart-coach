@@ -5,6 +5,29 @@
   "installCommand": "pnpm i --frozen-lockfile",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
+    {
+      "source": "/api/stripe/webhook",
+      "destination": "/api/stripe/webhook"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/supabase/:path*",
+      "destination": "/supabase/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ],
+  "functions": {
+    "api/stripe/webhook.ts": {
+      "runtime": "nodejs22.x"
+    },
+    "supabase/functions/**/*.ts": {
+      "runtime": "nodejs22.x"
+    }
+  }
 }

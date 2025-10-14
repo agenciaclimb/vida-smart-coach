@@ -1,8 +1,124 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+const PARTNER_CONTACT_EMAIL: string = 'jeferson@jccempresas.com.br';
+const PARTNER_FORM_LINK: string = `mailto:${PARTNER_CONTACT_EMAIL}?subject=Quero%20ser%20parceiro%20Vida%20Smart%20Coach`;
+const PARTNER_DEMO_LINK: string = `mailto:${PARTNER_CONTACT_EMAIL}?subject=Agendar%20demonstra%C3%A7%C3%A3o%20Vida%20Smart%20Coach`;
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  minimumFractionDigits: 2,
+});
+
+const PLAN_PRICES: { [key: string]: number } = {
+  basic: 19.9,
+  premium: 29.9,
+  advanced: 49.9,
+};
+
+interface CommissionTier {
+  level: string;
+  range: string;
+  rate: number;
+  clients: number;
+  highlight?: boolean;
+  potential?: string;
+}
+
+const COMMISSION_TIERS: CommissionTier[] = [
+  { level: 'Bronze', range: '1-10 clientes', rate: 0.15, clients: 10 },
+  { level: 'Prata', range: '11-25 clientes', rate: 0.25, clients: 25 },
+  { level: 'Ouro', range: '26-50 clientes', rate: 0.35, clients: 50, highlight: true },
+  { level: 'Diamante', range: '51+ clientes', rate: 0.4, clients: 70, highlight: true },
+];
+
+interface EarningExample {
+  title: string;
+  clientsLabel: string;
+  tierLabel: string;
+  rate: number;
+  mix: { [key: string]: number };
+  styles: {
+    gradient: string;
+    accent: string;
+    divider: string;
+  };
+}
+
+const EARNING_EXAMPLES: EarningExample[] = [
+  {
+    title: 'Influencer Iniciante',
+    clientsLabel: '30 clientes ativos',
+    tierLabel: 'Nível Prata',
+    rate: 0.25,
+    mix: { premium: 20, advanced: 10 },
+    styles: { gradient: 'from-blue-50 to-blue-100', accent: 'text-blue-600', divider: 'border-blue-200' },
+  },
+  {
+    title: 'Nutricionista',
+    clientsLabel: '40 clientes ativos',
+    tierLabel: 'Nível Ouro',
+    rate: 0.35,
+    mix: { premium: 24, advanced: 16 },
+    styles: { gradient: 'from-green-50 to-green-100', accent: 'text-green-600', divider: 'border-green-200' },
+  },
+  {
+    title: 'Coach Experiente',
+    clientsLabel: '70 clientes ativos',
+    tierLabel: 'Nível Diamante',
+    rate: 0.4,
+    mix: { premium: 30, advanced: 40 },
+    styles: { gradient: 'from-purple-50 to-purple-100', accent: 'text-purple-600', divider: 'border-purple-200' },
+  },
+];
+
+const formatCurrency = (value: number): string => currencyFormatter.format(value);
+
+const calculateMixRevenue = (mix: { [key: string]: number }): number =>
+  Object.entries(mix).reduce(
+    (total, [plan, count]) => total + (PLAN_PRICES[plan] || 0) * count,
+    0
+  );
+
 export default function PartnersPageCorrigida() {
-  const [activeTab, setActiveTab] = useState('influencers');
+  const [activeTab, setActiveTab] = useState<string>('influencers');
+
+  const averageTicket: number = PLAN_PRICES.premium * 0.6 + PLAN_PRICES.advanced * 0.4;
+  const topTierRate: number = COMMISSION_TIERS[COMMISSION_TIERS.length - 1]?.rate ?? 0.4;
+  const topPotentialValue: number = PLAN_PRICES.advanced * 50 * topTierRate;
+
+  const commissionData: CommissionTier[] = useMemo(
+    () =>
+      COMMISSION_TIERS.map((tier) => ({
+        ...tier,
+        potential: formatCurrency(tier.clients * averageTicket * tier.rate),
+      })),
+    [averageTicket]
+  );
+
+  interface EarningCard extends EarningExample {
+    ticketLabel: string;
+    earningLabel: string;
+  }
+
+  const earningCards: EarningCard[] = useMemo(
+    () =>
+      EARNING_EXAMPLES.map((item) => {
+        const gross = calculateMixRevenue(item.mix);
+        const totalClients = Object.values(item.mix).reduce((acc, value) => acc + value, 0);
+        const earnings = gross * item.rate;
+        return {
+          ...item,
+          ticketLabel: formatCurrency(gross / totalClients),
+          earningLabel: formatCurrency(earnings),
+        };
+      }),
+    []
+  );
+
+  const topPotentialLabel: string = formatCurrency(topPotentialValue);
+  const heroTopEarningLabel: string = formatCurrency(PLAN_PRICES.advanced * 70 * topTierRate);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -23,10 +139,15 @@ export default function PartnersPageCorrigida() {
             </nav>
 
             <div className="flex items-center space-x-4">
-              <button className="text-gray-700 hover:text-blue-600">Login Parceiro</button>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <Link to="/login?role=partner" className="text-gray-700 hover:text-blue-600">
+                Login Parceiro
+              </Link>
+              <a
+                href={PARTNER_FORM_LINK}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Quero Ser Parceiro
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -50,22 +171,28 @@ export default function PartnersPageCorrigida() {
               <p className="text-gray-600">Taxa de satisfação dos parceiros</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="text-3xl font-bold text-blue-600 mb-2">R$ 5.000+</div>
-              <p className="text-gray-600">Média mensal dos top parceiros</p>
+              <div className="text-3xl font-bold text-blue-600 mb-2">≈ {heroTopEarningLabel}/mês</div>
+              <p className="text-gray-600">Potencial recorrente no nível Diamante</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="text-3xl font-bold text-purple-600 mb-2">50%</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">40%</div>
               <p className="text-gray-600">Comissão máxima recorrente</p>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
+            <a
+              href={PARTNER_FORM_LINK}
+              className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
               Quero Ser Parceiro
-            </button>
-            <button className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors">
+            </a>
+            <a
+              href={PARTNER_DEMO_LINK}
+              className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
               Agendar Demonstração
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -210,47 +337,46 @@ export default function PartnersPageCorrigida() {
 
               <div className="bg-white p-8 rounded-xl shadow-lg">
                 <h4 className="text-2xl font-bold mb-6 text-center">Estrutura de Comissões</h4>
-                
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold">Bronze</div>
-                      <div className="text-sm text-gray-600">1-10 clientes</div>
+                  {commissionData.map((tier) => (
+                    <div
+                      key={tier.level}
+                      className={`flex justify-between items-center p-4 rounded-lg ${
+                        tier.highlight
+                          ? 'bg-blue-50 border-2 border-blue-200'
+                          : 'bg-gray-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-semibold">{tier.level}</div>
+                        <div className="text-sm text-gray-600">{tier.range}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-blue-600">
+                          {(tier.rate * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Potencial: {tier.potential}/mês
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xl font-bold text-blue-600">15%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold">Prata</div>
-                      <div className="text-sm text-gray-600">11-25 clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-blue-600">25%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                    <div>
-                      <div className="font-semibold">Ouro</div>
-                      <div className="text-sm text-gray-600">26-50 clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-blue-600">35%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
-                    <div>
-                      <div className="font-semibold">Diamante</div>
-                      <div className="text-sm text-gray-600">51+ clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-purple-600">40%</div>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="mt-6 p-4 bg-green-50 rounded-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">R$ 19.600</div>
-                    <div className="text-sm text-gray-600">Potencial mensal com 50 clientes</div>
+                    <div className="text-2xl font-bold text-green-600">{topPotentialLabel}</div>
+                    <div className="text-sm text-gray-600">
+                      Potencial mensal com 50 clientes no plano Avançado
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Comissão Diamante ({(topTierRate * 100).toFixed(0)}%) + ticket R$ 49,90
+                    </div>
                   </div>
                 </div>
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Cenários calculados com ticket médio aproximado de {formatCurrency(averageTicket)} (mix Premium + Avançado).
+                </p>
               </div>
             </div>
           )}
@@ -324,42 +450,34 @@ export default function PartnersPageCorrigida() {
                 <p className="text-center text-gray-600 mb-6">Sistema de ranking justo para todos os profissionais</p>
                 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold">Bronze</div>
-                      <div className="text-sm text-gray-600">1-10 clientes</div>
+                  {commissionData.map((tier) => ( 
+                    <div
+                      key={`professional-${tier.level}`}
+                      className={`flex justify-between items-center p-4 rounded-lg ${
+                        tier.highlight
+                          ? 'bg-purple-50 border-2 border-purple-200'
+                          : 'bg-gray-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-semibold">{tier.level}</div>
+                        <div className="text-sm text-gray-600">{tier.range}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-blue-600">
+                          {(tier.rate * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Potencial: {tier.potential}/mês
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xl font-bold text-blue-600">15%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold">Prata</div>
-                      <div className="text-sm text-gray-600">11-25 clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-blue-600">25%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                    <div>
-                      <div className="font-semibold">Ouro</div>
-                      <div className="text-sm text-gray-600">26-50 clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-blue-600">35%</div>
-                  </div>
-
-                  <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
-                    <div>
-                      <div className="font-semibold">Diamante</div>
-                      <div className="text-sm text-gray-600">51+ clientes</div>
-                    </div>
-                    <div className="text-xl font-bold text-purple-600">40%</div>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">R$ 19.600</div>
+                    <div className="text-2xl font-bold text-purple-600">{topPotentialLabel}</div>
                     <div className="text-sm text-gray-600">Potencial mensal com 50 clientes</div>
                     <div className="text-xs text-blue-600 mt-1">+ Acesso ao painel profissional</div>
                   </div>
@@ -367,10 +485,13 @@ export default function PartnersPageCorrigida() {
 
                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                   <div className="text-center">
-                    <div className="text-sm font-semibold text-yellow-800">🎯 Diferencial Exclusivo</div>
+                    <div className="text-sm font-semibold text-yellow-800">🌟 Diferencial Exclusivo</div>
                     <div className="text-xs text-yellow-700">Painel profissional + personalização avançada</div>
                   </div>
                 </div>
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Cenários calculados com ticket médio aproximado de {formatCurrency(averageTicket)} (mix Premium + Avançado).
+                </p>
               </div>
             </div>
           )}
@@ -385,74 +506,30 @@ export default function PartnersPageCorrigida() {
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-xl">
-              <h3 className="text-xl font-bold mb-4">Influencer Iniciante</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>15 clientes ativos</span>
-                  <span className="font-semibold">Nível Prata</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Comissão:</span>
-                  <span className="font-semibold">25%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Ticket médio:</span>
-                  <span className="font-semibold">R$ 72,90</span>
-                </div>
-                <hr className="border-blue-200" />
-                <div className="flex justify-between text-lg font-bold text-blue-600">
-                  <span>Ganho mensal:</span>
-                  <span>R$ 2.734</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-xl">
-              <h3 className="text-xl font-bold mb-4">Nutricionista</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>20 clientes ativos</span>
-                  <span className="font-semibold">Profissional</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Comissão:</span>
-                  <span className="font-semibold">35%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Ticket médio:</span>
-                  <span className="font-semibold">R$ 72,90</span>
-                </div>
-                <hr className="border-green-200" />
-                <div className="flex justify-between text-lg font-bold text-green-600">
-                  <span>Ganho mensal:</span>
-                  <span>R$ 5.103</span>
+            {earningCards.map((card) => ( 
+              <div key={card.title} className={`bg-gradient-to-br ${card.styles.gradient} p-8 rounded-xl`}>
+                <h3 className="text-xl font-bold mb-4">{card.title}</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>{card.clientsLabel}</span>
+                    <span className="font-semibold">{card.tierLabel}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Comissão:</span>
+                    <span className="font-semibold">{(card.rate * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Ticket médio:</span>
+                    <span className="font-semibold">{card.ticketLabel}</span>
+                  </div>
+                  <hr className={card.styles.divider} />
+                  <div className={`flex justify-between text-lg font-bold ${card.styles.accent}`}>
+                    <span>Ganho mensal:</span>
+                    <span>{card.earningLabel}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-8 rounded-xl">
-              <h3 className="text-xl font-bold mb-4">Coach Experiente</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>50 clientes ativos</span>
-                  <span className="font-semibold">Diamante</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Comissão:</span>
-                  <span className="font-semibold">50%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Ticket médio:</span>
-                  <span className="font-semibold">R$ 72,90</span>
-                </div>
-                <hr className="border-purple-200" />
-                <div className="flex justify-between text-lg font-bold text-purple-600">
-                  <span>Ganho mensal:</span>
-                  <span>R$ 18.225</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -470,7 +547,7 @@ export default function PartnersPageCorrigida() {
                 <div className="text-yellow-400">⭐⭐⭐⭐⭐</div>
               </div>
               <p className="text-gray-600 mb-6">
-                "Como influencer fitness, sempre busquei formas de monetizar minha audiência de forma ética. Com o Vida Smart Coach, consigo oferecer valor real aos meus seguidores e ainda ganho uma renda extra de R$ 4.200/mês!"
+                "Como influencer fitness, sempre busquei formas de monetizar minha audiência de forma ética. Com o Vida Smart Coach, consigo oferecer valor real e, com meus 70 clientes indicados, gero uma renda extra de mais de R$ 1.150/mês!"
               </p>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white font-semibold">
@@ -479,7 +556,7 @@ export default function PartnersPageCorrigida() {
                 <div className="ml-4">
                   <p className="font-semibold">Carla Fitness</p>
                   <p className="text-sm text-gray-500">Influencer • 85k seguidores</p>
-                  <p className="text-sm text-green-600 font-semibold">R$ 4.200/mês</p>
+                  <p className="text-sm text-green-600 font-semibold">{earningCards[2].earningLabel}/mês</p>
                 </div>
               </div>
             </div>
@@ -489,7 +566,7 @@ export default function PartnersPageCorrigida() {
                 <div className="text-yellow-400">⭐⭐⭐⭐⭐</div>
               </div>
               <p className="text-gray-600 mb-6">
-                "Sou nutricionista e a IA se tornou uma extensão do meu trabalho. Meus pacientes têm resultados melhores e eu ainda ganho uma renda adicional significativa. É um win-win perfeito!"
+                "Sou nutricionista e a IA se tornou uma extensão do meu trabalho. Meus 40 pacientes indicados geram uma renda adicional de mais de R$ 530 por mês. É um win-win perfeito!"
               </p>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
@@ -498,7 +575,7 @@ export default function PartnersPageCorrigida() {
                 <div className="ml-4">
                   <p className="font-semibold">Dra. Marina Oliveira</p>
                   <p className="text-sm text-gray-500">Nutricionista • CRN 12345</p>
-                  <p className="text-sm text-green-600 font-semibold">R$ 6.800/mês</p>
+                  <p className="text-sm text-green-600 font-semibold">{earningCards[1].earningLabel}/mês</p>
                 </div>
               </div>
             </div>
@@ -540,12 +617,18 @@ export default function PartnersPageCorrigida() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
+            <a
+              href={PARTNER_FORM_LINK}
+              className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
               Quero Ser Parceiro Agora
-            </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors">
+            </a>
+            <a
+              href={PARTNER_DEMO_LINK}
+              className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors"
+            >
               Agendar Demonstração
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -596,4 +679,3 @@ export default function PartnersPageCorrigida() {
     </div>
   );
 }
-

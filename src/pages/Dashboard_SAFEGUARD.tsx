@@ -1,12 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useApiCallSafeGuard } from '../hooks/useApiCall-SafeGuard';
-import { 
-  fetchDadosComunidade, 
-  fetchPlanos, 
-  fetchRecompensas,
-  checkAuth 
-} from '../lib/apiHelper_FIXED';
+import { supabase } from '@/lib/supabaseClient';
 
 // ===============================================
 // 🛡️ DASHBOARD COM PROTEÇÃO ANTI-LOOP INFINITO
@@ -20,108 +16,179 @@ interface DashboardData {
 
 export const DashboardSafeGuard: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const [retryCount, setRetryCount] = useState(0);
+  const userId = user?.id;
   
   // 🛡️ PROTEÇÃO: Hook seguro para dados da comunidade
-  const { call: comunidadeCall } = useApiCallSafeGuard();
-  const comunidadeAPI = {
-    loading: false,
+  const { call: comunidadeCall, abortAll: abortComunidade } = useApiCallSafeGuard();
+  const [comunidadeState, setComunidadeState] = useState({
+    loading: true,
     data: null,
     error: null,
-    retryCount: 0,
-    refetch: () => {},
-    abort: () => {}
-  };
-    useCallback(async () => {
-      console.log('🔄 Fetching comunidade data...');
-      const result = await fetchDadosComunidade();
-      if (result.error) {
-        throw new Error(result.error.message || 'Erro ao carregar dados da comunidade');
-      }
-      return result.data;
-    }, []),
-    [user?.id], // Dependência: recarregar se usuário mudar
-    {
-      maxRetries: 2,
-      retryDelay: 1000,
-      timeout: 15000,
-      enabled: !!user && !authLoading
+    retryCount: 0
+  });
+
+  const fetchComunidade = useCallback(async () => {
+    if (!userId || authLoading) {
+      setComunidadeState(prev => ({ ...prev, loading: false }));
+      return;
     }
-  );
+
+    setComunidadeState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const data = await comunidadeCall(async () => {
+        console.log('[SafeGuard] Fetching comunidade data...');
+        const { data, error } = await supabase.from('comunidade').select('*');
+        if (error) throw new Error(error.message || 'Erro ao carregar dados da comunidade');
+        return data ?? [];
+      }, { maxRetries: 2, timeout: 15000, enabled: true });
+
+      setComunidadeState({ loading: false, data, error: null, retryCount: 0 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar dados da comunidade';
+      if (message === 'API call too frequent') {
+        setTimeout(() => fetchComunidade(), 600);
+        return;
+      }
+      console.error('Erro ao carregar dados da comunidade:', error);
+      setComunidadeState(prev => ({ ...prev, loading: false, error: message, retryCount: prev.retryCount + 1 }));
+    }
+  }, [comunidadeCall, authLoading, userId]);
+
+  const comunidadeAPI = useMemo(() => ({
+    ...comunidadeState,
+    refetch: fetchComunidade,
+    abort: abortComunidade
+  }), [comunidadeState, fetchComunidade, abortComunidade]);
 
   // 🛡️ PROTEÇÃO: Hook seguro para dados dos planos
-  const { call: planosCall } = useApiCallSafeGuard();
-  const planosAPI = {
-    loading: false,
+  const { call: planosCall, abortAll: abortPlanos } = useApiCallSafeGuard();
+  const [planosState, setPlanosState] = useState({
+    loading: true,
     data: null,
     error: null,
-    retryCount: 0,
-    refetch: () => {},
-    abort: () => {}
-  };
-    useCallback(async () => {
-      console.log('🔄 Fetching planos data...');
-      const result = await fetchPlanos();
-      if (result.error) {
-        throw new Error(result.error.message || 'Erro ao carregar planos');
-      }
-      return result.data;
-    }, []),
-    [user?.id], // Dependência: recarregar se usuário mudar
-    {
-      maxRetries: 2,
-      retryDelay: 1000,
-      timeout: 15000,
-      enabled: !!user && !authLoading
+    retryCount: 0
+  });
+
+  const fetchPlanosSafe = useCallback(async () => {
+    if (!userId || authLoading) {
+      setPlanosState(prev => ({ ...prev, loading: false }));
+      return;
     }
-  );
+
+    setPlanosState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const data = await planosCall(async () => {
+        console.log('[SafeGuard] Fetching planos data...');
+        const { data, error } = await supabase.from('planos').select('*');
+        if (error) throw new Error(error.message || 'Erro ao carregar planos');
+        return data ?? [];
+      }, { maxRetries: 2, timeout: 15000, enabled: true });
+
+      setPlanosState({ loading: false, data, error: null, retryCount: 0 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar planos';
+      if (message === 'API call too frequent') {
+        setTimeout(() => fetchPlanosSafe(), 600);
+        return;
+      }
+      console.error('Erro ao carregar planos:', error);
+      setPlanosState(prev => ({ ...prev, loading: false, error: message, retryCount: prev.retryCount + 1 }));
+    }
+  }, [planosCall, authLoading, userId]);
+
+  const planosAPI = useMemo(() => ({
+    ...planosState,
+    refetch: fetchPlanosSafe,
+    abort: abortPlanos
+  }), [planosState, fetchPlanosSafe, abortPlanos]);
 
   // 🛡️ PROTEÇÃO: Hook seguro para dados das recompensas  
-  const { call: recompensasCall } = useApiCallSafeGuard();
-  const recompensasAPI = {
-    loading: false,
+  const { call: recompensasCall, abortAll: abortRecompensas } = useApiCallSafeGuard();
+  const [recompensasState, setRecompensasState] = useState({
+    loading: true,
     data: null,
     error: null,
-    retryCount: 0,
-    refetch: () => {},
-    abort: () => {}
-  };
-    useCallback(async () => {
-      console.log('🔄 Fetching recompensas data...');
-      const result = await fetchRecompensas();
-      if (result.error) {
-        throw new Error(result.error.message || 'Erro ao carregar recompensas');
-      }
-      return result.data;
-    }, []),
-    [user?.id], // Dependência: recarregar se usuário mudar
-    {
-      maxRetries: 2,
-      retryDelay: 1000,
-      timeout: 15000,
-      enabled: !!user && !authLoading
+    retryCount: 0
+  });
+
+  const fetchRecompensasSafe = useCallback(async () => {
+    if (!userId || authLoading) {
+      setRecompensasState(prev => ({ ...prev, loading: false }));
+      return;
     }
-  );
 
-  // Função de retry que reinicia todos os API calls
+    setRecompensasState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const data = await recompensasCall(async () => {
+        console.log('[SafeGuard] Fetching recompensas data...');
+        const { data, error } = await supabase.from('recompensas').select('*');
+        if (error) throw new Error(error.message || 'Erro ao carregar recompensas');
+        return data ?? [];
+      }, { maxRetries: 2, timeout: 15000, enabled: true });
+
+      setRecompensasState({ loading: false, data, error: null, retryCount: 0 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar recompensas';
+      if (message === 'API call too frequent') {
+        setTimeout(() => fetchRecompensasSafe(), 600);
+        return;
+      }
+      console.error('Erro ao carregar recompensas:', error);
+      setRecompensasState(prev => ({ ...prev, loading: false, error: message, retryCount: prev.retryCount + 1 }));
+    }
+  }, [recompensasCall, authLoading, userId]);
+
+  const recompensasAPI = useMemo(() => ({
+    ...recompensasState,
+    refetch: fetchRecompensasSafe,
+    abort: abortRecompensas
+  }), [recompensasState, fetchRecompensasSafe, abortRecompensas]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!userId) {
+      setComunidadeState(prev => ({ ...prev, loading: false, data: null, error: null, retryCount: 0 }));
+      setPlanosState(prev => ({ ...prev, loading: false, data: null, error: null, retryCount: 0 }));
+      setRecompensasState(prev => ({ ...prev, loading: false, data: null, error: null, retryCount: 0 }));
+      return;
+    }
+
+    fetchComunidade();
+    fetchPlanosSafe();
+    fetchRecompensasSafe();
+
+    return () => {
+      abortComunidade();
+      abortPlanos();
+      abortRecompensas();
+    };
+  }, [
+    authLoading,
+    userId,
+    fetchComunidade,
+    fetchPlanosSafe,
+    fetchRecompensasSafe,
+    abortComunidade,
+    abortPlanos,
+    abortRecompensas
+  ]);
+
   const handleRetryAll = useCallback(() => {
-    console.log('🔄 Retry all requested by user');
-    setRetryCount(prev => prev + 1);
-    
-    // Abortar calls atuais primeiro
-    comunidadeAPI.abort();
-    planosAPI.abort();
-    recompensasAPI.abort();
-    
-    // Refetch todos
+    console.log('[SafeGuard] Retry all requested by user');
+    abortComunidade();
+    abortPlanos();
+    abortRecompensas();
     setTimeout(() => {
-      comunidadeAPI.refetch();
-      planosAPI.refetch();
-      recompensasAPI.refetch();
-    }, 100);
-  }, [comunidadeAPI, planosAPI, recompensasAPI]);
+      fetchComunidade();
+      fetchPlanosSafe();
+      fetchRecompensasSafe();
+    }, 200);
+  }, [abortComunidade, abortPlanos, abortRecompensas, fetchComunidade, fetchPlanosSafe, fetchRecompensasSafe]);
 
-  // Computar estados agregados
   const aggregatedState = useMemo(() => {
     const hasAnyLoading = comunidadeAPI.loading || planosAPI.loading || recompensasAPI.loading;
     const hasAnyError = comunidadeAPI.error || planosAPI.error || recompensasAPI.error;
@@ -134,12 +201,11 @@ export const DashboardSafeGuard: React.FC = () => {
       totalRetries: comunidadeAPI.retryCount + planosAPI.retryCount + recompensasAPI.retryCount
     };
   }, [
-    comunidadeAPI.loading, comunidadeAPI.error, comunidadeAPI.data, comunidadeAPI.retryCount,
-    planosAPI.loading, planosAPI.error, planosAPI.data, planosAPI.retryCount,
-    recompensasAPI.loading, recompensasAPI.error, recompensasAPI.data, recompensasAPI.retryCount
+    comunidadeAPI,
+    planosAPI,
+    recompensasAPI
   ]);
 
-  // Loading inicial
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -151,14 +217,12 @@ export const DashboardSafeGuard: React.FC = () => {
     );
   }
 
-  // Se não há usuário, não renderizar nada (AuthGuard deve redirecionar)
   if (!user) {
     return null;
   }
 
   return (
     <div className="dashboard-container p-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Dashboard - Vida Smart Coach
@@ -176,7 +240,6 @@ export const DashboardSafeGuard: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Alerts */}
       {aggregatedState.hasAnyError && (
         <div className="mb-6 space-y-3">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -184,15 +247,9 @@ export const DashboardSafeGuard: React.FC = () => {
               <div>
                 <h3 className="text-red-800 font-medium">❌ Erros Detectados</h3>
                 <div className="text-red-700 mt-2 space-y-1">
-                  {comunidadeAPI.error && (
-                    <p>• <strong>Comunidade:</strong> {comunidadeAPI.error}</p>
-                  )}
-                  {planosAPI.error && (
-                    <p>• <strong>Planos:</strong> {planosAPI.error}</p>
-                  )}
-                  {recompensasAPI.error && (
-                    <p>• <strong>Recompensas:</strong> {recompensasAPI.error}</p>
-                  )}
+                  {comunidadeAPI.error && <p>• <strong>Comunidade:</strong> {comunidadeAPI.error}</p>}
+                  {planosAPI.error && <p>• <strong>Planos:</strong> {planosAPI.error}</p>}
+                  {recompensasAPI.error && <p>• <strong>Recompensas:</strong> {recompensasAPI.error}</p>}
                 </div>
               </div>
               <button
@@ -207,254 +264,32 @@ export const DashboardSafeGuard: React.FC = () => {
         </div>
       )}
 
-      {/* Loading Indicators */}
       {aggregatedState.hasAnyLoading && (
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-blue-800 flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
             Carregando dados do dashboard...
-            <span className="ml-2 text-sm">
-              ({[comunidadeAPI.loading && 'Comunidade', planosAPI.loading && 'Planos', recompensasAPI.loading && 'Recompensas'].filter(Boolean).join(', ')})
-            </span>
           </p>
         </div>
       )}
 
-      {/* Success Indicator */}
-      {aggregatedState.allDataLoaded && !aggregatedState.hasAnyError && !aggregatedState.hasAnyLoading && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-800 flex items-center">
-            <div className="h-4 w-4 bg-green-600 rounded-full mr-3"></div>
-            ✅ Todos os dados carregados com sucesso!
-          </p>
-        </div>
-      )}
-
-      {/* Dashboard Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
         {/* Card Comunidade */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Comunidade</h2>
-            <div className="flex items-center space-x-2">
-              {comunidadeAPI.loading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-              )}
-              {comunidadeAPI.error && (
-                <div className="text-red-500 text-xs">❌</div>
-              )}
-              {comunidadeAPI.data && !comunidadeAPI.error && !comunidadeAPI.loading && (
-                <div className="text-green-500 text-xs">✅</div>
-              )}
-            </div>
-          </div>
-          
-          {comunidadeAPI.loading ? (
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ) : comunidadeAPI.error ? (
-            <div className="text-red-600 text-sm">
-              <p>Erro ao carregar dados</p>
-              <button
-                onClick={comunidadeAPI.refetch}
-                className="mt-2 text-blue-600 hover:text-blue-800 text-xs underline"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          ) : comunidadeAPI.data ? (
-            <div>
-              <p className="text-green-600 font-medium text-2xl">
-                {Array.isArray(comunidadeAPI.data) ? comunidadeAPI.data.length : 0}
-              </p>
-              <p className="text-gray-600 text-sm mt-1">
-                Membros ativos na comunidade
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                <p>Tentativas: {comunidadeAPI.retryCount}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500">Aguardando dados...</p>
-          )}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-900">Comunidade</h2>
+          {comunidadeAPI.loading ? <p>Carregando...</p> : comunidadeAPI.error ? <p className="text-red-500">{comunidadeAPI.error}</p> : <p>{comunidadeAPI.data?.length ?? 0} membros</p>}
         </div>
-
         {/* Card Planos */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Planos</h2>
-            <div className="flex items-center space-x-2">
-              {planosAPI.loading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              )}
-              {planosAPI.error && (
-                <div className="text-red-500 text-xs">❌</div>
-              )}
-              {planosAPI.data && !planosAPI.error && !planosAPI.loading && (
-                <div className="text-green-500 text-xs">✅</div>
-              )}
-            </div>
-          </div>
-          
-          {planosAPI.loading ? (
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ) : planosAPI.error ? (
-            <div className="text-red-600 text-sm">
-              <p>Erro ao carregar planos</p>
-              <button
-                onClick={planosAPI.refetch}
-                className="mt-2 text-blue-600 hover:text-blue-800 text-xs underline"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          ) : planosAPI.data ? (
-            <div>
-              <p className="text-blue-600 font-medium text-2xl">
-                {Array.isArray(planosAPI.data) ? planosAPI.data.length : 0}
-              </p>
-              <p className="text-gray-600 text-sm mt-1">
-                Planos disponíveis
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                <p>Tentativas: {planosAPI.retryCount}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500">Aguardando dados...</p>
-          )}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-900">Planos</h2>
+          {planosAPI.loading ? <p>Carregando...</p> : planosAPI.error ? <p className="text-red-500">{planosAPI.error}</p> : <p>{planosAPI.data?.length ?? 0} planos</p>}
         </div>
-
         {/* Card Recompensas */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Recompensas</h2>
-            <div className="flex items-center space-x-2">
-              {recompensasAPI.loading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
-              )}
-              {recompensasAPI.error && (
-                <div className="text-red-500 text-xs">❌</div>
-              )}
-              {recompensasAPI.data && !recompensasAPI.error && !recompensasAPI.loading && (
-                <div className="text-green-500 text-xs">✅</div>
-              )}
-            </div>
-          </div>
-          
-          {recompensasAPI.loading ? (
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          ) : recompensasAPI.error ? (
-            <div className="text-red-600 text-sm">
-              <p>Erro ao carregar recompensas</p>
-              <button
-                onClick={recompensasAPI.refetch}
-                className="mt-2 text-blue-600 hover:text-blue-800 text-xs underline"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          ) : recompensasAPI.data ? (
-            <div>
-              <p className="text-purple-600 font-medium text-2xl">
-                {Array.isArray(recompensasAPI.data) ? recompensasAPI.data.length : 0}
-              </p>
-              <p className="text-gray-600 text-sm mt-1">
-                Recompensas ativas
-              </p>
-              <div className="mt-3 text-xs text-gray-500">
-                <p>Tentativas: {recompensasAPI.retryCount}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500">Aguardando dados...</p>
-          )}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-900">Recompensas</h2>
+          {recompensasAPI.loading ? <p>Carregando...</p> : recompensasAPI.error ? <p className="text-red-500">{recompensasAPI.error}</p> : <p>{recompensasAPI.data?.length ?? 0} recompensas</p>}
         </div>
       </div>
-
-      {/* Control Panel */}
-      <div className="mt-8 bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">🛡️ Painel de Controle</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={handleRetryAll}
-            disabled={aggregatedState.hasAnyLoading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            {aggregatedState.hasAnyLoading ? 'Carregando...' : '🔄 Recarregar Tudo'}
-          </button>
-          
-          <button
-            onClick={() => {
-              comunidadeAPI.abort();
-              planosAPI.abort();
-              recompensasAPI.abort();
-            }}
-            disabled={!aggregatedState.hasAnyLoading}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            ⏹️ Parar Carregamentos
-          </button>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            🔄 Reload Página
-          </button>
-        </div>
-      </div>
-
-      {/* Debug Info (desenvolvimento) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-          <h3 className="font-semibold mb-2">🔧 Debug Info:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div>
-              <h4 className="font-medium text-green-600 mb-1">Comunidade</h4>
-              <pre className="text-gray-600">
-{JSON.stringify({
-  loading: comunidadeAPI.loading,
-  error: !!comunidadeAPI.error,
-  dataCount: Array.isArray(comunidadeAPI.data) ? comunidadeAPI.data.length : 'null',
-  retryCount: comunidadeAPI.retryCount
-}, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <h4 className="font-medium text-blue-600 mb-1">Planos</h4>
-              <pre className="text-gray-600">
-{JSON.stringify({
-  loading: planosAPI.loading,
-  error: !!planosAPI.error,
-  dataCount: Array.isArray(planosAPI.data) ? planosAPI.data.length : 'null',
-  retryCount: planosAPI.retryCount
-}, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <h4 className="font-medium text-purple-600 mb-1">Recompensas</h4>
-              <pre className="text-gray-600">
-{JSON.stringify({
-  loading: recompensasAPI.loading,
-  error: !!recompensasAPI.error,
-  dataCount: Array.isArray(recompensasAPI.data) ? recompensasAPI.data.length : 'null',
-  retryCount: recompensasAPI.retryCount
-}, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

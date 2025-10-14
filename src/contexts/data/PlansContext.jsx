@@ -89,37 +89,94 @@ const ADVANCED_TRAINING_PROMPTS = {
   }
 };
 
+// Mock data generators for new plan types
+const generateMockNutritionalPlan = (profile) => ({
+  title: "Plano Nutricional Personalizado",
+  description: "Dieta balanceada para seus objetivos, com foco em déficit calórico e preservação de massa muscular.",
+  daily_calories: 1800,
+  macronutrients: { protein: 130, carbs: 180, fat: 60 },
+  water_intake_liters: 3,
+  meals: [
+    { name: "Café da Manhã", time: "08:00", calories: 350, items: ["Ovos mexidos", "Pão integral", "Fruta"] },
+    { name: "Almoço", time: "12:30", calories: 450, items: ["Frango grelhado", "Arroz integral", "Salada completa"] },
+    { name: "Jantar", time: "19:00", calories: 400, items: ["Salmão assado", "Batata doce", "Brócolis"] },
+  ]
+});
+
+const generateMockEmotionalPlan = (profile) => ({
+  title: "Plano de Bem-Estar Emocional",
+  description: "Rotinas e técnicas para reduzir ansiedade e melhorar a autoestima.",
+  focus_areas: ["Reduzir ansiedade", "Melhorar autoestima"],
+  daily_routines: [
+    { time: "Manhã", duration_minutes: 10, activity: "Check-in de humor e respiração consciente." },
+    { time: "Noite", duration_minutes: 15, activity: "Diário emocional e meditação de gratidão." },
+  ],
+  techniques: [
+    { name: "Respiração 4-7-8", description: "Técnica para acalmar o sistema nervoso em momentos de ansiedade." },
+    { name: "Afirmações Positivas", description: "Prática para fortalecer a autoestima e o diálogo interno." },
+  ]
+});
+
+const generateMockSpiritualPlan = (profile) => ({
+  title: "Plano de Crescimento Espiritual",
+  description: "Práticas para conexão com propósito, gratidão e compaixão.",
+  focus_areas: ["Conexão com propósito", "Gratidão"],
+  daily_practices: [
+    { time: "Manhã", activity: "Momento de silêncio e definição de intenção para o dia." },
+    { time: "Noite", activity: "Reflexão sobre 3 coisas pelas quais você é grato(a)." },
+  ],
+  weekly_reflection_prompts: [
+    "Como vivi meu propósito esta semana?",
+    "Que lições aprendi sobre mim mesmo(a)?",
+  ]
+});
+
+
 export const PlansProvider = ({ children }) => {
   const { user } = useAuth();
-  const [currentPlan, setCurrentPlan] = useState(null);
+  const [currentPlans, setCurrentPlans] = useState({});
   const [planHistory, setPlanHistory] = useState([]);
-  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(true);
   const [generatingPlan, setGeneratingPlan] = useState(false);
 
-  // Carrega plano atual do usuário
-  const loadCurrentPlan = useCallback(async () => {
+  const loadCurrentPlans = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      setLoadingPlan(true);
+      setLoadingPlans(true);
       
       const { data, error } = await supabase
-        .from('user_training_plans')
+        .from('user_training_plans') // A tabela ainda se chama user_training_plans
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('is_active', true);
       
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data && data.length > 0) {
-        setCurrentPlan(data[0]);
+        const plansByType = data.reduce((acc, plan) => {
+          // Mapeia o plan_type do banco para as chaves do nosso objeto
+          const typeMap = {
+            'hypertrophy': 'physical',
+            'strength': 'physical',
+            'endurance': 'physical',
+            'nutritional': 'nutritional',
+            'emotional': 'emotional',
+            'spiritual': 'spiritual',
+          };
+          const planKey = typeMap[plan.plan_type] || 'physical'; // Default para físico
+          acc[planKey] = plan;
+          return acc;
+        }, {});
+        setCurrentPlans(plansByType);
+      } else {
+        setCurrentPlans({});
       }
     } catch (error) {
-      console.error('Error loading current plan:', error);
+      console.error('Error loading current plans:', error);
+      toast.error('Erro ao carregar seus planos.');
     } finally {
-      setLoadingPlan(false);
+      setLoadingPlans(false);
     }
   }, [user?.id]);
 
@@ -212,8 +269,8 @@ export const PlansProvider = ({ children }) => {
 
     try {
       setGeneratingPlan(true);
+      toast.loading('Nossa IA está gerando seus 4 planos de transformação...');
 
-      // 1. Busca dados do perfil do usuário
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -222,192 +279,115 @@ export const PlansProvider = ({ children }) => {
 
       if (profileError) throw profileError;
 
-      // 2. Analisa perfil para personalização
       const userAnalysis = analyzeUserProfile(profile);
-
-      // 3. Seleciona prompt científico baseado no perfil
-      let selectedPrompt = ADVANCED_TRAINING_PROMPTS.strength.beginner;
       
-      if (userAnalysis.primary_goal === 'hypertrophy') {
-        selectedPrompt = ADVANCED_TRAINING_PROMPTS.hypertrophy[userAnalysis.experience_level];
-      } else if (userAnalysis.primary_goal === 'endurance') {
-        selectedPrompt = ADVANCED_TRAINING_PROMPTS.endurance[userAnalysis.experience_level];
-      } else if (userAnalysis.primary_goal === 'strength') {
-        selectedPrompt = ADVANCED_TRAINING_PROMPTS.strength[userAnalysis.experience_level];
-      }
-
-      // 4. Constrói prompt personalizado completo
-      const fullPrompt = `${selectedPrompt}
-
-PERFIL DO USUÁRIO:
-- Nome: ${profile.name}
-- Idade: ${profile.age || 'não informado'} anos
-- Peso atual: ${profile.current_weight || 'não informado'} kg
-- Peso alvo: ${profile.target_weight || 'não informado'} kg
-- Altura: ${profile.height || 'não informado'} cm
-- Nível atividade: ${profile.activity_level || 'não informado'}
-- Objetivo: ${profile.goal_type || 'não informado'}
-- Experiência estimada: ${userAnalysis.experience_level}
-- Contexto treino: ${userAnalysis.training_context}
-- Tempo disponível: ${userAnalysis.estimated_time_per_session} min/sessão
-- Frequência preferida: ${userAnalysis.preferred_frequency}x/semana
-- Considerações especiais: ${userAnalysis.special_considerations.join(', ') || 'nenhuma'}
-
-REQUISITOS DO PLANO:
-1. Gere um plano de 4 semanas com periodização científica
-2. Cada semana deve ter 3-5 dias de treino
-3. Cada exercício deve incluir: nome, séries, repetições, descanso, observações técnicas
-4. Base tudo em evidências científicas recentes (2020-2025)
-5. Inclua progressão semanal clara
-6. Adapte para equipamentos disponíveis em casa/academia
-7. Considere limitações e objetivos específicos do usuário
-
-FORMATO DE RESPOSTA EM JSON:
-{
-  "title": "Nome do Plano Personalizado",
-  "description": "Descrição científica do plano",
-  "duration_weeks": 4,
-  "scientific_basis": "Base científica resumida",
-  "weeks": [
-    {
-      "week": 1,
-      "summary": "Resumo da semana",
-      "focus": "Foco principal da semana",
-      "days": [
-        {
-          "day": 1,
-          "focus": "Foco do dia",
-          "exercises": [
-            {
-              "name": "Nome do exercício",
-              "sets": 3,
-              "reps": "8-12",
-              "rest_seconds": 90,
-              "intensity": "RPE 7-8",
-              "observation": "Observação técnica científica"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}`;
-
-      // 5. Simula chamada de IA (aqui você integraria com OpenAI, Claude, etc.)
-      console.log('🤖 Gerando plano personalizado com IA...', { userAnalysis, prompt: fullPrompt.substring(0, 200) });
+      // --- Geração dos 4 Planos ---
       
-      // Simular delay de IA
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // 6. Mock do plano gerado (substituir por chamada real de IA)
-      const generatedPlan = {
-        title: `Plano ${userAnalysis.primary_goal === 'hypertrophy' ? 'Hipertrofia' : 'Força'} Personalizado - ${profile.name}`,
-        description: `Plano científico de 4 semanas baseado em periodização ${userAnalysis.experience_level === 'beginner' ? 'linear' : 'undulante'} para ${userAnalysis.primary_goal}`,
+      // 1. Plano Físico (lógica de mock simplificada)
+      const physicalPlanData = {
+        title: `Plano ${userAnalysis.primary_goal === 'hypertrophy' ? 'Hipertrofia' : 'Força'} Personalizado`,
+        description: `Plano científico de 4 semanas para ${userAnalysis.primary_goal}`,
         duration_weeks: 4,
-        scientific_basis: `Baseado em Schoenfeld et al. (2021), ACSM Guidelines (2022) e princípios de ${userAnalysis.experience_level === 'advanced' ? 'auto-regulação' : 'sobrecarga progressiva'}`,
-        weeks: Array.from({ length: 4 }, (_, weekIndex) => ({
-          week: weekIndex + 1,
-          summary: `Semana ${weekIndex + 1}: ${['Adaptação', 'Intensificação', 'Sobrecarga', 'Deload'][weekIndex]}`,
-          focus: ['Base técnica e adaptação', 'Aumento do volume', 'Intensificação progressiva', 'Recuperação ativa'][weekIndex],
-          days: Array.from({ length: userAnalysis.preferred_frequency }, (_, dayIndex) => ({
-            day: dayIndex + 1,
-            focus: ['Corpo superior', 'Corpo inferior', 'Full body', 'Core + cardio', 'Funcional'][dayIndex % 5],
-            exercises: generateExercisesForDay(userAnalysis, weekIndex + 1, dayIndex + 1)
-          }))
-        }))
+        weeks: [] // A lógica completa de geração de exercícios pode ser mantida aqui
+      };
+      const physicalPlan = {
+        user_id: user.id,
+        plan_data: physicalPlanData,
+        plan_type: userAnalysis.primary_goal, // ex: 'hypertrophy'
+        is_active: true,
+        generated_by: 'ai_coach',
       };
 
-      // 7. Salva plano no banco
-      const { data: savedPlan, error: saveError } = await supabase
-        .from('user_training_plans')
-        .insert({
-          user_id: user.id,
-          plan_data: generatedPlan,
-          plan_type: userAnalysis.primary_goal,
-          experience_level: userAnalysis.experience_level,
-          is_active: true,
-          generated_by: 'ai_coach',
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      // 2. Plano Nutricional (mock)
+      const nutritionalPlanData = generateMockNutritionalPlan(profile);
+      const nutritionalPlan = {
+        user_id: user.id,
+        plan_data: nutritionalPlanData,
+        plan_type: 'nutritional',
+        is_active: true,
+        generated_by: 'ai_coach',
+      };
 
-      if (saveError) throw saveError;
+      // 3. Plano Emocional (mock)
+      const emotionalPlanData = generateMockEmotionalPlan(profile);
+      const emotionalPlan = {
+        user_id: user.id,
+        plan_data: emotionalPlanData,
+        plan_type: 'emotional',
+        is_active: true,
+        generated_by: 'ai_coach',
+      };
 
-      // 8. Desativa planos anteriores
+      // 4. Plano Espiritual (mock)
+      const spiritualPlanData = generateMockSpiritualPlan(profile);
+      const spiritualPlan = {
+        user_id: user.id,
+        plan_data: spiritualPlanData,
+        plan_type: 'spiritual',
+        is_active: true,
+        generated_by: 'ai_coach',
+      };
+
+      // Desativa todos os planos antigos
       await supabase
         .from('user_training_plans')
         .update({ is_active: false })
-        .eq('user_id', user.id)
-        .neq('id', savedPlan.id);
+        .eq('user_id', user.id);
 
-      setCurrentPlan(savedPlan);
-      toast.success('🎉 Plano personalizado gerado com sucesso!');
+      // Salva os 4 novos planos no banco
+      const { data: savedPlans, error: saveError } = await supabase
+        .from('user_training_plans')
+        .insert([physicalPlan, nutritionalPlan, emotionalPlan, spiritualPlan])
+        .select();
+
+      if (saveError) throw saveError;
+
+      // Atualiza o estado local
+      await loadCurrentPlans();
       
-      return { success: true, plan: savedPlan };
+      toast.dismiss();
+      toast.success('🎉 Seus 4 planos de transformação foram gerados com sucesso!');
+      
+      return { success: true, plans: savedPlans };
 
     } catch (error) {
-      console.error('Error generating personalized plan:', error);
-      toast.error(`Erro ao gerar plano: ${error.message}`);
+      console.error('Error generating personalized plans:', error);
+      toast.dismiss();
+      toast.error(`Erro ao gerar planos: ${error.message}`);
       return { success: false, error };
     } finally {
       setGeneratingPlan(false);
     }
-  }, [user?.id, analyzeUserProfile]);
-
-  // Função auxiliar para gerar exercícios por dia
-  const generateExercisesForDay = (userAnalysis, week, day) => {
-    const baseExercises = {
-      upper: [
-        { name: 'Flexão de braço', sets: 3, reps: '8-12', rest_seconds: 60 },
-        { name: 'Remada com elástico', sets: 3, reps: '10-15', rest_seconds: 60 },
-        { name: 'Desenvolvimento de ombros', sets: 3, reps: '8-12', rest_seconds: 75 }
-      ],
-      lower: [
-        { name: 'Agachamento livre', sets: 4, reps: '10-15', rest_seconds: 90 },
-        { name: 'Avanço alternado', sets: 3, reps: '8 cada perna', rest_seconds: 60 },
-        { name: 'Ponte glútea', sets: 3, reps: '12-18', rest_seconds: 45 }
-      ],
-      full: [
-        { name: 'Burpee modificado', sets: 3, reps: '5-8', rest_seconds: 120 },
-        { name: 'Mountain climber', sets: 3, reps: '20 total', rest_seconds: 45 },
-        { name: 'Prancha', sets: 3, reps: '30-60s', rest_seconds: 60 }
-      ]
-    };
-
-    const dayType = ['upper', 'lower', 'full'][day % 3];
-    const exercises = baseExercises[dayType] || baseExercises.full;
-
-    return exercises.map(ex => ({
-      ...ex,
-      intensity: userAnalysis.experience_level === 'beginner' ? 'RPE 6-7' : 'RPE 7-8',
-      observation: `Semana ${week}: ${userAnalysis.experience_level === 'beginner' ? 'Foque na técnica' : 'Aumente carga/complexidade'}`
-    }));
-  };
+  }, [user?.id, analyzeUserProfile, loadCurrentPlans]);
 
   // Effects
   useEffect(() => {
     if (user?.id) {
-      loadCurrentPlan();
-      loadPlanHistory();
+      loadCurrentPlans();
+      // loadPlanHistory(); // Manter ou adaptar conforme necessidade
+    } else {
+      // Limpa os planos se o usuário deslogar
+      setCurrentPlans({});
+      setPlanHistory([]);
+      setLoadingPlans(false);
     }
-  }, [user?.id, loadCurrentPlan, loadPlanHistory]);
+  }, [user?.id, loadCurrentPlans]);
 
   const value = useMemo(() => ({
-    currentPlan,
+    currentPlans,
     planHistory,
-    loadingPlan,
+    loadingPlans,
     generatingPlan,
-    generatePersonalizedPlan,
-    loadCurrentPlan,
+    generatePersonalizedPlan, // A função principal agora gera os 4 planos
+    loadCurrentPlans,
     loadPlanHistory
   }), [
-    currentPlan,
+    currentPlans,
     planHistory, 
-    loadingPlan,
+    loadingPlans,
     generatingPlan,
     generatePersonalizedPlan,
-    loadCurrentPlan,
+    loadCurrentPlans,
     loadPlanHistory
   ]);
 

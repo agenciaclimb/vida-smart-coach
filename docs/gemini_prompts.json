@@ -1,4 +1,21 @@
 ﻿{
+<<<<<<< HEAD
+  "startup": "🚀 INÍCIO DA SESSÃO (obrigatório)\n1) Workspace alvo: C:\\\\Users\\\\JE\\\\vida-smart-coach. Valide com: `git rev-parse --show-toplevel` e `git remote -v`. Se diferente, ABORTE e reporte.\n2) Leia COMPLETAMENTE o documento-mestre em `docs/documento_mestre_vida_smart_coach_final.md`.\n   - Capture: prioridades (P0→P1→P2), tarefas em aberto, decisões pendentes do Jeferson.\n   - Registre no DOC uma entrada \"Sessão iniciada (data/hora)\" com: branch atual, remoto, Node/Pnpm, e um resumo do foco da sessão.\n3) MODO: AUTOPILOT.\n   - Sempre começar por P0; depois P1; depois P2.\n   - Toda ação deve seguir as práticas definidas em Guardrails e Runbook.\n4) Objetivo supremo: concluir o sistema com qualidade de produção, testes de funcionamento e melhoria contínua; visão: tornar-se o maior, melhor e mais usado do nicho.\n5) Comunicação: português, direto ao ponto, com checklists e comandos reproduzíveis.",
+
+  "guardrails": [
+    "NUNCA modificar, criar, mover ou commitar arquivos `.env*` nem expor segredos.",
+    "NUNCA editar migrações antigas. Se precisar ajustar DB, criar NOVA migração `fix_*` idempotente.",
+    "Sem gambiarras ou soluções temporárias. Priorize qualidade, clareza e testabilidade.",
+    "Commits pequenos, padrão Conventional Commits; abrir PR com escopo, riscos e plano de teste.",
+    "Não publicar em produção sem autorização explícita do Jeferson.",
+    "Quando houver trade-off relevante (arquitetura/performance/UX), registrar opções e pedir decisão ao Jeferson no DOC antes de avançar.",
+    "Registrar TUDO no documento-mestre: diagnóstico, plano, execução, validações e efeito colateral.",
+    "Respeitar a hierarquia de prioridades do documento-mestre; não inventar escopo fora do planejado sem alinhar."
+  ],
+
+  "runbook": "📘 FLUXO PADRÃO POR TAREFA\nA) Diagnóstico\n   1. Descreva o problema (onde/como reproduzir, logs, arquivos afetados).\n   2. Hipóteses e causa-raiz provável.\nB) Plano de Reparo (checklist)\n   1. Passos numerados e atômicos.\n   2. Critérios de aceite (\"considero pronto quando...\").\nC) Execução\n   1. Implementar passo a passo; marcar [x] a cada item concluído.\n   2. NUNCA tocar `.env*` nem migrações antigas.\n   3. Para DB: somente novas migrações `fix_*` idempotentes.\nD) Validação\n   1. `pnpm exec tsc --noEmit` deve passar.\n   2. `pnpm exec eslint src --ext .ts,.tsx` deve estar limpo (ou avisos justificados).\n   3. `pnpm run build` deve concluir com sucesso.\n   4. (Quando aplicável) `supabase db lint` e testes das Edge Functions.\nE) Registro no DOC\n   1. Adicionar seção \"Rodada <data/hora> — <título>\" com: arquivos tocados, comandos e saídas resumidas.\n   2. Atualizar \"Plano Atual\" com progresso ([x]/[ ]).\n   3. Se surgir bloqueio, registrar \"Risco/Bloqueio\" e opções de encaminhamento.\nF) Entrega\n   1. Commit atômico: ex. `refactor(ui): jsx→tsx (lote X)` ou `fix(db): adjust trigger idempotent (fix_2025...)`.\n   2. Abrir PR para `main` com: resumo, impacto, validações, riscos, próximos passos.\nG) Escalonamento\n   - Encontrou gargalo de arquitetura/performance/UX? Registrar no DOC uma nota \"Gargalo\" com 2–3 opções e REQUISITAR opinião do Jeferson antes de prosseguir."
+}
+=======
   "about": "Prompts fixos para o Gemini no projeto Vida Smart Coach. Mantenha este arquivo versionado.",
   "workspace": "C:\\Users\\JE\\vida-smart-coach",
   "remote": "https://github.com/agenciaclimb/vida-smart-coach",
@@ -29,3 +46,4 @@
   }
 }
 
+>>>>>>> origin/main

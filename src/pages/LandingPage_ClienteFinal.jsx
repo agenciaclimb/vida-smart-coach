@@ -24,9 +24,12 @@ export default function LandingPageClienteFinal() {
 
             <div className="flex items-center space-x-4">
               <Link to="/login" className="text-gray-700 hover:text-blue-600">Entrar</Link>
-              <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <Link
+                to="/login?tab=register"
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Teste 7 Dias Grátis
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -57,12 +60,18 @@ export default function LandingPageClienteFinal() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
+            <Link
+              to="/login?tab=register"
+              className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
               🚀 Começar Teste Gratuito de 7 Dias
-            </button>
-            <button className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors">
+            </Link>
+            <Link
+              to="/login?tab=register"
+              className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
               📱 Ver Como Funciona
-            </button>
+            </Link>
           </div>
 
           <p className="text-sm text-gray-500 mt-4">
@@ -207,13 +216,13 @@ export default function LandingPageClienteFinal() {
             Escolha Seu Plano de Transformação
           </h2>
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid gap-8 max-w-6xl mx-auto md:grid-cols-3">
             <div className="border-2 border-gray-200 rounded-xl p-8">
-              <h3 className="text-2xl font-bold mb-4">Plano Essencial</h3>
+              <h3 className="text-2xl font-bold mb-4">Plano Básico</h3>
               <div className="text-4xl font-bold text-blue-600 mb-6">
-                R$ 47,90<span className="text-lg text-gray-500">/mês</span>
+                R$ 19,90<span className="text-lg text-gray-500">/mês</span>
               </div>
-              
+
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
@@ -221,67 +230,85 @@ export default function LandingPageClienteFinal() {
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Acompanhamento de 2 áreas
+                  Acompanhamento físico e alimentar
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Painel de progresso
+                  Gamificação básica e pontos
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Sistema de pontos
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-500 mr-3">✓</span>
-                  Comunidade de apoio
+                  Suporte humano via WhatsApp
                 </li>
               </ul>
-              
-              <button className="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors">
+
+              <Link to="/login?tab=register" className="w-full inline-flex justify-center bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors">
                 Começar Teste Grátis
-              </button>
+              </Link>
             </div>
 
             <div className="border-2 border-blue-500 rounded-xl p-8 relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-1 rounded-full text-sm">
                 Mais Popular
               </div>
-              
-              <h3 className="text-2xl font-bold mb-4">Plano Transformação</h3>
+
+              <h3 className="text-2xl font-bold mb-4">Plano Premium</h3>
               <div className="text-4xl font-bold text-blue-600 mb-6">
-                R$ 97,90<span className="text-lg text-gray-500">/mês</span>
+                R$ 29,90<span className="text-lg text-gray-500">/mês</span>
               </div>
-              
+
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  IA Coach avançada 24/7
+                  Tudo do Básico + 4 áreas completas
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Transformação nas 4 áreas
+                  Gamificação avançada e desafios semanais
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Análise de fotos e progresso
+                  Comunidade exclusiva com eventos
                 </li>
                 <li className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
-                  Pontos em dobro
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-500 mr-3">✓</span>
-                  Acesso a especialistas
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-500 mr-3">✓</span>
-                  Relatórios detalhados
+                  Relatórios semanais e plano integrado
                 </li>
               </ul>
-              
-              <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+
+              <Link to="/login?tab=register" className="w-full inline-flex justify-center bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
                 Começar Teste Grátis
-              </button>
+              </Link>
+            </div>
+
+            <div className="border-2 border-indigo-500 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-4">Plano Avançado</h3>
+              <div className="text-4xl font-bold text-blue-600 mb-6">
+                R$ 49,90<span className="text-lg text-gray-500">/mês</span>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-3">✓</span>
+                  Tudo do Premium + relatórios especiais
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-3">✓</span>
+                  Conteúdos exclusivos e experiências VIP
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-3">✓</span>
+                  Consultoria individual com especialistas
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-3">✓</span>
+                  Suporte prioritário multiplataforma
+                </li>
+              </ul>
+
+              <Link to="/login?tab=register" className="w-full inline-flex justify-center bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                Começar Teste Grátis
+              </Link>
             </div>
           </div>
 
@@ -372,9 +399,12 @@ export default function LandingPageClienteFinal() {
             Junte-se a milhares de pessoas que já estão transformando suas vidas com nosso Coach de IA 24/7.
           </p>
 
-          <button className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors mb-4">
+          <Link
+            to="/login?tab=register"
+            className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors mb-4 inline-block"
+          >
             🚀 Começar Teste Gratuito de 7 Dias
-          </button>
+          </Link>
 
           <p className="text-sm opacity-90">
             Sem cartão de crédito • Cancele quando quiser • Suporte 24/7
@@ -428,4 +458,3 @@ export default function LandingPageClienteFinal() {
     </div>
   );
 }
-

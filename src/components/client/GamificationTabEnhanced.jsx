@@ -125,6 +125,18 @@ const GamificationTabEnhanced = () => {
         );
     }
 
+    if (!userStats) {
+        return (
+            <TabsContent value="gamification" className="mt-6">
+                <div className="flex flex-col justify-center items-center h-64">
+                    <Award className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-semibold">Opa! Algo deu errado.</h3>
+                    <p className="text-sm text-gray-500">Não foi possível carregar seus dados de gamificação. Tente recarregar a página.</p>
+                </div>
+            </TabsContent>
+        );
+    }
+
     const levelInfo = getLevelInfo(userStats?.level || 1);
 
     return (

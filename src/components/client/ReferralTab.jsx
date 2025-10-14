@@ -16,7 +16,7 @@ const ReferralTab = () => {
   const { referredClients, loading } = useData();
   const baseUrl = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
   const referralCode = user?.profile?.ref_code || user?.profile?.affiliate_code || user?.id || '';
-  const referralLink = referralCode ? `${baseUrl}/register?ref=${encodeURIComponent(referralCode)}` : '';
+  const referralLink = referralCode ? `${baseUrl}/login?tab=register&ref=${encodeURIComponent(referralCode)}` : '';
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
