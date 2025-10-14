@@ -60,8 +60,8 @@ const IntegrationsTab = () => {
     };
 
     const integrations = [
-        { name: 'Google Fit', service: 'google_fit', description: 'Sincronize seus dados de saúde e atividades físicas.' },
-        { name: 'Google Calendar', service: 'google_calendar', description: 'Adicione seus treinos e compromissos à sua agenda.' },
+        { name: 'Google Fit', service: 'google_fit', description: 'Sincronize seus dados de saúde e atividades físicas.', disabled: true },
+        { name: 'Google Calendar', service: 'google_calendar', description: 'Adicione seus treinos e compromissos à sua agenda.', disabled: true },
         { name: 'WhatsApp', service: 'whatsapp', description: 'Receba lembretes e mensagens diretamente no seu WhatsApp.', disabled: true },
         { name: 'Spotify', service: 'spotify', description: 'Sincronize suas playlists para treinar com a trilha sonora perfeita.', disabled: true },
     ];
