@@ -162,7 +162,7 @@ const CheckinSystem = () => {
       <CardHeader>
         <CardTitle className="flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-          Sistema de Check-ins Diários
+          Check-in Reflexivo (IA Coach)
           <Badge variant="outline" className="ml-2">
             IA Coach
           </Badge>

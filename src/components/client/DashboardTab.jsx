@@ -106,8 +106,8 @@ const DailyCheckInCard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Check-in Diário Rápido</CardTitle>
-        <CardDescription>Registre seu progresso em menos de 30 segundos.</CardDescription>
+        <CardTitle>Check-in Rápido (Métricas)</CardTitle>
+        <CardDescription>Peso, humor e sono — registre em 30 segundos.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
