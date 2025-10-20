@@ -1,11 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Home, Settings, Users, BarChart3, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Home, Settings, Users, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function EmergencyDashboard() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">

@@ -24,7 +24,12 @@ SELECT cron.schedule(
         url := 'https://zzugbgoylwbaojdnunuz.supabase.co/functions/v1/trial-reminder',
         headers := jsonb_build_object(
             'Content-Type', 'application/json',
-            'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'SUPABASE_FUNCTION_SECRET' LIMIT 1)
+            'Authorization', 'Bearer ' || (
+                SELECT decrypted_secret
+                FROM vault.decrypted_secrets
+                WHERE name = 'TRIAL_REMINDER_SECRET'
+                LIMIT 1
+            )
         ),
         body := '{}'::jsonb
     );

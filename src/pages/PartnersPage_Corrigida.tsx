@@ -656,17 +656,26 @@ export default function PartnersPageCorrigida() {
             <div>
               <h4 className="font-semibold mb-4">Suporte</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Central de Ajuda</a></li>
-                <li><a href="#" className="hover:text-white">Contato</a></li>
-                <li><a href="#" className="hover:text-white">WhatsApp</a></li>
+                <li><a href="/ajuda" className="hover:text-white">Central de Ajuda</a></li>
+                <li><a href="/contato" className="hover:text-white">Contato</a></li>
+                <li>
+                  <a
+                    href="https://wa.me/5511999999999"
+                    className="hover:text-white"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp
+                  </a>
+                </li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Termos de Uso</a></li>
-                <li><a href="#" className="hover:text-white">Política de Privacidade</a></li>
+                <li><a href="/termos" className="hover:text-white">Termos de Uso</a></li>
+                <li><a href="/privacidade" className="hover:text-white">Política de Privacidade</a></li>
               </ul>
             </div>
           </div>

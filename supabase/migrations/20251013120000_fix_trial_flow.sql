@@ -18,7 +18,8 @@ BEGIN
     phone,
     name,
     role,
-    referral_token,
+    activity_level,
+    referral_code,
     created_at,
     updated_at,
     -- Colunas de Billing
@@ -32,6 +33,7 @@ BEGIN
     NEW.phone,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuário'),
     COALESCE(NEW.raw_user_meta_data->>'role', 'client'),
+    COALESCE(NEW.raw_user_meta_data->>'activity_level', 'moderate'),
     gen_random_uuid()::text,
     NOW(),
     NOW(),
@@ -44,6 +46,8 @@ BEGIN
     email = EXCLUDED.email,
     phone = EXCLUDED.phone,
     name = EXCLUDED.name,
+    activity_level = COALESCE(EXCLUDED.activity_level, user_profiles.activity_level),
+    referral_code = COALESCE(EXCLUDED.referral_code, user_profiles.referral_code),
     updated_at = NOW();
 
   -- FIX: Gera as missões diárias iniciais para o novo usuário.

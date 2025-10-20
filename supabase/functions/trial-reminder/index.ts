@@ -29,7 +29,7 @@ async function handleRequest(request: Request): Promise<Response> {
   try {
     // Adicionar verificação de bearer token para segurança
     const authHeader = request.headers.get('Authorization');
-    if (authHeader !== `Bearer ${process.env.SUPABASE_FUNCTION_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.TRIAL_REMINDER_SECRET}`) {
       return new Response('Unauthorized', { status: 401 });
     }
 

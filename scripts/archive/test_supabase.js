@@ -42,7 +42,7 @@ async function testConnection() {
       console.log('📝 Creating test user...');
       
       const testEmail = 'test@vidasmart.com';
-      const testPassword = 'TestPassword123!';
+      const testPassword = '<TEST_PASSWORD>';
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: testEmail,

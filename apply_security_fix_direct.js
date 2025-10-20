@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 // Configuração do Supabase
 const supabaseUrl = "https://zzugbgoylwbaojdnunuz.supabase.co";
-const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNjQ4MTkxMCwiZXhwIjoyMDQyMDU3OTEwfQ.MasQ-Ca8JcT0rOCTGxCbX_ap6v6KoNFcojWLU04jYPU";
+const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE";
 
 /**
  * Executa SQL diretamente via API REST

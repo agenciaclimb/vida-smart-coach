@@ -133,24 +133,24 @@ const generateMockSpiritualPlan = (profile) => ({
 
 
 export const PlansProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const [currentPlans, setCurrentPlans] = useState({});
   const [planHistory, setPlanHistory] = useState([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [generatingPlan, setGeneratingPlan] = useState(false);
 
   const loadCurrentPlans = useCallback(async () => {
-    if (!user?.id) return;
+    if (!authUser?.id) return;
 
     try {
       setLoadingPlans(true);
       
-      console.log('🔍 [DEBUG] Carregando planos para usuário:', user.id);
+      console.log('🔍 [DEBUG] Carregando planos para usuário:', authUser.id);
       
       const { data, error } = await supabase
         .from('user_training_plans') // A tabela ainda se chama user_training_plans
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .eq('is_active', true);
       
       if (error && error.code !== 'PGRST116') {
@@ -231,17 +231,17 @@ export const PlansProvider = ({ children }) => {
     } finally {
       setLoadingPlans(false);
     }
-  }, [user?.id]);
+  }, [authUser?.id]);
 
   // Carrega histórico de planos
   const loadPlanHistory = useCallback(async () => {
-    if (!user?.id) return;
+    if (!authUser?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('user_training_plans')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .order('created_at', { ascending: false })
         .limit(10);
       
@@ -251,7 +251,7 @@ export const PlansProvider = ({ children }) => {
     } catch (error) {
       console.error('Error loading plan history:', error);
     }
-  }, [user?.id]);
+  }, [authUser?.id]);
 
   // Análise do perfil do usuário para personalização
   const analyzeUserProfile = useCallback((profile) => {
@@ -315,7 +315,7 @@ export const PlansProvider = ({ children }) => {
 
   // Geração de plano personalizado via IA
   const generatePersonalizedPlan = useCallback(async () => {
-    if (!user?.id) {
+    if (!authUser?.id) {
       toast.error('Usuário não autenticado');
       return { success: false };
     }
@@ -327,7 +327,7 @@ export const PlansProvider = ({ children }) => {
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .single();
 
       if (profileError) throw profileError;
@@ -344,7 +344,7 @@ export const PlansProvider = ({ children }) => {
         weeks: [] // A lógica completa de geração de exercícios pode ser mantida aqui
       };
       const physicalPlan = {
-        user_id: user.id,
+        user_id: authUser.id,
         plan_data: physicalPlanData,
         plan_type: userAnalysis.primary_goal, // ex: 'hypertrophy'
         is_active: true,
@@ -354,7 +354,7 @@ export const PlansProvider = ({ children }) => {
       // 2. Plano Nutricional (mock)
       const nutritionalPlanData = generateMockNutritionalPlan(profile);
       const nutritionalPlan = {
-        user_id: user.id,
+        user_id: authUser.id,
         plan_data: nutritionalPlanData,
         plan_type: 'nutritional',
         is_active: true,
@@ -364,7 +364,7 @@ export const PlansProvider = ({ children }) => {
       // 3. Plano Emocional (mock)
       const emotionalPlanData = generateMockEmotionalPlan(profile);
       const emotionalPlan = {
-        user_id: user.id,
+        user_id: authUser.id,
         plan_data: emotionalPlanData,
         plan_type: 'emotional',
         is_active: true,
@@ -374,7 +374,7 @@ export const PlansProvider = ({ children }) => {
       // 4. Plano Espiritual (mock)
       const spiritualPlanData = generateMockSpiritualPlan(profile);
       const spiritualPlan = {
-        user_id: user.id,
+        user_id: authUser.id,
         plan_data: spiritualPlanData,
         plan_type: 'spiritual',
         is_active: true,
@@ -385,7 +385,7 @@ export const PlansProvider = ({ children }) => {
       await supabase
         .from('user_training_plans')
         .update({ is_active: false })
-        .eq('user_id', user.id);
+        .eq('user_id', authUser.id);
 
       // Salva os 4 novos planos no banco
       const { data: savedPlans, error: saveError } = await supabase
@@ -411,11 +411,11 @@ export const PlansProvider = ({ children }) => {
     } finally {
       setGeneratingPlan(false);
     }
-  }, [user?.id, analyzeUserProfile, loadCurrentPlans]);
+  }, [authUser?.id, analyzeUserProfile, loadCurrentPlans]);
 
   // Effects
   useEffect(() => {
-    if (user?.id) {
+    if (authUser?.id) {
       loadCurrentPlans();
       // loadPlanHistory(); // Manter ou adaptar conforme necessidade
     } else {
@@ -424,7 +424,7 @@ export const PlansProvider = ({ children }) => {
       setPlanHistory([]);
       setLoadingPlans(false);
     }
-  }, [user?.id, loadCurrentPlans]);
+  }, [authUser?.id, loadCurrentPlans]);
 
   const value = useMemo(() => ({
     currentPlans,

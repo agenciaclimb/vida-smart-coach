@@ -1,0 +1,11 @@
+console.log('=== DEPLOY IA COACH v8 - Prompts Otimizados ===');
+console.log('📁 Copie o conteúdo de: supabase/functions/ia-coach-chat/index.ts');
+console.log('📋 Cole no Supabase Dashboard > Edge Functions > ia-coach-chat');
+console.log('⚡ Versão: v8 - Prompts concisos, uma pergunta por vez');
+console.log('🔧 Otimizações:');
+console.log('  - SDR: Prompts diretos e simples');
+console.log('  - Especialista: Uma área por vez');
+console.log('  - Vendedor: Foco no teste grátis');
+console.log('  - Parceiro: Check-ins mais objetivos');
+console.log('');
+console.log('🚀 Deploy evolution-webhook também para adicionar histórico WhatsApp');

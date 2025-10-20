@@ -14,7 +14,6 @@ interface RouteGuardProps {
 }
 
 const MAX_REDIRECTS = 20;
-const REDIRECT_WINDOW = 30000; // 30s
 
 export const RouteGuardEnhanced: React.FC<RouteGuardProps> = ({
   children,

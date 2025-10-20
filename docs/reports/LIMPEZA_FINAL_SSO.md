@@ -205,7 +205,7 @@ if (conflicts.length > 0) {
 }
 
 // Verificar Supabase
-if (window.supabase || localStorage.getItem('sb-zzugbgoylwbaojdnunuz-auth-token')) {
+if (window.supabase || localStorage.getItem('<SUPABASE_AUTH_TOKEN>')) {
   console.log('✅ Supabase detectado corretamente');
 } else {
   console.warn('⚠️ Supabase não detectado');

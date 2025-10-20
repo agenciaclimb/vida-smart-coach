@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS daily_activities (
 
 ALTER TABLE daily_activities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own activities" ON daily_activities;
+DROP POLICY IF EXISTS "Users can insert own activities" ON daily_activities;
+DROP POLICY IF EXISTS "Users can update own activities" ON daily_activities;
 CREATE POLICY "Users can view own activities" ON daily_activities FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own activities" ON daily_activities FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own activities" ON daily_activities FOR UPDATE USING (auth.uid() = user_id);
@@ -75,6 +78,7 @@ CREATE TABLE IF NOT EXISTS user_achievements (
 
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own achievements" ON user_achievements;
 CREATE POLICY "Users can view own achievements" ON user_achievements FOR SELECT USING (auth.uid() = user_id);
 
 -- ==========================================
@@ -99,6 +103,7 @@ CREATE TABLE IF NOT EXISTS leaderboards (
 
 ALTER TABLE leaderboards ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access on leaderboards" ON leaderboards;
 CREATE POLICY "Allow public read access on leaderboards" ON leaderboards FOR SELECT USING (true);
 
 -- ==========================================
@@ -125,6 +130,8 @@ CREATE TABLE IF NOT EXISTS daily_missions (
 
 ALTER TABLE daily_missions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own missions" ON daily_missions;
+DROP POLICY IF EXISTS "Users can update own missions" ON daily_missions;
 CREATE POLICY "Users can view own missions" ON daily_missions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update own missions" ON daily_missions FOR UPDATE USING (auth.uid() = user_id);
 
@@ -152,6 +159,7 @@ CREATE TABLE IF NOT EXISTS gamification_events (
 
 ALTER TABLE gamification_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access on events" ON gamification_events;
 CREATE POLICY "Allow public read access on events" ON gamification_events FOR SELECT USING (true);
 
 -- ==========================================
@@ -174,6 +182,7 @@ CREATE TABLE IF NOT EXISTS user_event_participation (
 
 ALTER TABLE user_event_participation ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own participation" ON user_event_participation;
 CREATE POLICY "Users can view own participation" ON user_event_participation FOR SELECT USING (auth.uid() = user_id);
 
 -- ==========================================
@@ -230,6 +239,7 @@ CREATE TABLE IF NOT EXISTS referrals (
 
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own referrals" ON referrals;
 CREATE POLICY "Users can view own referrals" ON referrals FOR SELECT USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
 
 -- ==========================================
@@ -401,6 +411,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_points_on_activity_insert ON daily_activities;
 CREATE TRIGGER update_points_on_activity_insert 
     AFTER INSERT ON daily_activities 
     FOR EACH ROW 

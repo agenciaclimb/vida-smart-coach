@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
-import { 
-  User, 
-  LogOut, 
-  Home, 
-  Settings, 
+import {
+  User,
+  LogOut,
+  Home,
   Activity,
   RefreshCw,
   CheckCircle,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 
 export default function SimpleDashboard() {

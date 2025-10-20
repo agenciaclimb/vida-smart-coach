@@ -1,0 +1,1 @@
+const fs=require("fs");const {SourceMapConsumer}=require("source-map");const map=JSON.parse(fs.readFileSync("dist/assets/index-vBs_rXgo.js.map","utf8"));SourceMapConsumer.with(map,null,consumer=>{consumer.eachMapping(m=>{if(m.name==="user"){console.log(m.generatedLine,m.generatedColumn,m.source,m.originalLine,m.originalColumn);}});});

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/core/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { normalizeActivityKey } from '@/utils/activityKeys';
 
 const GamificationContext = createContext(undefined);
 
@@ -243,11 +244,46 @@ export const GamificationProvider = ({ children }) => {
         if (!user?.id) return;
 
         try {
+            const today = (activityData.date || new Date().toISOString().split('T')[0]);
+            const activityKey = activityData.key ? normalizeActivityKey(activityData.key) : null;
+
+            // Daily limiter: prevent duplicate quick actions by canonical key first, fallback to legacy name check
+            if (activityKey) {
+                const { data: existingByKey } = await supabase
+                    .from('daily_activities')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('activity_date', today)
+                    .eq('activity_key', activityKey)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (existingByKey && (Array.isArray(existingByKey) ? existingByKey.length > 0 : existingByKey.id)) {
+                    toast.error('Você já registrou esta atividade hoje. Tente novamente amanhã.');
+                    return null;
+                }
+            } else if (activityData?.name) {
+                const { data: existingByName } = await supabase
+                    .from('daily_activities')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('activity_date', today)
+                    .eq('activity_name', activityData.name)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (existingByName && (Array.isArray(existingByName) ? existingByName.length > 0 : existingByName.id)) {
+                    toast.error('Você já registrou esta atividade hoje. Tente novamente amanhã.');
+                    return null;
+                }
+            }
+
             const activity = {
                 user_id: user.id,
-                activity_date: activityData.date || new Date().toISOString().split('T')[0],
+                activity_date: today,
                 activity_type: activityData.type,
                 activity_name: activityData.name,
+                activity_key: activityKey,
                 points_earned: activityData.points,
                 is_bonus: activityData.isBonus || false,
                 bonus_type: activityData.bonusType || null,
@@ -302,6 +338,7 @@ export const GamificationProvider = ({ children }) => {
             await addDailyActivity({
                 type: 'mission',
                 name: `Missão: ${data.title}`,
+                key: `mission-${missionId}`,
                 points: data.points_reward,
                 description: `Missão ${data.mission_type} completada`,
                 metadata: { missionId, originalMission: data }
@@ -397,6 +434,7 @@ export const GamificationProvider = ({ children }) => {
             await addDailyActivity({
                 type: 'referral',
                 name: 'Indicação realizada',
+                key: `referral-created-${data.id}`,
                 points: 200,
                 description: 'Amigo se cadastrou via sua indicação',
                 metadata: { referralId: data.id, milestone: 'registration' }
@@ -431,6 +469,7 @@ export const GamificationProvider = ({ children }) => {
             await addDailyActivity({
                 type: 'referral',
                 name: `Indicação: ${milestone}`,
+                key: `referral-${referralId}-${normalizeActivityKey(milestone)}`,
                 points: points,
                 description: `Amigo alcançou marco: ${milestone}`,
                 metadata: { referralId, milestone, status: newStatus }

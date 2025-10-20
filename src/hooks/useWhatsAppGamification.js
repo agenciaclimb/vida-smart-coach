@@ -3,6 +3,7 @@ import { supabase } from '@/core/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGamification } from '@/contexts/data/GamificationContext';
 import toast from 'react-hot-toast';
+import { normalizeActivityKey } from '@/utils/activityKeys';
 
 /**
  * Hook para integração do sistema de gamificação com WhatsApp
@@ -50,10 +51,11 @@ export const useWhatsAppGamification = () => {
         const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
         try {
+            const normalizedKey = activityData.key ? normalizeActivityKey(activityData.key) : null;
             // 1. Verificar pontos totais do dia por categoria
             const { data: todayActivities, error: todayError } = await supabase
                 .from('daily_activities')
-                .select('points_earned, activity_type, activity_name, created_at')
+                .select('points_earned, activity_type, activity_name, activity_key, created_at')
                 .eq('user_id', user.id)
                 .eq('activity_date', today);
 
@@ -99,9 +101,12 @@ export const useWhatsAppGamification = () => {
             }
 
             // 4. Verificar repetição da mesma atividade
-            const sameActivityToday = todayActivities?.filter(a => 
-                a.activity_name === activityData.name
-            ) || [];
+            const sameActivityToday = todayActivities?.filter(a => {
+                if (normalizedKey) {
+                    return a.activity_key === normalizedKey;
+                }
+                return a.activity_name === activityData.name;
+            }) || [];
 
             if (sameActivityToday.length >= antifraudChecks.suspiciousPatterns.sameActivityRepeated) {
                 return {
@@ -274,6 +279,7 @@ export const useWhatsAppGamification = () => {
                     return {
                         type: category,
                         name: activityConfig.name,
+                        key: normalizeActivityKey(`whatsapp-${category}-${activityKey}`),
                         points: activityConfig.points,
                         description: `${activityConfig.name} identificada automaticamente`,
                         date: timestamp.toISOString().split('T')[0],
@@ -293,6 +299,7 @@ export const useWhatsAppGamification = () => {
                 return {
                     type: 'physical',
                     name: 'Contagem de passos',
+                    key: normalizeActivityKey('whatsapp-contagem-passos'),
                     points: Math.min(25, Math.floor(value / 1000) * 2),
                     description: `${value} passos registrados`,
                     date: timestamp.toISOString().split('T')[0],

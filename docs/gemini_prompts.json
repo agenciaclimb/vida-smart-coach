@@ -1,49 +1,20 @@
-﻿{
-<<<<<<< HEAD
-  "startup": "🚀 INÍCIO DA SESSÃO (obrigatório)\n1) Workspace alvo: C:\\\\Users\\\\JE\\\\vida-smart-coach. Valide com: `git rev-parse --show-toplevel` e `git remote -v`. Se diferente, ABORTE e reporte.\n2) Leia COMPLETAMENTE o documento-mestre em `docs/documento_mestre_vida_smart_coach_final.md`.\n   - Capture: prioridades (P0→P1→P2), tarefas em aberto, decisões pendentes do Jeferson.\n   - Registre no DOC uma entrada \"Sessão iniciada (data/hora)\" com: branch atual, remoto, Node/Pnpm, e um resumo do foco da sessão.\n3) MODO: AUTOPILOT.\n   - Sempre começar por P0; depois P1; depois P2.\n   - Toda ação deve seguir as práticas definidas em Guardrails e Runbook.\n4) Objetivo supremo: concluir o sistema com qualidade de produção, testes de funcionamento e melhoria contínua; visão: tornar-se o maior, melhor e mais usado do nicho.\n5) Comunicação: português, direto ao ponto, com checklists e comandos reproduzíveis.",
-
-  "guardrails": [
-    "NUNCA modificar, criar, mover ou commitar arquivos `.env*` nem expor segredos.",
-    "NUNCA editar migrações antigas. Se precisar ajustar DB, criar NOVA migração `fix_*` idempotente.",
-    "Sem gambiarras ou soluções temporárias. Priorize qualidade, clareza e testabilidade.",
-    "Commits pequenos, padrão Conventional Commits; abrir PR com escopo, riscos e plano de teste.",
-    "Não publicar em produção sem autorização explícita do Jeferson.",
-    "Quando houver trade-off relevante (arquitetura/performance/UX), registrar opções e pedir decisão ao Jeferson no DOC antes de avançar.",
-    "Registrar TUDO no documento-mestre: diagnóstico, plano, execução, validações e efeito colateral.",
-    "Respeitar a hierarquia de prioridades do documento-mestre; não inventar escopo fora do planejado sem alinhar."
-  ],
-
-  "runbook": "📘 FLUXO PADRÃO POR TAREFA\nA) Diagnóstico\n   1. Descreva o problema (onde/como reproduzir, logs, arquivos afetados).\n   2. Hipóteses e causa-raiz provável.\nB) Plano de Reparo (checklist)\n   1. Passos numerados e atômicos.\n   2. Critérios de aceite (\"considero pronto quando...\").\nC) Execução\n   1. Implementar passo a passo; marcar [x] a cada item concluído.\n   2. NUNCA tocar `.env*` nem migrações antigas.\n   3. Para DB: somente novas migrações `fix_*` idempotentes.\nD) Validação\n   1. `pnpm exec tsc --noEmit` deve passar.\n   2. `pnpm exec eslint src --ext .ts,.tsx` deve estar limpo (ou avisos justificados).\n   3. `pnpm run build` deve concluir com sucesso.\n   4. (Quando aplicável) `supabase db lint` e testes das Edge Functions.\nE) Registro no DOC\n   1. Adicionar seção \"Rodada <data/hora> — <título>\" com: arquivos tocados, comandos e saídas resumidas.\n   2. Atualizar \"Plano Atual\" com progresso ([x]/[ ]).\n   3. Se surgir bloqueio, registrar \"Risco/Bloqueio\" e opções de encaminhamento.\nF) Entrega\n   1. Commit atômico: ex. `refactor(ui): jsx→tsx (lote X)` ou `fix(db): adjust trigger idempotent (fix_2025...)`.\n   2. Abrir PR para `main` com: resumo, impacto, validações, riscos, próximos passos.\nG) Escalonamento\n   - Encontrou gargalo de arquitetura/performance/UX? Registrar no DOC uma nota \"Gargalo\" com 2–3 opções e REQUISITAR opinião do Jeferson antes de prosseguir."
-}
-=======
-  "about": "Prompts fixos para o Gemini no projeto Vida Smart Coach. Mantenha este arquivo versionado.",
-  "workspace": "C:\\Users\\JE\\vida-smart-coach",
+{
+  "about": "Prompts fixos para o agente do projeto Vida Smart Coach. Mantenha este arquivo alinhado ao documento mestre.",
+  "workspace": "C:/Users/JE/vida-smart-coach",
   "remote": "https://github.com/agenciaclimb/vida-smart-coach",
   "documento_mestre": "docs/documento_mestre_vida_smart_coach_final.md",
-
   "prompts": {
-    "STARTUP": "Sempre que iniciar: 1) Verifique que o repositório raiz é C:\\\\Users\\\\JE\\\\vida-smart-coach (git rev-parse --show-toplevel). 2) Confirme o remoto origin=https://github.com/agenciaclimb/vida-smart-coach.git. 3) Nunca altere arquivos .env* e nunca edite migrações antigas; se necessário, crie novas com prefixo fix_. 4) Use PNPM (corepack prepare pnpm@9.12.0 --activate). 5) O documento-guia é docs/documento_mestre_vida_smart_coach_final.md — escreva TODO o progresso nele usando checkboxes [ ], [>], [x], [!].",
-
-    "GUARDRAILS": "Limites: trabalhar APENAS dentro de C:\\\\Users\\\\JE\\\\vida-smart-coach; não criar novos repositórios/pastas; não mover o documento-mestre; não tocar em .env*; não alterar migrações antigas; parar imediatamente e registrar [!] quando houver erro que exija intervenção; nunca executar comandos fora do workspace.",
-
-    "RUNBOOK": "Fluxo padrão: (a) Diagnosticar (comando mínimo que reproduz o erro + coletar versões); (b) Planejar (8±2 passos atômicos); (c) Executar passo a passo em branch fix/<slug>, registrando Log/Resultado no documento; (d) Abrir PR (base=main, compare=fix/<slug>) com resumo do documento; (e) Encerrar com próximos passos.",
-
-    "AUTOPILOT": "Modo autônomo. Entrada: Objetivo curto do trabalho. Proceda: 1) STARTUP e GUARDRAILS. 2) DIAGNÓSTICO: rodar o cenário mínimo (ex.: pnpm run build), capturar erro principal, node -v, pnpm -v, branch atual e git status -s. Criar seção 'Diagnóstico — <objetivo>' no documento com [>] e colar logs. 3) PLANO: gerar plano de 6–10 passos atômicos, cada passo com comandos Shell claros; anexar como 'Plano — <objetivo>' no documento. 4) EXECUÇÃO: criar/usar branch fix/<slug>; para cada passo, executar, registrar Log/Resultado e marcar [x]. Se algum passo falhar, marcar [!] e PARAR. 5) PR: git add/commit/push e abrir PR (base=main, compare=fix/<slug>) com título e descrição vindos do documento. 6) FINALIZAÇÃO: escrever 'Encerramento — <objetivo>' com próximos passos.",
-
-    "CHECK_WORKSPACE": "Execute: git rev-parse --show-toplevel && git remote -v && git branch --show-current. Se o caminho não for C:\\\\Users\\\\JE\\\\vida-smart-coach, pare com [!].",
-
-    "IMPORTS_PLANS_REWARDS_FIND": "Rode: git grep -n \"@/contexts/data/PlansRewardsContext\"; cole apenas a lista (caminho:linha:trecho).",
-
-    "IMPORTS_PLANS_REWARDS_RESTORE": "Para cada caminho listado, execute: git restore -s origin/main -- <caminho>; depois rode pnpm run build. Atualize o documento na seção 'Correção de imports quebrados (v1)': marque Passo 2 como [x] com Log/Resultado ou [!] com o erro.",
-
-    "PNPM_BUILD": "corepack prepare pnpm@9.12.0 --activate && pnpm install --force && pnpm run build",
-
-    "FIX_ESBUILD": "Checar/garantir esbuild no ambiente PNPM. Comandos: corepack prepare pnpm@9.12.0 --activate && pnpm install --force && pnpm ls esbuild --depth -1 || pnpm add -D esbuild@^0.24.2 && pnpm rebuild esbuild && pnpm run build. Registrar no documento Passo 2 com logs.",
-
-    "OPEN_PR": "git add -A && git commit -m \"<mensagem>\" && git push -u origin <branch> — Abrir PR no GitHub (base=main, compare=<branch>) usando o resumo/logs do documento.",
-
-    "STRIPE_CHECKLIST": "Homologação Stripe: 1) chave publishable e secret em ambiente (NÃO editar .env local); 2) npm script de webhook de teste (se existir); 3) fluxo de checkout: criação de sessão, retorno de sucesso, registro em banco; 4) Vercel envs; 5) Registrar verificação e prints no documento."
+    "STARTUP": "1) git rev-parse --show-toplevel deve retornar C:/Users/JE/vida-smart-coach. 2) git remote -v precisa listar origin=https://github.com/agenciaclimb/vida-smart-coach.git. 3) Leia o documento mestre por completo antes de agir.",
+    "GUARDRAILS": "Nao tocar em arquivos .env*. Nao alterar migracoes antigas; criar novas fix_* se necessario. Trabalhar apenas dentro do workspace informado. Registrar tudo no documento mestre.",
+    "RUNBOOK": "Ciclo continuo: analisar informacoes no documento mestre, registrar intencao antes de qualquer comando, executar o plano com evidencias, registrar descobertas, registrar resultado e repetir.",
+    "CICLO_ANALISE": "Ao abrir nova tarefa, leia a secao Plano de Acao e identifique a prioridade mais alta pendente (P0 antes de P1, etc.).",
+    "CICLO_INTENCAO": "Antes de rodar comandos, adicione ao documento mestre uma entrada 'INICIANDO TAREFA Px: <descricao>'. Liste passos numerados do plano.",
+    "CICLO_EXECUCAO": "Siga os passos planejados. Para cada comando rodado, verifique a saida e confirme se condiz com a expectativa. Caso encontre bloqueio, interrompa a execucao.",
+    "CICLO_REGISTRO": "Se houver diferenca entre o documento mestre e o estado real, registre imediatamente como 'DISCREPANCIA' e sinalize bloqueio.",
+    "CICLO_RESULTADO": "Ao concluir, registrar 'RESULTADO TAREFA Px' com status (CONCLUIDO, FALHOU ou BLOQUEADO) e detalhes das mudancas ou bloqueios.",
+    "DEFAULT_COMMANDS": "Usar pnpm install, pnpm run dev, pnpm run build, pnpm run typecheck, pnpm run lint conforme necessidade, sempre registrando a justificativa no documento mestre.",
+    "CHECK_WORKSPACE": "Executar: git rev-parse --show-toplevel && git remote -v && git branch --show-current. Se qualquer informacao divergir, parar e registrar bloqueio.",
+    "PNPM_SETUP": "corepack prepare pnpm@9.12.0 --activate antes de instalar dependencias ou rodar scripts pnpm.",
+    "OPEN_PR": "Para entregar: git add -A, git commit com Conventional Commits, git push e abrir PR base=main. Descrever impacto, riscos, validacoes e proximos passos usando dados do documento mestre."
   }
 }
-
->>>>>>> origin/main

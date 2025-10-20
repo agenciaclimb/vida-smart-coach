@@ -9,7 +9,7 @@ async function createAndTestUser() {
   console.log('👤 Creating and testing user functionality...\n');
   
   const testEmail = 'demo@vidasmart.com';
-  const testPassword = 'Demo123456!';
+  const testPassword = '<DEMO_PASSWORD>';
   
   try {
     console.log('📝 Attempting to sign up user...');
@@ -126,7 +126,7 @@ async function testCheckinFunction(user) {
 console.log('🚀 Starting user creation and testing...');
 console.log('📧 Test credentials:');
 console.log('   Email: demo@vidasmart.com');
-console.log('   Password: Demo123456!');
+console.log('   Password: <DEMO_PASSWORD>');
 console.log('');
 
 createAndTestUser();

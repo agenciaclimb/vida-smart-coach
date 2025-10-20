@@ -23,4 +23,6 @@ export function getSupabase() {
   return _client;
 }
 
-export default getSupabase();
+export const supabase = getSupabase();
+
+export default supabase;

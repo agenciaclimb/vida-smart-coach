@@ -17,9 +17,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
+import { normalizeActivityKey } from '@/utils/activityKeys';
 
 const GamificationTabEnhanced = () => {
-    const { user } = useAuth();
+    const { user: authUser } = useAuth();
     const {
         userStats,
         userRankings,
@@ -35,11 +36,29 @@ const GamificationTabEnhanced = () => {
         addDailyActivity,
         completeMission,
         joinEvent,
-        createReferral
+        createReferral,
+        generateDailyMissions
     } = useGamification();
 
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const buildActivityKey = (key, name) => normalizeActivityKey(key || name);
+
+    // Build a set of today's activity keys to disable duplicates (daily limiter)
+    const todaysActivityKeys = new Set(
+        (dailyActivities || [])
+            .filter(a => a.activity_date === todayStr)
+            .map(a => buildActivityKey(a.activity_key, a.activity_name))
+            .filter(Boolean)
+    );
+
+    const doneToday = (key, name) => {
+        const normalized = buildActivityKey(key, name);
+        if (!normalized) return false;
+        return todaysActivityKeys.has(normalized);
+    };
 
     // ==========================================
     // HELPER FUNCTIONS
@@ -76,12 +95,17 @@ const GamificationTabEnhanced = () => {
         return colors[type] || colors.easy;
     };
 
-    const handleQuickActivity = async (activityType, activityName, points) => {
+    const handleQuickActivity = async ({ activityType, activityName, activityKey, points }) => {
+        if (doneToday(activityKey, activityName)) {
+            toast.error('Esta ação já foi registrada hoje. Tente novamente amanhã.');
+            return;
+        }
         setIsSubmitting(true);
         try {
             await addDailyActivity({
                 type: activityType,
                 name: activityName,
+                key: activityKey,
                 points: points,
                 description: `Atividade rápida: ${activityName}`
             });
@@ -223,40 +247,40 @@ const GamificationTabEnhanced = () => {
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <Button 
-                                        onClick={() => handleQuickActivity('physical', 'Check-in de treino', 15)}
-                                        disabled={isSubmitting}
+                                        onClick={() => handleQuickActivity({ activityType: 'physical', activityName: 'Check-in de treino', activityKey: 'quick-checkin-treino', points: 15 })}
+                                        disabled={isSubmitting || doneToday('quick-checkin-treino', 'Check-in de treino')}
                                         className="w-full justify-start"
                                         variant="outline"
                                     >
                                         <Dumbbell className="w-4 h-4 mr-2" />
-                                        Check-in Treino (+15 pts)
+                                        {doneToday('quick-checkin-treino', 'Check-in de treino') ? 'Check-in Treino (já feito hoje)' : 'Check-in Treino (+15 pts)'}
                                     </Button>
                                     <Button 
-                                        onClick={() => handleQuickActivity('nutrition', 'Meta de água', 15)}
-                                        disabled={isSubmitting}
+                                        onClick={() => handleQuickActivity({ activityType: 'nutrition', activityName: 'Meta de água', activityKey: 'quick-meta-agua', points: 15 })}
+                                        disabled={isSubmitting || doneToday('quick-meta-agua', 'Meta de água')}
                                         className="w-full justify-start"
                                         variant="outline"
                                     >
                                         <Apple className="w-4 h-4 mr-2" />
-                                        Meta de Água (+15 pts)
+                                        {doneToday('quick-meta-agua', 'Meta de água') ? 'Meta de Água (já feita hoje)' : 'Meta de Água (+15 pts)'}
                                     </Button>
                                     <Button 
-                                        onClick={() => handleQuickActivity('emotional', 'Check-in de humor', 10)}
-                                        disabled={isSubmitting}
+                                        onClick={() => handleQuickActivity({ activityType: 'emotional', activityName: 'Check-in de humor', activityKey: 'quick-checkin-humor', points: 10 })}
+                                        disabled={isSubmitting || doneToday('quick-checkin-humor', 'Check-in de humor')}
                                         className="w-full justify-start"
                                         variant="outline"
                                     >
                                         <Heart className="w-4 h-4 mr-2" />
-                                        Check-in Humor (+10 pts)
+                                        {doneToday('quick-checkin-humor', 'Check-in de humor') ? 'Check-in Humor (já feito hoje)' : 'Check-in Humor (+10 pts)'}
                                     </Button>
                                     <Button 
-                                        onClick={() => handleQuickActivity('spiritual', 'Reflexão diária', 10)}
-                                        disabled={isSubmitting}
+                                        onClick={() => handleQuickActivity({ activityType: 'spiritual', activityName: 'Reflexão diária', activityKey: 'quick-reflexao-diaria', points: 10 })}
+                                        disabled={isSubmitting || doneToday('quick-reflexao-diaria', 'Reflexão diária')}
                                         className="w-full justify-start"
                                         variant="outline"
                                     >
                                         <Sparkles className="w-4 h-4 mr-2" />
-                                        Reflexão Diária (+10 pts)
+                                        {doneToday('quick-reflexao-diaria', 'Reflexão diária') ? 'Reflexão Diária (já feita hoje)' : 'Reflexão Diária (+10 pts)'}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -366,6 +390,23 @@ const GamificationTabEnhanced = () => {
                                 <CardDescription>
                                     Complete suas missões diárias e ganhe pontos extras!
                                 </CardDescription>
+                                <div className="mt-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => generateDailyMissions()}
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                                                Atualizando missões
+                                            </>
+                                        ) : (
+                                            'Gerar/Atualizar missões de hoje'
+                                        )}
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -415,6 +456,11 @@ const GamificationTabEnhanced = () => {
                                     <div className="text-center py-8 text-gray-500">
                                         <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                         <p>Nenhuma missão disponível hoje</p>
+                                    </div>
+                                )}
+                                {dailyMissions.length > 0 && dailyMissions.every(m => m.is_completed) && (
+                                    <div className="text-center py-6 text-gray-600">
+                                        Todas as missões de hoje foram completadas. Clique em "Gerar/Atualizar missões de hoje" para renovar.
                                     </div>
                                 )}
                             </CardContent>
@@ -502,19 +548,19 @@ const GamificationTabEnhanced = () => {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-2">
-                                        {leaderboards.global.slice(0, 10).map((user, index) => (
-                                            <div key={user.email} className={`flex items-center justify-between p-3 rounded-lg ${user.email === user?.email ? 'bg-primary/10 border border-primary/20' : 'bg-gray-50'}`}>
+                                        {leaderboards.global.slice(0, 10).map((row, index) => (
+                                            <div key={row.email} className={`flex items-center justify-between p-3 rounded-lg ${row.email === authUser?.email ? 'bg-primary/10 border border-primary/20' : 'bg-gray-50'}`}>
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${index < 3 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white' : 'bg-gray-200'}`}>
                                                         {index + 1}
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium">{user.name}</p>
-                                                        <p className="text-xs text-gray-500">Nível {user.level}</p>
+                                                        <p className="font-medium">{row.name}</p>
+                                                        <p className="text-xs text-gray-500">Nível {row.level}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold">{user.total_points}</p>
+                                                    <p className="font-bold">{row.total_points}</p>
                                                     <p className="text-xs text-gray-500">pontos</p>
                                                 </div>
                                             </div>
@@ -537,13 +583,13 @@ const GamificationTabEnhanced = () => {
                                         </CardHeader>
                                         <CardContent className="pt-0">
                                             <div className="space-y-2">
-                                                {leaderboards.category[category].slice(0, 5).map((user, index) => (
-                                                    <div key={user.email} className="flex items-center justify-between text-sm">
+                                                {leaderboards.category[category].slice(0, 5).map((entry, index) => (
+                                                    <div key={entry.email} className="flex items-center justify-between text-sm">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-bold w-4">{index + 1}.</span>
-                                                            <span className="truncate">{user.name}</span>
+                                                            <span className="truncate">{entry.name}</span>
                                                         </div>
-                                                        <span className="font-medium">{user[`${category}_points`] || 0}</span>
+                                                        <span className="font-medium">{entry[`${category}_points`] || 0}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -691,14 +737,14 @@ const GamificationTabEnhanced = () => {
                                 <CardContent className="space-y-4">
                                     <div className="flex gap-2">
                                         <Input 
-                                            value={`${window.location.origin}/register?ref=${user?.id}`}
+                                            value={`${window.location.origin}/register?ref=${authUser?.id}`}
                                             readOnly
                                             className="text-xs"
                                         />
                                         <Button 
                                             size="sm"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(`${window.location.origin}/register?ref=${user?.id}`);
+                                                navigator.clipboard.writeText(`${window.location.origin}/register?ref=${authUser?.id}`);
                                                 toast.success('Link copiado!');
                                             }}
                                         >

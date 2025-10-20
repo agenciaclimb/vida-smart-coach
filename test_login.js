@@ -10,10 +10,10 @@ async function testLogin() {
   
   // Try different email/password combinations that might exist
   const testAccounts = [
-    { email: 'test@vidasmart.com', password: 'TestPassword123!' },
-    { email: 'demo@vidasmart.com', password: 'Demo123456!' },
-    { email: 'admin@vidasmart.com', password: 'Admin123!' },
-    { email: 'user@vidasmart.com', password: 'User123!' }
+    { email: 'test@vidasmart.com', password: '<TEST_PASSWORD>' },
+    { email: 'demo@vidasmart.com', password: '<DEMO_PASSWORD>' },
+    { email: 'admin@vidasmart.com', password: '<ADMIN_PASSWORD>' },
+    { email: 'user@vidasmart.com', password: '<USER_PASSWORD>' }
   ];
   
   for (const account of testAccounts) {
@@ -129,7 +129,7 @@ async function createSimpleUser() {
   
   const { data, error } = await supabase.auth.signUp({
     email: testEmail,
-    password: 'Test123456!',
+    password: '<TEST_PASSWORD_ALT>',
     options: {
       data: {
         full_name: 'Test User'

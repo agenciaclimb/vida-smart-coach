@@ -39,7 +39,7 @@ async function testProfileColumns() {
     // Login with test user first
     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
       email: 'test@vidasmart.com',
-      password: 'TestPassword123!'
+      password: '<TEST_PASSWORD>'
     });
     
     if (loginError) {

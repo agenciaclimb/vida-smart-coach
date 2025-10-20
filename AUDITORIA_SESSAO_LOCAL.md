@@ -18,7 +18,7 @@ Script/middleware da unificação SSO pode estar zerando o `localStorage` após 
 ### **2. Antes do Login:**
 Verifique se já existe a chave:
 ```
-sb-zzugbgoylwbaojdnunuz-auth-token
+<SUPABASE_AUTH_TOKEN>
 ```
 - ✅ **Não deve existir** (aba anônima limpa)
 
@@ -26,15 +26,15 @@ sb-zzugbgoylwbaojdnunuz-auth-token
 1. **Faça login** com suas credenciais
 2. **IMEDIATAMENTE** após clicar "Entrar"
 3. **Verifique Local Storage novamente**
-4. **Procure a chave:** `sb-zzugbgoylwbaojdnunuz-auth-token`
+4. **Procure a chave:** `<SUPABASE_AUTH_TOKEN>`
 
 ### **4. Análise dos Resultados:**
 
 #### **✅ CENÁRIO NORMAL:**
 ```json
-Key: sb-zzugbgoylwbaojdnunuz-auth-token
+Key: <SUPABASE_AUTH_TOKEN>
 Value: {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE",
   "refresh_token": "v1.M2YzNjMxNGEtZjM5Yi00...",
   "expires_at": 1694123456,
   "user": {
@@ -47,7 +47,7 @@ Value: {
 
 #### **❌ CENÁRIO PROBLEMÁTICO 1:**
 ```
-Key: sb-zzugbgoylwbaojdnunuz-auth-token
+Key: <SUPABASE_AUTH_TOKEN>
 Value: (chave existe mas some em 1-2 segundos)
 ```
 **Status:** 🚨 **Script está limpando storage**
@@ -60,7 +60,7 @@ Value: (chave existe mas some em 1-2 segundos)
 
 #### **❌ CENÁRIO PROBLEMÁTICO 3:**
 ```json
-Key: sb-zzugbgoylwbaojdnunuz-auth-token  
+Key: <SUPABASE_AUTH_TOKEN>  
 Value: {
   "access_token": null,
   "refresh_token": null,

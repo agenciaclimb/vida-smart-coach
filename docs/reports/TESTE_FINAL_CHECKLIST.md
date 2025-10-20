@@ -58,7 +58,7 @@ Validar que todos os problemas de sessão/timeout foram resolvidos
 
 **Passos:**
 1. Na página de login, abra DevTools → Application → Local Storage
-2. Verifique se NÃO existe `sb-zzugbgoylwbaojdnunuz-auth-token`
+2. Verifique se NÃO existe `<SUPABASE_AUTH_TOKEN>`
 3. Faça login com credenciais válidas
 4. **IMEDIATAMENTE** após clicar "Entrar", monitore Local Storage
 5. Aguarde redirecionamento
@@ -73,7 +73,7 @@ Console:
 📍 RouteGuard: Redirecionando → /dashboard
 
 Local Storage:
-sb-zzugbgoylwbaojdnunuz-auth-token: {access_token: "eyJ...", user: {...}}
+<SUPABASE_AUTH_TOKEN>: {access_token: "eyJ...", user: {...}}
 ```
 
 **❌ Sinais de Problema:**
@@ -124,7 +124,7 @@ Console:
 🛡️ RouteGuard: Redirecionando → /login
 
 Local Storage:
-sb-zzugbgoylwbaojdnunuz-auth-token: (removido)
+<SUPABASE_AUTH_TOKEN>: (removido)
 
 Acesso a /dashboard:
 📍 RouteGuard: Redirecionando → /login
