@@ -10,7 +10,7 @@ async function testeJWTAuthentication() {
     
     // Testar diferentes chaves
     const keys = {
-        anon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIxMjcyNDksImV4cCI6MjA0NzcwMzI0OX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE',
+        anon: process.env.VITE_SUPABASE_ANON_KEY,
         // Precisamos da service_role key para edge functions
     };
     

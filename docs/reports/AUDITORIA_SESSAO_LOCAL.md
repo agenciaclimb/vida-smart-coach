@@ -34,7 +34,7 @@ Verifique se já existe a chave:
 ```json
 Key: <SUPABASE_AUTH_TOKEN>
 Value: {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE",
+  "access_token": process.env.VITE_SUPABASE_ANON_KEY,
   "refresh_token": "v1.M2YzNjMxNGEtZjM5Yi00...",
   "expires_at": 1694123456,
   "user": {

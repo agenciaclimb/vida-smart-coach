@@ -7,7 +7,7 @@ async function diagnosticoWhatsApp() {
     console.log('🔍 === DIAGNÓSTICO ESPECÍFICO WHATSAPP ===\n');
     
     const supabaseUrl = 'https://zzugbgoylwbaojdnunuz.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIxMjcyNDksImV4cCI6MjA0NzcwMzI0OX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE';
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
     
     console.log('1️⃣ === VERIFICAR MENSAGENS WHATSAPP HOJE ===');
     try {

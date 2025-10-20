@@ -7,7 +7,7 @@ console.log('📅 Data:', new Date().toLocaleString('pt-BR'));
 console.log('════════════════════════════════════════════════');
 
 const supabaseUrl = 'https://zzugbgoylwbaojdnunuz.supabase.co';
-const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE';
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 // ============================================
 // 🎯 TESTE 1: ESTÁGIO SDR - PROMPTS CONCISOS

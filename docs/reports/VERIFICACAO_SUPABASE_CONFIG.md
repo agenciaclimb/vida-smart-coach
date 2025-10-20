@@ -15,7 +15,7 @@
 1. Acesse: `https://supabase.com/dashboard/project/zzugbgoylwbaojdnunuz/settings/api`
 2. **CONFIRME:**
    - **Project URL:** `https://zzugbgoylwbaojdnunuz.supabase.co`
-   - **Anon Key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE` (copie a chave completa)
+   - **Anon Key:** `process.env.VITE_SUPABASE_ANON_KEY` (copie a chave completa)
 
 ### **2. No Vercel Environment Variables:**
 1. Acesse: `https://vercel.com/jeffersons/projects/vida-smart-coach/settings/environment-variables`
@@ -46,7 +46,7 @@ console.log('🔧 Config Check:', {
 // Deve exibir:
 // url: "https://zzugbgoylwbaojdnunuz.supabase.co"
 // hasKey: true
-// keyPrefix: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE"
+// keyPrefix: process.env.VITE_SUPABASE_ANON_KEY
 ```
 
 ---

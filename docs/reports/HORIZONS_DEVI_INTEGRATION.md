@@ -10,7 +10,7 @@ Configure as seguintes variáveis de ambiente no Horizons/Devi:
 VITE_SUPABASE_URL=https://gpdrhfhjdxhczdlfaesn.supabase.co
 
 # Chave pública (anon key) - segura para frontend
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE
+VITE_SUPABASE_ANON_KEY=process.env.VITE_SUPABASE_ANON_KEY
 ```
 
 ### Edge Functions

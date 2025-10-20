@@ -7,7 +7,7 @@ async function diagnosticoCompleto() {
     console.log('🔍 === DIAGNÓSTICO WHATSAPP PÓS-DEPLOY v9 ===\n');
     
     const supabaseUrl = 'https://zzugbgoylwbaojdnunuz.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIxMjcyNDksImV4cCI6MjA0NzcwMzI0OX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE';
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     

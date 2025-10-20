@@ -4,7 +4,7 @@ async function debugIACoachSystem() {
   const baseUrl = 'https://zzugbgoylwbaojdnunuz.supabase.co/functions/v1/ia-coach-chat';
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6dWdiZ295bHdiYW9qZG51bnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxODE5MTEsImV4cCI6MjA2OTc1NzkxMX0.8xe_8yAKTq4gWz0tzsYNgHRKvO5G7ZYK58Z2pkxxrmE'
+    'Authorization': 'Bearer process.env.VITE_SUPABASE_ANON_KEY'
   };
 
   const testUser = {
