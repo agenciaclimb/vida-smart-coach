@@ -332,76 +332,50 @@ export const PlansProvider = ({ children }) => {
 
       if (profileError) throw profileError;
 
-      const userAnalysis = analyzeUserProfile(profile);
-      
-      // --- Geração dos 4 Planos ---
-      
-      // 1. Plano Físico (lógica de mock simplificada)
-      const physicalPlanData = {
-        title: `Plano ${userAnalysis.primary_goal === 'hypertrophy' ? 'Hipertrofia' : 'Força'} Personalizado`,
-        description: `Plano científico de 4 semanas para ${userAnalysis.primary_goal}`,
-        duration_weeks: 4,
-        weeks: [] // A lógica completa de geração de exercícios pode ser mantida aqui
-      };
-      const physicalPlan = {
-        user_id: authUser.id,
-        plan_data: physicalPlanData,
-        plan_type: userAnalysis.primary_goal, // ex: 'hypertrophy'
-        is_active: true,
-        generated_by: 'ai_coach',
-      };
-
-      // 2. Plano Nutricional (mock)
-      const nutritionalPlanData = generateMockNutritionalPlan(profile);
-      const nutritionalPlan = {
-        user_id: authUser.id,
-        plan_data: nutritionalPlanData,
-        plan_type: 'nutritional',
-        is_active: true,
-        generated_by: 'ai_coach',
-      };
-
-      // 3. Plano Emocional (mock)
-      const emotionalPlanData = generateMockEmotionalPlan(profile);
-      const emotionalPlan = {
-        user_id: authUser.id,
-        plan_data: emotionalPlanData,
-        plan_type: 'emotional',
-        is_active: true,
-        generated_by: 'ai_coach',
-      };
-
-      // 4. Plano Espiritual (mock)
-      const spiritualPlanData = generateMockSpiritualPlan(profile);
-      const spiritualPlan = {
-        user_id: authUser.id,
-        plan_data: spiritualPlanData,
-        plan_type: 'spiritual',
-        is_active: true,
-        generated_by: 'ai_coach',
-      };
-
-      // Desativa todos os planos antigos
+      // Desativa todos os planos antigos primeiro
       await supabase
         .from('user_training_plans')
         .update({ is_active: false })
         .eq('user_id', authUser.id);
 
-      // Salva os 4 novos planos no banco
-      const { data: savedPlans, error: saveError } = await supabase
-        .from('user_training_plans')
-        .insert([physicalPlan, nutritionalPlan, emotionalPlan, spiritualPlan])
-        .select();
+      // Gerar os 4 planos via Edge Function (com IA real)
+      const planTypes = ['physical', 'nutritional', 'emotional', 'spiritual'];
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zzugbgoylwbaojdnunuz.supabase.co';
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (saveError) throw saveError;
+      const generationPromises = planTypes.map(async (planType) => {
+        const response = await fetch(`${supabaseUrl}/functions/v1/generate-plan`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`
+          },
+          body: JSON.stringify({
+            userId: authUser.id,
+            planType,
+            userProfile: profile
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`Erro ao gerar plano ${planType}:`, errorData);
+          throw new Error(`Falha ao gerar plano ${planType}`);
+        }
+
+        return response.json();
+      });
+
+      // Aguardar todos os planos serem gerados
+      const results = await Promise.all(generationPromises);
 
       // Atualiza o estado local
       await loadCurrentPlans();
       
       toast.dismiss();
-      toast.success('🎉 Seus 4 planos de transformação foram gerados com sucesso!');
+      toast.success('🎉 Seus 4 planos de transformação foram gerados com sucesso pela IA!');
       
-      return { success: true, plans: savedPlans };
+      return { success: true, plans: results };
 
     } catch (error) {
       console.error('Error generating personalized plans:', error);
@@ -411,7 +385,7 @@ export const PlansProvider = ({ children }) => {
     } finally {
       setGeneratingPlan(false);
     }
-  }, [authUser?.id, analyzeUserProfile, loadCurrentPlans]);
+  }, [authUser?.id, loadCurrentPlans]);
 
   // Effects
   useEffect(() => {
