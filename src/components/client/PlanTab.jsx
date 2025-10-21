@@ -288,20 +288,59 @@ const IACoachIntegration = () => {
 };
 
 // Componente para quando não há planos gerados
+import {
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
+const PLAN_AREAS = [
+  { key: 'physical', label: 'Físico' },
+  { key: 'nutritional', label: 'Alimentar' },
+  { key: 'emotional', label: 'Emocional' },
+  { key: 'spiritual', label: 'Espiritual' },
+];
+
+const areaQuestions = {
+  physical: [
+    { name: 'goal', label: 'Qual seu objetivo físico principal?', type: 'text' },
+    { name: 'routine', label: 'Descreva sua rotina de exercícios atual', type: 'textarea' },
+    { name: 'time', label: 'Quanto tempo por semana pode dedicar?', type: 'text' },
+  ],
+  nutritional: [
+    { name: 'goal', label: 'Qual seu objetivo alimentar?', type: 'text' },
+    { name: 'restrictions', label: 'Possui restrições/alergias?', type: 'text' },
+    { name: 'meals', label: 'Quantas refeições faz por dia?', type: 'text' },
+  ],
+  emotional: [
+    { name: 'goal', label: 'Qual seu objetivo emocional?', type: 'text' },
+    { name: 'stress', label: 'Nível de estresse atual (1-10)', type: 'text' },
+    { name: 'habits', label: 'Práticas de autocuidado?', type: 'text' },
+  ],
+  spiritual: [
+    { name: 'goal', label: 'Qual seu objetivo espiritual?', type: 'text' },
+    { name: 'practices', label: 'Práticas espirituais atuais?', type: 'text' },
+    { name: 'frequency', label: 'Com que frequência pratica?', type: 'text' },
+  ],
+};
+
 const NoPlanState = () => {
   const { generatePersonalizedPlan, generatingPlan } = usePlans();
   const { user: authUser } = useAuth();
   const { addDailyActivity } = useGamification();
-  
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [selectedArea, setSelectedArea] = useState('physical');
+  const [form, setForm] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
   const handleGeneratePlan = async () => {
     if (!authUser?.profile?.name || !authUser?.profile?.goal_type) {
       toast.error('Complete seu perfil primeiro para gerar um plano personalizado!');
       return;
     }
-    
     const success = await generatePersonalizedPlan();
     if (success) {
-      // 🎮 Registrar atividade e pontos por geração de plano
       await addDailyActivity({
         type: 'mission',
         name: 'Plano personalizado gerado',
@@ -316,18 +355,26 @@ const NoPlanState = () => {
     }
   };
 
+  const handleManualSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      // Chamada para endpoint de geração manual (mock: usa generatePersonalizedPlan)
+      // Aqui você pode customizar para enviar apenas a área e respostas
+      await generatePersonalizedPlan();
+      toast.success('Plano gerado manualmente!');
+      setManualDialogOpen(false);
+    } catch (err) {
+      toast.error('Erro ao gerar plano manual');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* IA Coach Estratégico removido - interface administrativa não deve aparecer para cliente */}
-      {/* <IACoachIntegration /> */}
-      
-      {/* Gamification Display */}
       <GamificationDisplay />
-      
-      {/* Check-in System */}
       <CheckinSystem />
-      
-      {/* Estado original de "sem planos" */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -344,18 +391,72 @@ const NoPlanState = () => {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
           Nossa Inteligência Artificial analisará seu perfil e criará um plano completo nas 4 áreas (Físico, Alimentar, Emocional e Espiritual) para seus objetivos.
         </p>
-        <Button 
-          onClick={handleGeneratePlan}
-          disabled={generatingPlan}
-          size="lg"
-          className="vida-smart-gradient text-white px-8 py-3 text-lg font-semibold mb-4"
-        >
-          {generatingPlan ? (
-            <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Gerando Planos...</>
-          ) : (
-            <><Sparkles className="mr-2 h-5 w-5" />Gerar Meus Planos de Transformação</>
-          )}
-        </Button>
+        <div className="flex flex-col md:flex-row gap-4 justify-center">
+          <Button 
+            onClick={handleGeneratePlan}
+            disabled={generatingPlan}
+            size="lg"
+            className="vida-smart-gradient text-white px-8 py-3 text-lg font-semibold mb-4"
+          >
+            {generatingPlan ? (
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Gerando Planos...</>
+            ) : (
+              <><Sparkles className="mr-2 h-5 w-5" />Gerar Meus Planos de Transformação</>
+            )}
+          </Button>
+          <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="lg" className="px-8 py-3 text-lg font-semibold mb-4">
+                Gerar Plano Manualmente
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Gerar Plano Manual</DialogTitle>
+                <DialogDescription>
+                  Escolha a área e preencha as informações para gerar um plano personalizado.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div>
+                  <label className="block mb-1 font-medium">Área do Plano</label>
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    value={selectedArea}
+                    onChange={e => setSelectedArea(e.target.value)}
+                  >
+                    {PLAN_AREAS.map(area => (
+                      <option key={area.key} value={area.key}>{area.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {areaQuestions[selectedArea].map(q => (
+                  <div key={q.name}>
+                    <label className="block mb-1 font-medium">{q.label}</label>
+                    {q.type === 'textarea' ? (
+                      <Textarea
+                        value={form[q.name] || ''}
+                        onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
+                        required
+                      />
+                    ) : (
+                      <Input
+                        value={form[q.name] || ''}
+                        onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
+                        required
+                      />
+                    )}
+                  </div>
+                ))}
+                <DialogFooter>
+                  <Button type="submit" disabled={submitting} className="vida-smart-gradient text-white">
+                    {submitting ? 'Gerando...' : 'Gerar Plano'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </motion.div>
     </div>
   );
