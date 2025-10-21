@@ -58,10 +58,13 @@ serve(async (req) => {
   }
 
   try {
-    // Verificar autorização
+    // Verificar autorização do webhook (aceitar nomes antigos/novos)
     const apiKey = req.headers.get("apikey");
-    const evolutionSecret = Deno.env.get("EVOLUTION_API_SECRET");
-    
+    const evolutionSecret =
+      Deno.env.get("EVOLUTION_API_SECRET") ||
+      Deno.env.get("EVOLUTION_WEBHOOK_TOKEN") ||
+      Deno.env.get("EVOLUTION_WEBHOOK_SECRET");
+
     if (!evolutionSecret || apiKey !== evolutionSecret) {
       return new Response(
         JSON.stringify({ ok: false, error: "Unauthorized" }),
@@ -135,12 +138,13 @@ serve(async (req) => {
 
     // Verificar emergência
     if (isEmergency(messageContent)) {
-      const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
+      const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
       const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
       
       if (evolutionApiUrl && evolutionApiKey) {
         // URL correta: /message/sendText/{instanceId}
-        const sendUrl = `${evolutionApiUrl}/message/sendText/${instance}`;
+        const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
+        const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
         
         await fetch(sendUrl, {
           method: "POST",
@@ -177,7 +181,8 @@ serve(async (req) => {
       if (matchedUser) {
         // Usuário cadastrado - usar IA Coach
         // IA Coach Integration com ANON_KEY (corrigido!)
-        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+        // Aceitar ANON de nomes antigos/novos
+        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("VITE_SUPABASE_ANON_KEY");
         try {
           if (supabaseAnonKey) {
             // Buscar histórico das últimas 5 mensagens do WhatsApp
@@ -219,6 +224,7 @@ serve(async (req) => {
               responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
             }
           } else {
+            console.warn("SUPABASE_ANON_KEY não configurado. Usando fallback de saudação.");
             responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
           }
         } catch (error) {
@@ -232,7 +238,7 @@ serve(async (req) => {
       }
 
       // Enviar resposta via Evolution API
-      const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL");
+      const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
       const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
       
       if (evolutionApiUrl && evolutionApiKey && responseMessage) {
@@ -248,7 +254,8 @@ serve(async (req) => {
         }
 
         // URL correta: /message/sendText/{instanceId}
-        const sendUrl = `${evolutionApiUrl}/message/sendText/${instance}`;
+        const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
+        const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
         
         await fetch(sendUrl, {
           method: "POST",
