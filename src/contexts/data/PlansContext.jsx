@@ -405,7 +405,70 @@ export const PlansProvider = ({ children }) => {
     planHistory,
     loadingPlans,
     generatingPlan,
-    generatePersonalizedPlan, // A função principal agora gera os 4 planos
+    generatePersonalizedPlan, // Gera/regera os 4 planos
+    /**
+     * Gera apenas os planos que estiverem faltando, mantendo os existentes ativos
+     */
+    generateMissingPlans: async () => {
+      if (!authUser?.id) {
+        toast.error('Usuário não autenticado');
+        return { success: false };
+      }
+
+      try {
+        setGeneratingPlan(true);
+
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+        if (profileError) throw profileError;
+
+        const planTypes = ['physical', 'nutritional', 'emotional', 'spiritual'];
+        const existingKeys = Object.keys(currentPlans || {});
+        const missing = planTypes.filter((t) => !existingKeys.includes(t) || !currentPlans?.[t]?.plan_data);
+
+        if (missing.length === 0) {
+          toast.success('Todos os planos já estão completos!');
+          return { success: true };
+        }
+
+        toast.loading(`Gerando ${missing.length} plano(s) faltante(s)...`);
+
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zzugbgoylwbaojdnunuz.supabase.co';
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        const results = [];
+        for (const planType of missing) {
+          const res = await fetch(`${supabaseUrl}/functions/v1/generate-plan`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseAnonKey}`
+            },
+            body: JSON.stringify({ userId: authUser.id, planType, userProfile: profile })
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Erro ao gerar plano', planType, err);
+            throw new Error(`Falha ao gerar ${planType}`);
+          }
+          results.push(await res.json());
+        }
+
+        await loadCurrentPlans();
+        toast.dismiss();
+        toast.success('Planos faltantes gerados com sucesso!');
+        return { success: true, plans: results };
+      } catch (e) {
+        toast.dismiss();
+        toast.error(e.message || 'Erro ao gerar planos faltantes');
+        return { success: false, error: e };
+      } finally {
+        setGeneratingPlan(false);
+      }
+    },
     loadCurrentPlans,
     loadPlanHistory
   }), [

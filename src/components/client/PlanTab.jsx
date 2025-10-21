@@ -582,7 +582,7 @@ const MultiPlanDisplay = () => {
 }
 
 const PlanTab = () => {
-  const { currentPlans, loadingPlans } = usePlans();
+  const { currentPlans, loadingPlans, generatePersonalizedPlan, generateMissingPlans, generatingPlan } = usePlans();
   const { user: authUser } = useAuth();
 
   if (loadingPlans) {
@@ -623,6 +623,12 @@ const PlanTab = () => {
     });
   }
 
+  const missingTypes = ['physical','nutritional','emotional','spiritual'].filter(
+    (t) => !currentPlans?.[t] || !currentPlans?.[t]?.plan_data
+  );
+
+  const showGenerateButtons = missingTypes.length > 0;
+
   return (
     <TabsContent value="plan" className="mt-6">
       {hasValidPlans ? (
@@ -633,6 +639,17 @@ const PlanTab = () => {
           <GamificationDisplay />
           {/* Check-in System sempre visível quando há planos */}
           <CheckinSystem />
+
+          {showGenerateButtons && (
+            <div className="flex flex-col md:flex-row gap-3">
+              <Button onClick={generateMissingPlans} disabled={generatingPlan} className="vida-smart-gradient text-white">
+                {generatingPlan ? 'Gerando planos faltantes...' : `Gerar planos faltantes (${missingTypes.length})`}
+              </Button>
+              <Button variant="outline" onClick={generatePersonalizedPlan} disabled={generatingPlan}>
+                {generatingPlan ? 'Gerando...' : 'Regerar todos os planos'}
+              </Button>
+            </div>
+          )}
           <MultiPlanDisplay />
         </div>
       ) : (
