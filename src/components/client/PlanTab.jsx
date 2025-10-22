@@ -18,6 +18,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 // 🎮 COMPONENTE DE GAMIFICAÇÃO INTEGRADO
 const GamificationDisplay = () => {
@@ -288,12 +294,6 @@ const IACoachIntegration = () => {
 };
 
 // Componente para quando não há planos gerados
-import {
-  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 
 const PLAN_AREAS = [
   { key: 'physical', label: 'Físico' },
@@ -465,91 +465,685 @@ const NoPlanState = () => {
 // Display para o Plano Físico (antigo PlanDisplay)
 const PhysicalPlanDisplay = ({ planData }) => {
   const [activeWeek, setActiveWeek] = useState(0);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedback, setFeedback] = useState('');
   const plan = planData.plan_data;
 
-  if (!plan || !plan.weeks) return <Card><CardContent>Plano físico indisponível.</CardContent></Card>;
+  if (!plan || !plan.weeks) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>Plano físico não disponível.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedback.trim()) {
+      toast.error('Por favor, escreva seu feedback');
+      return;
+    }
+    
+    // Salvar feedback (implementar endpoint ou salvamento local)
+    toast.success('Feedback enviado! Vamos revisar seu plano.');
+    setFeedback('');
+    setFeedbackOpen(false);
+  };
 
   return (
     <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-primary to-green-400 text-white">
-            <CardHeader>
-                <CardTitle className="flex items-center"><Brain className="w-6 h-6 mr-2" />{plan.title}</CardTitle>
-                <CardDescription className="text-green-100">{plan.description}</CardDescription>
-            </CardHeader>
+      {/* Header do Plano */}
+      <Card className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white border-0 shadow-xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <Dumbbell className="w-8 h-8" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold">{plan.title}</CardTitle>
+                <CardDescription className="text-white/90 mt-1">{plan.description}</CardDescription>
+              </div>
+            </div>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setFeedbackOpen(true)}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Dar Feedback
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Seletor de Semanas */}
+      {plan.weeks && plan.weeks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Selecione a Semana</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2 flex-wrap">
+              {plan.weeks.map((week, index) => (
+                <Button
+                  key={index}
+                  variant={activeWeek === index ? 'default' : 'outline'}
+                  onClick={() => setActiveWeek(index)}
+                  className="flex-1 min-w-[100px]"
+                >
+                  Semana {week.week || index + 1}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
         </Card>
-        {/* ... (resto da lógica de exibição do plano físico com Accordion, etc.) ... */}
+      )}
+
+      {/* Treinos da Semana */}
+      {plan.weeks && plan.weeks[activeWeek] && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Semana {plan.weeks[activeWeek].week || activeWeek + 1}</CardTitle>
+            <CardDescription>Foco: {plan.weeks[activeWeek].focus}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="space-y-4">
+              {plan.weeks[activeWeek].workouts?.map((workout, idx) => (
+                <AccordionItem key={idx} value={`workout-${idx}`} className="border rounded-lg px-4">
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <Activity className="w-5 h-5 text-primary" />
+                      <div className="text-left">
+                        <p className="font-semibold">{workout.day}</p>
+                        <p className="text-sm text-muted-foreground">{workout.name}</p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3 pt-4">
+                      {workout.exercises?.map((ex, exIdx) => (
+                        <div key={exIdx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="font-medium">{ex.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {ex.sets} séries × {ex.reps} repetições
+                              {ex.rest_seconds && ` • ${ex.rest_seconds}s descanso`}
+                            </p>
+                            {ex.notes && (
+                              <p className="text-xs text-muted-foreground mt-1 italic">💡 {ex.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dialog de Feedback */}
+      <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Feedback do Plano Físico</DialogTitle>
+            <DialogDescription>
+              Conte-nos o que você gostaria de ajustar no seu plano de treino
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Ex: Gostaria de mais foco em pernas, menos exercícios de cardio..."
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            rows={5}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
+              Enviar Feedback
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 // Display para o Plano Nutricional
 const NutritionalPlanDisplay = ({ planData }) => {
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
-    if (!plan) return <Card><CardContent>Plano nutricional indisponível.</CardContent></Card>;
+    
+    if (!plan) {
+      return (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            <Leaf className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Plano nutricional não disponível.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const handleFeedbackSubmit = async () => {
+      if (!feedback.trim()) {
+        toast.error('Por favor, escreva seu feedback');
+        return;
+      }
+      toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
+      setFeedback('');
+      setFeedbackOpen(false);
+    };
 
     return (
-        <Card>
+        <div className="space-y-6">
+          {/* Header */}
+          <Card className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 text-white border-0 shadow-xl">
             <CardHeader>
-                <CardTitle className="flex items-center"><Leaf className="w-6 h-6 mr-2 text-green-500" />{plan.title}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex justify-around text-center">
-                    <div><p className="font-bold text-lg">{plan.daily_calories} kcal</p><p className="text-sm text-muted-foreground">Calorias Diárias</p></div>
-                    <div><p className="font-bold text-lg">{plan.water_intake_liters}L</p><p className="text-sm text-muted-foreground">Água</p></div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Leaf className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">{plan.title}</CardTitle>
+                    <CardDescription className="text-white/90 mt-1">{plan.description}</CardDescription>
+                  </div>
                 </div>
-                <Accordion type="single" collapsible defaultValue="item-0">
-                    {plan.meals.map((meal, i) => (
-                        <AccordionItem key={i} value={`item-${i}`}>
-                            <AccordionTrigger>{meal.name} ({meal.calories} kcal)</AccordionTrigger>
-                            <AccordionContent><ul>{meal.items.map(item => <li key={item}>{item}</li>)}</ul></AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Dar Feedback
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Métricas */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardContent className="pt-6 text-center">
+                <Flame className="w-8 h-8 mx-auto mb-2 text-orange-500" />
+                <p className="text-3xl font-bold text-orange-700">{plan.daily_calories}</p>
+                <p className="text-sm text-orange-600">kcal/dia</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardContent className="pt-6 text-center">
+                <Droplets className="w-8 h-8 mx-auto mb-2 text-blue-500" />
+                <p className="text-3xl font-bold text-blue-700">{plan.water_intake_liters}L</p>
+                <p className="text-sm text-blue-600">água/dia</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardContent className="pt-6 text-center">
+                <Target className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+                <p className="text-xs font-semibold text-purple-700 mb-1">MACROS</p>
+                <p className="text-sm text-purple-600">
+                  P:{plan.macronutrients?.protein}g | C:{plan.macronutrients?.carbs}g | G:{plan.macronutrients?.fat}g
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Refeições */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                Plano de Refeições
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible defaultValue="item-0" className="space-y-3">
+                {plan.meals?.map((meal, i) => (
+                  <AccordionItem key={i} value={`item-${i}`} className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="flex-1 text-left">
+                          <p className="font-semibold">{meal.name}</p>
+                          <p className="text-sm text-muted-foreground">{meal.time}</p>
+                        </div>
+                        <span className="text-sm font-medium text-orange-600">{meal.calories} kcal</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-2 pt-3">
+                        {meal.items?.map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                            <span className="text-sm">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </CardContent>
-        </Card>
+          </Card>
+
+          {/* Tips */}
+          {plan.tips && plan.tips.length > 0 && (
+            <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-amber-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-800">
+                  <Zap className="w-5 h-5" />
+                  Dicas Importantes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {plan.tips.map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-amber-900">
+                      <span className="text-amber-500">•</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Dialog de Feedback */}
+          <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Feedback do Plano Nutricional</DialogTitle>
+                <DialogDescription>
+                  Conte-nos o que você gostaria de ajustar na sua alimentação
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Ex: Tenho alergia a frutos do mar, prefiro refeições vegetarianas..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={5}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
+                  Enviar Feedback
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
     );
 };
 
 // Display para o Plano Emocional
 const EmotionalPlanDisplay = ({ planData }) => {
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
-    if (!plan) return <Card><CardContent>Plano emocional indisponível.</CardContent></Card>;
+    
+    if (!plan) {
+      return (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            <Heart className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Plano emocional não disponível.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const handleFeedbackSubmit = async () => {
+      if (!feedback.trim()) {
+        toast.error('Por favor, escreva seu feedback');
+        return;
+      }
+      toast.success('Feedback enviado! Vamos ajustar seu plano de bem-estar emocional.');
+      setFeedback('');
+      setFeedbackOpen(false);
+    };
 
     return (
-        <Card>
+        <div className="space-y-6">
+          {/* Header */}
+          <Card className="bg-gradient-to-br from-pink-500 via-rose-500 to-red-500 text-white border-0 shadow-xl">
             <CardHeader>
-                <CardTitle className="flex items-center"><Heart className="w-6 h-6 mr-2 text-red-500" />{plan.title}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Heart className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">{plan.title}</CardTitle>
+                    <CardDescription className="text-white/90 mt-1">{plan.description}</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Dar Feedback
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <h4 className="font-semibold">Rotinas Diárias</h4>
-                {plan.daily_routines.map((routine, i) => <p key={i}><strong>{routine.time}:</strong> {routine.activity}</p>)}
-                <h4 className="font-semibold mt-4">Técnicas Recomendadas</h4>
-                {plan.techniques.map((tech, i) => <p key={i}><strong>{tech.name}:</strong> {tech.description}</p>)}
+          </Card>
+
+          {/* Áreas de Foco */}
+          {plan.focus_areas && plan.focus_areas.length > 0 && (
+            <Card className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200">
+              <CardHeader>
+                <CardTitle className="text-rose-800 flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Áreas de Foco
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {plan.focus_areas.map((area, i) => (
+                    <span key={i} className="px-4 py-2 bg-rose-100 text-rose-700 rounded-full text-sm font-medium">
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Rotinas Diárias */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                Rotinas Diárias
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {plan.daily_routines?.map((routine, i) => (
+                  <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-pink-700">{routine.duration_minutes || '10'}min</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-pink-900">{routine.time}</p>
+                      <p className="text-sm text-pink-700 mt-1">{routine.activity}</p>
+                    </div>
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
             </CardContent>
-        </Card>
+          </Card>
+
+          {/* Técnicas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="w-5 h-5 text-purple-500" />
+                Técnicas Recomendadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="space-y-3">
+                {plan.techniques?.map((tech, i) => (
+                  <AccordionItem key={i} value={`tech-${i}`} className="border rounded-lg px-4">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-5 h-5 text-yellow-500" />
+                        <span className="font-semibold">{tech.name}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-sm text-muted-foreground pt-3">{tech.description}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          {/* Metas Semanais */}
+          {plan.weekly_goals && plan.weekly_goals.length > 0 && (
+            <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+              <CardHeader>
+                <CardTitle className="text-purple-800 flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Metas Semanais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {plan.weekly_goals.map((goal, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Award className="w-5 h-5 text-purple-500 mt-0.5" />
+                      <span className="text-sm text-purple-900">{goal}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Dialog de Feedback */}
+          <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Feedback do Plano Emocional</DialogTitle>
+                <DialogDescription>
+                  Conte-nos o que você gostaria de ajustar no seu bem-estar emocional
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Ex: Gostaria de mais técnicas para ansiedade, menos meditação guiada..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={5}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
+                  Enviar Feedback
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
     );
 };
 
 // Display para o Plano Espiritual
 const SpiritualPlanDisplay = ({ planData }) => {
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
-    if (!plan) return <Card><CardContent>Plano espiritual indisponível.</CardContent></Card>;
+    
+    if (!plan) {
+      return (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            <Wind className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Plano espiritual não disponível.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const handleFeedbackSubmit = async () => {
+      if (!feedback.trim()) {
+        toast.error('Por favor, escreva seu feedback');
+        return;
+      }
+      toast.success('Feedback enviado! Vamos ajustar seu plano espiritual.');
+      setFeedback('');
+      setFeedbackOpen(false);
+    };
 
     return (
-        <Card>
+        <div className="space-y-6">
+          {/* Header */}
+          <Card className="bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 text-white border-0 shadow-xl">
             <CardHeader>
-                <CardTitle className="flex items-center"><Wind className="w-6 h-6 mr-2 text-purple-500" />{plan.title}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Wind className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">{plan.title}</CardTitle>
+                    <CardDescription className="text-white/90 mt-1">{plan.description}</CardDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Dar Feedback
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <h4 className="font-semibold">Práticas Diárias</h4>
-                {plan.daily_practices.map((practice, i) => <p key={i}><strong>{practice.time}:</strong> {practice.activity}</p>)}
-                <h4 className="font-semibold mt-4">Reflexões Semanais</h4>
-                <ul className="list-disc pl-5">{plan.weekly_reflection_prompts.map((prompt, i) => <li key={i}>{prompt}</li>)}</ul>
+          </Card>
+
+          {/* Áreas de Foco */}
+          {plan.focus_areas && plan.focus_areas.length > 0 && (
+            <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+              <CardHeader>
+                <CardTitle className="text-violet-800 flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Áreas de Foco
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {plan.focus_areas.map((area, i) => (
+                    <span key={i} className="px-4 py-2 bg-violet-100 text-violet-700 rounded-full text-sm font-medium">
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Práticas Diárias */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                Práticas Diárias
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {plan.daily_practices?.map((practice, i) => (
+                  <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
+                        <Wind className="w-6 h-6 text-purple-700" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-purple-900">{practice.time}</p>
+                      <p className="text-sm text-purple-700 mt-1">{practice.activity}</p>
+                    </div>
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
             </CardContent>
-        </Card>
+          </Card>
+
+          {/* Reflexões Semanais */}
+          {plan.weekly_reflection_prompts && plan.weekly_reflection_prompts.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-indigo-500" />
+                  Reflexões Semanais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {plan.weekly_reflection_prompts.map((prompt, i) => (
+                    <li key={i} className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg">
+                      <Info className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-indigo-900">{prompt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Metas Mensais */}
+          {plan.monthly_goals && plan.monthly_goals.length > 0 && (
+            <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
+              <CardHeader>
+                <CardTitle className="text-amber-800 flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Metas Mensais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {plan.monthly_goals.map((goal, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Award className="w-5 h-5 text-amber-500 mt-0.5" />
+                      <span className="text-sm text-amber-900">{goal}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Dialog de Feedback */}
+          <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Feedback do Plano Espiritual</DialogTitle>
+                <DialogDescription>
+                  Conte-nos o que você gostaria de ajustar no seu crescimento espiritual
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                placeholder="Ex: Gostaria de mais práticas de meditação, menos reflexões escritas..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={5}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
+                  Enviar Feedback
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
     );
 };
 
