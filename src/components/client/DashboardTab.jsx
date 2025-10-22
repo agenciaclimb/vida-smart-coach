@@ -7,6 +7,7 @@ import { useCheckins } from '@/contexts/data/CheckinsContext';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ProgressChart from '@/components/client/ProgressChart';
+import CompletionProgress from '@/components/client/CompletionProgress';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import toast from 'react-hot-toast';
@@ -230,6 +231,11 @@ const DashboardTab = () => {
             <ProgressChart />
           </CardContent>
         </Card>
+      </div>
+
+      {/* Completion and XP progress charts */}
+      <div>
+        <CompletionProgress />
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

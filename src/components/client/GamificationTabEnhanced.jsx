@@ -11,6 +11,7 @@ import {
     TrendingUp, Star, Zap, Crown, Medal, Flame, CheckCircle, Timer,
     Heart, Brain, Dumbbell, Apple, Sparkles, Share2
 } from 'lucide-react';
+import CompletionProgress from '@/components/client/CompletionProgress';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGamification } from '@/contexts/data/GamificationContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -236,6 +237,10 @@ const GamificationTabEnhanced = () => {
 
                     {/* Dashboard Tab */}
                     <TabsContent value="dashboard" className="mt-6">
+                        {/* Bloco de progresso semanal/mensal de conclusões e XP */}
+                        <div className="mb-8">
+                            <CompletionProgress />
+                        </div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Quick Actions */}
                             <Card>

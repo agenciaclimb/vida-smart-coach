@@ -131,6 +131,39 @@ RLS Policies (security)
 - ⏭️ **Pendente:** Sistema de conquistas visuais (badges)
 - ⏭️ **Pendente:** Notificações de check-ins diários
 
+**REGISTRO DE CICLO DE TRABALHO - 23/10/2025**
+
+**✅ TAREFA P0 CONCLUÍDA (Parte de Progresso):** Visualização semanal/mensal de conclusões e XP
+**Objetivo:** Exibir gráficos com contagem diária de itens concluídos por pilar e XP acumulado, com seleção de período (7d/30d).
+**Status:** ✅ CONCLUÍDO
+**Hora de Início:** 23/10/2025 - Ciclo 1
+**Hora de Conclusão:** 23/10/2025 - Ciclo 1
+
+**IMPLEMENTAÇÃO REALIZADA:**
+
+1. ✅ Hook de agregação
+    - Arquivo: `src/hooks/useCompletionStats.js`
+    - Consulta `plan_completions` e agrega por dia e tipo (physical, nutritional, emotional, spiritual) + soma de XP
+    - Suporte a intervalos `7d` e `30d`
+
+2. ✅ Componente de gráficos
+    - Arquivo: `src/components/client/CompletionProgress.jsx`
+    - Gráfico de barras empilhadas (itens/dia por pilar) e área (XP/dia)
+    - KPIs: total de itens, XP no período, melhor dia
+    - Alternador de período (Tabs 7d/30d)
+
+3. ✅ Integração no Dashboard
+    - Arquivo: `src/components/client/DashboardTab.jsx`
+    - Seção adicionada abaixo de "Seu Progresso" (métricas de peso/humor/sono)
+
+**Validações:**
+- Build: PASS (pnpm build)
+- Tipos/Lint: sem erros relacionados às alterações
+
+**Observações:**
+- Fonte de dados: `plan_completions` (completions criadas pelos checkboxes dos planos)
+- O componente é auto-contido (possui Card próprio) e pode ser reutilizado na aba de Gamificação, se desejado
+
 **APRENDIZADOS:**
 - Sistema modular facilita integração em múltiplos displays
 - Map() em useState oferece performance superior a arrays para lookups
