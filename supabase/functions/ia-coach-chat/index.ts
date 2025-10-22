@@ -14,6 +14,21 @@ serve(async (req) => {
   }
 
   try {
+    // 🔐 Validação de chamada interna (opcional, mas recomendada)
+    const configuredSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
+    if (configuredSecret) {
+      const callerSecret = req.headers.get('x-internal-secret') || '';
+      if (callerSecret !== configuredSecret) {
+        console.warn('Unauthorized call to ia-coach-chat: missing/invalid X-Internal-Secret');
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...headers, 'Content-Type': 'application/json' }
+        });
+      }
+    } else {
+      console.warn('INTERNAL_FUNCTION_SECRET not set. Skipping internal call validation.');
+    }
+
     const { messageContent, userProfile, chatHistory } = await req.json();
     
     if (!messageContent || !userProfile) {
@@ -40,25 +55,25 @@ serve(async (req) => {
     // 🧠 Detectar estágio automaticamente baseado em sinais da conversa
     const detectedStage = detectStageFromSignals(messageContent, chatHistory, userProfile, clientStage);
     const activeStage = detectedStage || clientStage.current_stage;
-const contextPrompt = buildContextPrompt(userProfile, contextData, activeStage);
+    const contextPrompt = buildContextPrompt(userProfile, contextData, activeStage) || undefined;
 
-// 🧠 Processar mensagem com base no estágio detectado
-const response = await processMessageByStage(
-  messageContent,
-  userProfile,
-  { ...clientStage, current_stage: activeStage },
-  supabase,
-  openaiKey,
-  chatHistory,
-  contextPrompt,
-  contextData
-);
+    // 🧠 Processar mensagem com base no estágio detectado
+    const response = await processMessageByStage(
+      messageContent,
+      userProfile,
+      { ...clientStage, current_stage: activeStage },
+      supabase,
+      openaiKey,
+      chatHistory,
+      contextPrompt,
+      contextData
+    );
 
 // 💾 Salvar interação
-    await saveInteraction(userProfile.id, activeStage, messageContent, response.text, response.metadata, supabase);
+  await saveInteraction(userProfile.id, activeStage, messageContent, response.text, response.metadata, supabase);
 
     // 🔄 Atualizar estágio se necessário
-    if (response.shouldUpdateStage) {
+    if (response.shouldUpdateStage && response.newStage) {
       await updateClientStage(userProfile.id, response.newStage, supabase);
     }
 
@@ -71,11 +86,11 @@ const response = await processMessageByStage(
       headers: { ...headers, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('IA Coach Error:', error);
     return new Response(JSON.stringify({
       error: 'Erro interno do sistema',
-      details: error.message
+      details: error?.message || String(error)
     }), {
       status: 500,
       headers: { ...headers, 'Content-Type': 'application/json' }
@@ -231,22 +246,38 @@ async function processSDRStage(
   contextPrompt?: string,
   contextData?: UserContextData
 ) {
-  const systemPrompt = `Você é uma SDR (Sales Development Representative) do Vida Smart Coach.
+  // Contar quantas perguntas já foram feitas
+  const assistantMessages = chatHistory?.filter(m => m.role === 'assistant') || [];
+  const questionCount = assistantMessages.length;
+  
+  const systemPrompt = `Você é uma SDR do Vida Smart Coach usando metodologia SPIN Selling.
 
-PERSONALIDADE: Amigável, empática, uma pergunta por vez
+NOME DO LEAD: ${profile.full_name || 'Lead'}
 
-MISSÃO: Qualificar com perguntas simples e diretas.
+ESTRUTURA SPIN (seguir NESTA ORDEM):
+${questionCount === 0 ? `
+1. SITUAÇÃO: Descobrir contexto atual
+   → "Oi ${profile.full_name}! Como está sua rotina de saúde hoje?"
+` : questionCount === 1 ? `
+2. PROBLEMA: Identificar dor específica
+   → Foque na resposta anterior e pergunte sobre UM desafio específico
+   → "Qual é o maior desafio com [área mencionada]?"
+` : questionCount === 2 ? `
+3. IMPLICAÇÃO: Amplificar consequências
+   → "Como isso tem afetado seu dia a dia?"
+` : `
+4. NECESSIDADE: Apresentar solução
+   → "Quer conhecer uma solução personalizada para isso?"
+   → Avançar para SPECIALIST
+`}
 
-NOME: ${profile.full_name || 'querido(a)'}
+REGRAS CRÍTICAS:
+- UMA pergunta curta (máx 15 palavras)
+- NUNCA repita perguntas já feitas
+- Progredir LINEARMENTE: Situação → Problema → Implicação → Necessidade
+- Tom informal WhatsApp
 
-ESTILO: Uma pergunta por resposta. Seja natural como no WhatsApp.
-
-EXEMPLOS:
-"Oi ${profile.full_name || 'querido(a)'}! Qual seu maior desafio hoje?"
-"Como isso tem afetado sua rotina?"
-"O que você gostaria de mudar?"
-
-NUNCA USE LISTAS! Sempre uma pergunta focada por vez.`;
+Responda APENAS com a próxima pergunta do SPIN, nada mais.`;
 
   // Construir mensagens com histórico se disponível
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -255,16 +286,16 @@ NUNCA USE LISTAS! Sempre uma pergunta focada por vez.`;
     messages.push({ role: 'system', content: contextPrompt });
   }
   
-  // Adicionar histórico de conversa (últimas 4 mensagens para dar contexto)
+  // Adicionar histórico de conversa (últimas 5 mensagens para contexto leve)
   if (chatHistory && chatHistory.length > 0) {
-    messages.push(...chatHistory.slice(-4));
+    messages.push(...chatHistory.slice(-5));
   }
   
   // Adicionar mensagem atual
   messages.push({ role: 'user', content: message });
 
   const aiResponse = await callOpenAI(messages, openaiKey);
-  
+
   // Analisar se deve avançar
   const shouldAdvance = analyzeAdvancementSDR(message);
 
@@ -275,7 +306,7 @@ NUNCA USE LISTAS! Sempre uma pergunta focada por vez.`;
       interest: message.toLowerCase().includes('quero') || message.toLowerCase().includes('ajuda')
     }
   });
-  
+
   return {
     text: aiResponse,
     shouldUpdateStage: shouldAdvance,
@@ -288,7 +319,14 @@ NUNCA USE LISTAS! Sempre uma pergunta focada por vez.`;
 // 🎓 ESTÁGIO 2: ESPECIALISTA
 // ============================================
 
-async function processSpecialistStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string) {
+async function processSpecialistStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string, contextData?: UserContextData) {
+  // Extrair última mensagem do assistente para evitar repetição
+  const lastAssistantMsg = chatHistory?.filter(m => m.role === 'assistant').slice(-1)[0]?.content || '';
+  
+  // Contar quantas perguntas já foram feitas pela IA
+  const assistantMessages = chatHistory?.filter(m => m.role === 'assistant') || [];
+  const questionsAsked = assistantMessages.length;
+  
   const systemPrompt = `Você é uma ESPECIALISTA CONSULTIVA do Vida Smart Coach.
 
 PERSONALIDADE: Diagnóstica, focada, uma pergunta específica por vez
@@ -300,39 +338,48 @@ NOME: ${profile.full_name || 'querido(a)'}
 ÁREAS PARA DIAGNÓSTICO:
 💪 FÍSICA | 🥗 ALIMENTAR | 🧠 EMOCIONAL | ✨ ESPIRITUAL
 
-ESTILO: Uma pergunta específica por resposta.
+${lastAssistantMsg ? `
+🚫 SUA ÚLTIMA MENSAGEM FOI: "${lastAssistantMsg}"
+NUNCA REPITA! Já perguntou isso. MUDE DE ÁREA ou AVANCE.
+` : ''}
 
-EXEMPLOS:
-"${profile.full_name || 'Querido(a)'}, vamos focar no físico primeiro. Quantas vezes você se exercita por semana?"
-"Sobre alimentação, você tem alguma compulsão ou dificuldade específica?"
-"Na parte emocional, como anda sua ansiedade no dia a dia?"
+REGRAS CRÍTICAS ANTI-LOOP:
+1. LEIA todo o histórico antes de responder
+2. Se o usuário RESPONDEU (sim/não/qualquer coisa), RECONHEÇA e MUDE DE ÁREA
+3. Se já perguntou sobre Física, vá para Alimentação. Se já fez Alimentação, vá para Emocional
+4. NUNCA volte em área já diagnosticada
+5. Uma pergunta CURTA (máximo 20 palavras)
 
 UMA PERGUNTA POR VEZ! Não faça listas.`;
 
   // Construir mensagens com histórico se disponível
   const messages = [{ role: 'system', content: systemPrompt }];
   
-  if (contextPrompt) {
-    messages.push({ role: 'system', content: contextPrompt });
-  }
-  
-  // Adicionar histórico de conversa (últimas 4 mensagens para contexto)
+  // Adicionar histórico COMPLETO para IA entender contexto
   if (chatHistory && chatHistory.length > 0) {
-    messages.push(...chatHistory.slice(-4));
+    messages.push(...chatHistory);
   }
   
   // Adicionar mensagem atual
   messages.push({ role: 'user', content: message });
 
   const aiResponse = await callOpenAI(messages, openaiKey);
-  
-  const shouldAdvance = message.toLowerCase().includes('interesse') || 
-                       message.toLowerCase().includes('quero');
-  
+
+  // Avançar para Seller após 3-4 perguntas OU se o usuário demonstrar interesse direto
+  const wantsToAdvance = /\b(quero|aceito|sim|vamos|pode ser|topo)\b/i.test(message);
+  const shouldAdvance = questionsAsked >= 3 || wantsToAdvance;
+
+  const metadata = buildInteractionMetadata('specialist', message, aiResponse, contextData, {
+    shouldAdvance,
+    questionsAsked,
+    wantsToAdvance
+  });
+
   return {
     text: aiResponse,
     shouldUpdateStage: shouldAdvance,
-    newStage: shouldAdvance ? 'seller' : null
+    newStage: shouldAdvance ? 'seller' : null,
+    metadata
   };
 }
 
@@ -340,29 +387,35 @@ UMA PERGUNTA POR VEZ! Não faça listas.`;
 // 💰 ESTÁGIO 3: VENDEDOR
 // ============================================
 
-async function processSellerStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string) {
-  const objection = detectObjection(message);
+async function processSellerStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string, contextData?: UserContextData) {
+  const wantsLink = message.toLowerCase().includes('sim') || 
+                    message.toLowerCase().includes('quero') || 
+                    message.toLowerCase().includes('gostaria') ||
+                    message.toLowerCase().includes('testar');
   
-  const systemPrompt = `Você é uma VENDEDORA CONSULTIVA do Vida Smart Coach.
+  const systemPrompt = `Você é uma Coach de Vendas do Vida Smart Coach, focada e direta.
 
-PERSONALIDADE: Confiante, focada no teste grátis, uma pergunta por vez
+${wantsLink ? `
+✅ CLIENTE ACEITOU! Envie o link AGORA:
 
-MISSÃO: Oferecer TESTE GRÁTIS de 7 dias.
+"Perfeito! 🎉 Aqui está seu link:
+
+🔗 https://appvidasmart.com/cadastro
+
+Clica aí e faz o cadastro rapidinho. Qualquer dúvida, tô aqui! 😊"
+` : `
+OFERTA: 🆓 Teste grátis 7 dias, acesso completo!
+
+REGRAS:
+- Máximo 2 frases
+- Seja direta: "Quer testar grátis por 7 dias?"
+- Se aceitar → envie o link https://appvidasmart.com/cadastro
+- Se hesitar → "O que te faz hesitar?"
+`}
 
 NOME: ${profile.full_name || 'querido(a)'}
 
-OFERTA: 🆓 TESTE GRÁTIS 7 DIAS com acesso total ao sistema!
-
-${objection ? `
-OBJEÇÃO: ${objection}
-💸 "Caro": Teste é GRÁTIS por 7 dias!
-⏰ "Tempo": Só 2-3min/dia no check-in
-🤔 "Pensar": O que te faz hesitar?
-` : ''}
-
-FOQUE: "Quer testar grátis por 7 dias?"
-
-Uma pergunta clara por vez!`;
+Seja natural e breve.`;
 
   // Construir mensagens com histórico se disponível
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -380,15 +433,20 @@ Uma pergunta clara por vez!`;
   messages.push({ role: 'user', content: message });
 
   const aiResponse = await callOpenAI(messages, openaiKey);
-  
+
   const shouldAdvance = message.toLowerCase().includes('cadastro') || 
                        message.toLowerCase().includes('teste') ||
                        message.toLowerCase().includes('quero começar');
-  
+
+  const metadata = buildInteractionMetadata('seller', message, aiResponse, undefined, {
+    shouldAdvance
+  });
+
   return {
     text: aiResponse,
     shouldUpdateStage: shouldAdvance,
-    newStage: shouldAdvance ? 'partner' : null
+    newStage: shouldAdvance ? 'partner' : null,
+    metadata
   };
 }
 
@@ -396,7 +454,7 @@ Uma pergunta clara por vez!`;
 // 🤝 ESTÁGIO 4: PARCEIRO
 // ============================================
 
-async function processPartnerStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string) {
+async function processPartnerStage(message: string, profile: any, openaiKey: string, chatHistory?: any[], contextPrompt?: string, contextData?: UserContextData) {
   const currentHour = new Date().getHours();
   const isCheckInTime = (currentHour >= 7 && currentHour <= 9) || (currentHour >= 20 && currentHour <= 22);
   
@@ -435,13 +493,21 @@ Sempre uma pergunta focada por resposta!`;
   messages.push({ role: 'user', content: message });
 
   const aiResponse = await callOpenAI(messages, openaiKey);
-  
+
+  const metadata = buildInteractionMetadata('partner', message, aiResponse, undefined, {
+    shouldAdvance: false
+  });
+
   return {
     text: aiResponse,
     shouldUpdateStage: false,
-    newStage: null
+    newStage: null,
+    metadata
   };
 }
+
+
+// (função buildInteractionMetadata tipada é definida após fetchUserContext)
 
 // ============================================
 // FUNÇÕES DE SUPORTE
@@ -457,6 +523,9 @@ async function callOpenAI(messages: any[], openaiKey: string) {
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0.7,
+      top_p: 0.9,
+      frequency_penalty: 0.7,
+      presence_penalty: 0.3,
       max_tokens: 800,
       messages: messages
     })
@@ -507,7 +576,16 @@ function detectObjection(message: string): string | null {
   return null;
 }
 
-async function saveInteraction(userId: string, stage: string, content: string, aiResponse: string, supabase: any) {
+// saveInteraction(userId, stage, content, aiResponse, metadata?, supabase)
+async function saveInteraction(userId: string, stage: string, content: string, aiResponse: string, metadataOrSupabase?: any, maybeSupabase?: any) {
+  let metadata: any = { stage, timestamp: new Date().toISOString() };
+  let supabase: any = maybeSupabase;
+
+  if (maybeSupabase) {
+    metadata = metadataOrSupabase;
+  } else {
+    supabase = metadataOrSupabase;
+  }
   try {
     await supabase.from('interactions').insert({
       user_id: userId,
@@ -515,7 +593,7 @@ async function saveInteraction(userId: string, stage: string, content: string, a
       stage: stage,
       content: content,
       ai_response: aiResponse,
-      metadata: { stage, timestamp: new Date().toISOString() }
+      metadata
     });
   } catch (error) {
     console.log('Erro ao salvar interação:', error);
@@ -524,6 +602,7 @@ async function saveInteraction(userId: string, stage: string, content: string, a
 
 async function updateClientStage(userId: string, newStage: string, supabase: any) {
   try {
+    if (!newStage) return;
     await supabase.from('client_stages').insert({
       user_id: userId,
       current_stage: newStage,
@@ -644,6 +723,36 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
     activePlans: plans.slice(0, 2),
     gamification,
     memorySnippets: memories.slice(0, 3)
+  };
+}
+
+// Fora de fetchUserContext: helper de metadados
+function buildInteractionMetadata(
+  stage: string,
+  message: string,
+  aiResponse: string,
+  contextData?: UserContextData,
+  custom: Record<string, any> = {}
+): Record<string, any> {
+  return {
+    stage,
+    message,
+    ai_response: aiResponse,
+    context: contextData ? {
+      recentActivities: contextData.recentActivities?.length,
+      todaysMissions: contextData.todaysMissions?.length,
+      activeGoals: contextData.activeGoals?.length,
+      pendingActions: contextData.pendingActions?.length,
+      activePlans: contextData.activePlans?.length,
+      gamification: contextData.gamification ? {
+        total_points: contextData.gamification.total_points,
+        level: contextData.gamification.level,
+        current_streak: contextData.gamification.current_streak
+      } : null,
+      memorySnippets: contextData.memorySnippets?.length
+    } : null,
+    ...custom,
+    timestamp: new Date().toISOString()
   };
 }
 

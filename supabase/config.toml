@@ -40,4 +40,4 @@ port = 54323
   # Configuração para a função 'ia-coach-chat'
   [functions.ia-coach-chat]
     entrypoint = "./functions/ia-coach-chat/index.ts"
-    verify_jwt = true # Requer autenticação
+    verify_jwt = false # Desabilitado para permitir validação customizada via INTERNAL_FUNCTION_SECRET (mais adequada para server-to-server)

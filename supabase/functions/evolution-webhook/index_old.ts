@@ -59,9 +59,6 @@ serve(async (req) => {
   }
 
   try {
-  const url = new URL(req.url);
-  const debugParam = url.searchParams.get('debug');
-  const debug = debugParam === '1' || debugParam === 'true';
     // Verificar autorização do webhook (aceitar nomes antigos/novos)
     const apiKey = req.headers.get("apikey");
     const evolutionSecret =
@@ -103,7 +100,7 @@ serve(async (req) => {
       );
     }
 
-  const phoneNumber = data.key?.remoteJid;
+    const phoneNumber = data.key?.remoteJid;
     const messageContent = data.message?.conversation || 
                           data.message?.extendedTextMessage?.text || 
                           "Mensagem não suportada";
@@ -119,7 +116,10 @@ serve(async (req) => {
       );
     }
 
-    // Setup Supabase
+    // 🛡️ DEDUPLICAÇÃO: Verificar se mensagem já foi processada recentemente (últimos 30s)
+    const messageId = data.key?.id;
+    const messageTimestamp = data.messageTimestamp || Math.floor(Date.now() / 1000);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -129,47 +129,20 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 🛡️ DEDUPLICAÇÃO CORRIGIDA: Salvar mensagem PRIMEIRO, depois verificar duplicatas
-    const messageId = data.key?.id;
-    
-    // Procurar usuário pelo telefone
-    const matchedUser = await findUserByPhone(supabase, phoneNumber);
-    
-    // Normalizar telefone para storage consistente (sem @s.whatsapp.net)
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    
-    console.log('📞 Phone lookup:', {
-      raw: phoneNumber,
-      normalized: normalizedPhone,
-      matched: !!matchedUser,
-      userId: matchedUser?.id,
-      userName: matchedUser?.full_name,
-    });
-
-    // Log da mensagem recebida
-    const currentTimestamp = Date.now();
-    await supabase.from("whatsapp_messages").insert({
-      user_id: matchedUser?.id || null,
-      phone: normalizedPhone,  // Usar normalizado para busca consistente
-      message: messageContent,
-      event: "messages.upsert",
-      timestamp: currentTimestamp,
-    });
-
-    // Verificar se já existem outras mensagens idênticas recentes (últimos 30s)
+    // Verificar se mensagem duplicada nos últimos 30 segundos
     if (messageId && phoneNumber) {
-      const thirtySecondsAgo = currentTimestamp - 30000;
-      const { count } = await supabase
+      const thirtySecondsAgo = Date.now() - 30000;
+      const { data: recentMsg } = await supabase
         .from("whatsapp_messages")
-        .select("*", { count: 'exact', head: true })
-        .eq("phone", normalizedPhone)  // Usar normalizado para deduplicação
+        .select("id")
+        .eq("phone", phoneNumber)
         .eq("message", messageContent)
-        .eq("event", "messages.upsert")
-        .gte("timestamp", thirtySecondsAgo);
+        .gte("timestamp", thirtySecondsAgo)
+        .limit(1)
+        .maybeSingle();
 
-      // Se count >= 2 (incluindo a que acabamos de inserir), é duplicação
-      if (count && count >= 2) {
-        console.log("Duplicate message ignored:", messageId, "count:", count);
+      if (recentMsg) {
+        console.log("Duplicate message ignored:", messageId);
         return new Response(
           JSON.stringify({ ok: true, message: "Duplicate message ignored" }),
           { 
@@ -180,30 +153,24 @@ serve(async (req) => {
       }
     }
 
-    // Se debug=env, retornar presença das variáveis de ambiente (mascaradas)
-    if (debugParam === 'env') {
-      const dbg = {
-        EVOLUTION_API_URL: !!(Deno.env.get('EVOLUTION_API_URL') || Deno.env.get('EVOLUTION_BASE_URL')),
-        EVOLUTION_API_KEY: !!Deno.env.get('EVOLUTION_API_KEY'),
-        EVOLUTION_API_TOKEN: !!Deno.env.get('EVOLUTION_API_TOKEN'),
-        EVOLUTION_API_SECRET: !!Deno.env.get('EVOLUTION_API_SECRET'),
-        EVOLUTION_INSTANCE_ID: !!(Deno.env.get('EVOLUTION_INSTANCE_ID') || Deno.env.get('EVOLUTION_INSTANCE_NAME')),
-        SUPABASE_URL: !!Deno.env.get('SUPABASE_URL'),
-        SUPABASE_ANON_KEY: !!(Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('VITE_SUPABASE_ANON_KEY')),
-        SUPABASE_SERVICE_ROLE_KEY: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-      };
-      return new Response(JSON.stringify({ ok: true, debug: 'env', present: dbg }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    // Procurar usuário pelo telefone
+    const matchedUser = await findUserByPhone(supabase, phoneNumber);
+
+    // Log da mensagem
+    await supabase.from("whatsapp_messages").insert({
+      user_id: matchedUser?.id || null,
+      phone: phoneNumber,
+      message: messageContent,
+      event: "messages.upsert",
+      timestamp: Date.now(),
+    });
 
     // Verificar emergência
     if (isEmergency(messageContent)) {
       const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
-      const evolutionToken =
-        Deno.env.get("EVOLUTION_API_TOKEN") ||
-        Deno.env.get("EVOLUTION_API_SECRET") ||
-        Deno.env.get("EVOLUTION_API_KEY");
+      const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
       
-      if (evolutionApiUrl && evolutionToken) {
+      if (evolutionApiUrl && evolutionApiKey) {
         // URL correta: /message/sendText/{instanceId}
         const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
         const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
@@ -212,10 +179,10 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "apikey": evolutionToken,
+            "apikey": evolutionApiKey,
           },
           body: JSON.stringify({
-            number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+            number: phoneNumber.replace('+', '').replace('@s.whatsapp.net', ''),
             text: EMERGENCY_RESPONSE
           }),
         });
@@ -238,93 +205,60 @@ serve(async (req) => {
 
     // Processar mensagem normal
     if (messageContent && messageContent !== "Mensagem não suportada") {
-  let responseMessage = "";
-  let iaDebug: { ok?: boolean; stage?: string; replyLength?: number; status?: number } = {};
+      let responseMessage = "";
 
       if (matchedUser) {
         // Usuário cadastrado - usar IA Coach
+        // IA Coach Integration com ANON_KEY (corrigido!)
+        // Aceitar ANON de nomes antigos/novos
         const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("VITE_SUPABASE_ANON_KEY");
         try {
-          // Prefer SERVICE ROLE for server-to-server reliability; fall back to ANON if missing
-          const iaAuthToken = supabaseKey || supabaseAnonKey;
-          if (iaAuthToken) {
-            // Buscar histórico das últimas 10 mensagens do WhatsApp (usar telefone normalizado)
+          if (supabaseAnonKey) {
+            // Buscar histórico das últimas 5 mensagens do WhatsApp
             const { data: chatHistory } = await supabase
               .from('whatsapp_messages')
-              .select('message, user_id, timestamp')
-              .eq('phone', normalizedPhone)
+              .select('message, user_id')
+              .eq('phone', phoneNumber)
               .order('timestamp', { ascending: false })
-              .limit(10);
+              .limit(5);
 
-            console.log('💬 Chat history:', {
-              count: chatHistory?.length || 0,
-              phone: normalizedPhone,
-            });
-
-            // Formatar histórico como mensagens de chat (ordenar do mais antigo ao mais recente)
+            // Formatar histórico como mensagens de chat
             const formattedHistory = (chatHistory || []).reverse().map(msg => ({
               role: msg.user_id ? 'user' : 'assistant',
               content: msg.message,
-              created_at: new Date(msg.timestamp).toISOString()
+              created_at: new Date().toISOString()
             }));
-
-            // Verificar se a última mensagem da IA foi idêntica à penúltima (loop detection)
-            const lastAssistantMessages = formattedHistory
-              .filter(m => m.role === 'assistant')
-              .slice(-2);
-            
-            const isLooping = lastAssistantMessages.length >= 2 && 
-                             lastAssistantMessages[0].content === lastAssistantMessages[1].content;
 
             // ⏱️ TIMEOUT: 25 segundos para evitar retry do webhook
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 25000);
 
             try {
-              // Injetar aviso anti-loop se detectado
-              let effectiveMessageContent = messageContent;
-              if (isLooping) {
-                effectiveMessageContent = `[SYSTEM: A última resposta da IA foi repetida. AVANCE para uma nova pergunta ou área diferente.]\nUsuário: ${messageContent}`;
-              }
-
               const iaCoachResponse = await fetch(`${supabaseUrl}/functions/v1/ia-coach-chat`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  // Use whichever token is available/valid for this project (anon preferred, else service role)
-                  "Authorization": `Bearer ${iaAuthToken}`,
-                  // 🔐 Segredo interno para validar chamada entre funções
-                  "X-Internal-Secret": Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+                  "Authorization": `Bearer ${supabaseAnonKey}`,
                 },
                 body: JSON.stringify({
-                  messageContent: effectiveMessageContent,
+                  messageContent: messageContent,
                   userProfile: { 
                     id: matchedUser.id, 
                     full_name: matchedUser.full_name || "Usuário WhatsApp" 
                   },
-                  chatHistory: formattedHistory
+                  chatHistory: formattedHistory // Adicionar histórico igual ao web chat
                 }),
                 signal: controller.signal
               });
 
               clearTimeout(timeoutId);
 
-              iaDebug.status = iaCoachResponse.status;
               if (iaCoachResponse.ok) {
                 const iaCoachData = await iaCoachResponse.json();
                 responseMessage = iaCoachData.reply || iaCoachData.response || iaCoachData.text || "Desculpe, não consegui processar sua mensagem.";
-                console.log('🤖 IA Coach:', {
-                  stage: iaCoachData.stage,
-                  replyLength: responseMessage.length,
-                  loopDetected: isLooping,
-                });
-                iaDebug.ok = true;
-                iaDebug.stage = iaCoachData.stage;
-                iaDebug.replyLength = responseMessage.length;
               } else {
                 console.error("IA Coach error:", await iaCoachResponse.text());
                 responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
-                iaDebug.ok = false;
               }
             } catch (fetchError: any) {
               clearTimeout(timeoutId);
@@ -337,7 +271,7 @@ serve(async (req) => {
               }
             }
           } else {
-            console.warn("Nenhum token JWT disponível (ANON ou SERVICE). Usando fallback de saudação.");
+            console.warn("SUPABASE_ANON_KEY não configurado. Usando fallback de saudação.");
             responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
           }
         } catch (error) {
@@ -350,22 +284,11 @@ serve(async (req) => {
                          "cadastre-se em nosso aplicativo! Como posso ajudá-lo hoje?";
       }
 
-      // Se estiver em modo debug simples, retornar sem enviar para Evolution
-      if (debug) {
-        return new Response(
-          JSON.stringify({ ok: true, debug: true, responseMessage, phoneNumber, matchedUser, iaDebug }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
       // Enviar resposta via Evolution API
       const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
-      const evolutionToken =
-        Deno.env.get("EVOLUTION_API_TOKEN") ||
-        Deno.env.get("EVOLUTION_API_SECRET") ||
-        Deno.env.get("EVOLUTION_API_KEY");
+      const evolutionApiKey = Deno.env.get("EVOLUTION_API_KEY");
       
-      if (evolutionApiUrl && evolutionToken && responseMessage) {
+      if (evolutionApiUrl && evolutionApiKey && responseMessage) {
         // URL correta: /message/sendText/{instanceId}
         const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
         const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
@@ -374,10 +297,10 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "apikey": evolutionToken,
+            "apikey": evolutionApiKey,
           },
           body: JSON.stringify({
-            number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+            number: phoneNumber.replace('+', '').replace('@s.whatsapp.net', ''),
             text: responseMessage
           }),
         }).catch(err => {
@@ -385,26 +308,11 @@ serve(async (req) => {
           return null;
         });
 
-        // Se debug=send, retornar o status e corpo da Evolution sem salvar histórico
-        if (debugParam === 'send') {
-          const dbgStatus = sendResult ? sendResult.status : null;
-          const dbgText = sendResult ? (await sendResult.text().catch(() => '')) : 'no-response';
-          return new Response(
-            JSON.stringify({ ok: !!(sendResult && sendResult.ok), debug: 'send', status: dbgStatus, body: dbgText, url: sendUrl }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (sendResult && !sendResult.ok) {
-          const errText = await sendResult.text().catch(() => '');
-          console.error("Evolution send failed:", sendResult.status, errText);
-        }
-
         // ✅ Armazenar resposta da IA no histórico SOMENTE após envio bem-sucedido
         if (sendResult && sendResult.ok && matchedUser) {
           await supabase.from("whatsapp_messages").insert({
             user_id: null, // null indica resposta da IA
-            phone: normalizedPhone,  // Usar normalizado para busca consistente
+            phone: phoneNumber,
             message: responseMessage,
             event: "ia_response",
             timestamp: Date.now(),

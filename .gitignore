@@ -10,6 +10,7 @@ coverage/
 .env
 .env.*
 !.env.example
+INTERNAL_FUNCTION_SECRET.txt
 
 # Logs e temporários
 logs/
