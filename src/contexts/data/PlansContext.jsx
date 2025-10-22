@@ -340,8 +340,18 @@ export const PlansProvider = ({ children }) => {
 
       // Gerar os 4 planos via Edge Function (com IA real)
       const planTypes = ['physical', 'nutritional', 'emotional', 'spiritual'];
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zzugbgoylwbaojdnunuz.supabase.co';
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        console.error('[PlansContext] VITE_SUPABASE_URL ausente');
+        toast.error('Configuração do Supabase ausente');
+        return { success: false };
+      }
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseAnonKey) {
+        console.error('[PlansContext] VITE_SUPABASE_ANON_KEY ausente');
+        toast.error('Configuração do Supabase ausente');
+        return { success: false };
+      }
 
       const generationPromises = planTypes.map(async (planType) => {
         const response = await fetch(`${supabaseUrl}/functions/v1/generate-plan`, {
@@ -436,8 +446,18 @@ export const PlansProvider = ({ children }) => {
 
         toast.loading(`Gerando ${missing.length} plano(s) faltante(s)...`);
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zzugbgoylwbaojdnunuz.supabase.co';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        if (!supabaseUrl) {
+          console.error('[PlansContext] VITE_SUPABASE_URL ausente');
+          toast.error('Configuração do Supabase ausente');
+          return { success: false };
+        }
         const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        if (!supabaseAnonKey) {
+          console.error('[PlansContext] VITE_SUPABASE_ANON_KEY ausente');
+          toast.error('Configuração do Supabase ausente');
+          return { success: false };
+        }
 
         const results = [];
         for (const planType of missing) {

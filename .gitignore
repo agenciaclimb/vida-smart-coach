@@ -21,3 +21,6 @@ codex_*/
 audit/
 sandbox/
 .vercel
+
+# Local secret backups (do not commit)
+local_secrets_backup/

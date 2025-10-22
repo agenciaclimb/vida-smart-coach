@@ -252,7 +252,271 @@ O sistema Vida Smart Coach faz uso estratégico de diferentes modelos de LLM, se
 | **Interações Conversacionais de Baixa Latência** | `gpt-4o-mini` / `gemini-1.5-flash` | Priorizam a velocidade de resposta para manter a fluidez da conversa, onde a profundidade da resposta pode ser ligeiramente sacrificada em prol da agilidade. Atualmente, `gpt-4o-mini` é o modelo padrão para todas as etapas do IA Coach. |
 | **Expansões de Modelo** | `Claude 3 Haiku` (em avaliação) | Modelos adicionais estão em avaliação para complementar as capacidades existentes, oferecendo alternativas e otimizações futuras. |
 
-### 3.3. Fluxo de Dados e Interações entre Componentes
+### 3.3. Configuração e Operação da IA Coach + WhatsApp
+
+#### 🤖 REGRAS CRÍTICAS DE CONFIGURAÇÃO - INTEGRAÇÃO IA COACH + EVOLUTION API
+
+**⚠️ ATENÇÃO:** Estas regras foram criadas após múltiplos incidentes de desconfigurações que causaram downtime da IA no WhatsApp. A violação destas regras resulta em:
+- IA Coach parando de responder no WhatsApp
+- Usuários recebendo mensagens genéricas em vez de respostas personalizadas
+- Perda de contexto e histórico de conversas
+- Tempo significativo de diagnóstico e correção
+
+#### 3.3.1. Arquitetura da Integração WhatsApp → IA Coach
+
+**FLUXO OBRIGATÓRIO (NÃO ALTERAR SEM DOCUMENTAR):**
+
+```
+1. WhatsApp User
+   ↓
+2. Evolution API (webhook configurado)
+   ↓
+3. Supabase Edge Function: evolution-webhook
+   ↓ (normaliza telefone, busca usuário)
+4. user_profiles table (Supabase)
+   ↓ (se usuário encontrado)
+5. Supabase Edge Function: ia-coach-chat
+   ↓ (processa com contexto)
+6. OpenAI API (gpt-4o-mini)
+   ↓ (resposta gerada)
+7. ia_coach_history table (salva histórico)
+   ↓
+8. Evolution API (envia resposta)
+   ↓
+9. WhatsApp User (recebe resposta personalizada)
+```
+
+**COMPONENTES CRÍTICOS:**
+- `supabase/functions/evolution-webhook/index.ts` — Gateway de entrada
+- `supabase/functions/ia-coach-chat/index.ts` — Motor de IA (4 estágios)
+- `user_profiles.phone` — Chave de identificação (formato: apenas números, ex: `5516981459950`)
+- `ia_coach_history` — Persistência de contexto
+- Evolution API Instance — Configurada com webhook apontando para `evolution-webhook`
+
+#### 3.3.2. Variáveis de Ambiente - Configuração Obrigatória
+
+**EDGE FUNCTION: `evolution-webhook`**
+
+Requer (configurar em Supabase → Edge Functions → Function Secrets):
+```bash
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...  # Admin access para buscar usuários
+EVOLUTION_API_URL=https://api.evoapicloud.com
+EVOLUTION_INSTANCE_ID=uuid-da-instancia
+EVOLUTION_API_TOKEN=token-de-autenticacao
+INTERNAL_FUNCTION_SECRET=VSC_INTERNAL_SECRET_...  # Autenticação entre funções
+```
+
+**EDGE FUNCTION: `ia-coach-chat`**
+
+Requer:
+```bash
+OPENAI_API_KEY=sk-proj-...  # Para chamadas ao GPT-4o-mini
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...  # Para salvar histórico
+INTERNAL_FUNCTION_SECRET=VSC_INTERNAL_SECRET_...  # Validação de origem
+```
+
+**VALIDAÇÃO DE CONFIGURAÇÃO:**
+Executar script de diagnóstico:
+```bash
+node scripts/debug_ia_coach.js
+```
+
+Deve retornar:
+- ✅ Evolution API accessible
+- ✅ Supabase connection OK
+- ✅ OpenAI API key valid
+- ✅ Function secrets configured
+
+#### 3.3.3. Regras de Normalização de Telefone (CRÍTICO)
+
+**PROBLEMA HISTÓRICO RECORRENTE:**
+WhatsApp envia telefones no formato `+5516981459950@s.whatsapp.net`, mas banco armazena apenas números `5516981459950`. Normalizações incorretas causam falha na identificação do usuário.
+
+**NORMALIZAÇÃO CORRETA (NÃO ALTERAR):**
+```typescript
+// evolution-webhook/index.ts
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, ""); // Remove TUDO que não é número
+}
+
+// Exemplo:
+// Input:  "+5516981459950@s.whatsapp.net"
+// Output: "5516981459950"
+```
+
+**VALIDAÇÃO DA NORMALIZAÇÃO:**
+```typescript
+const normalizedPhone = normalizePhone(remoteJid);
+const { data: user } = await supabase
+  .from('user_profiles')
+  .select('*')
+  .eq('phone', normalizedPhone)  // Match exato
+  .single();
+
+if (!user) {
+  // Enviar mensagem genérica de cadastro
+  // NÃO prosseguir para IA Coach
+}
+```
+
+**FORMATO NO BANCO DE DADOS:**
+- Sempre armazenar telefone como apenas números
+- Incluir código do país (ex: `55` para Brasil)
+- Formato: `5516981459950` (país + DDD + número)
+- NUNCA incluir `+`, `()`, `-`, espaços ou `@s.whatsapp.net`
+
+#### 3.3.4. Proteção de Configuração da IA Coach
+
+**PROIBIDO ABSOLUTAMENTE:**
+- ❌ Alterar a estrutura de prompts dos 4 estágios sem testar em ambiente isolado
+- ❌ Modificar a lógica de transição entre estágios (SDR → Specialist → Seller → Partner) sem validação
+- ❌ Remover ou alterar campos de `ia_coach_history` que armazenam contexto
+- ❌ Modificar a lógica de detecção de emergências sem aprovação (risco de segurança)
+- ❌ Alterar timeout ou retry logic sem medir impacto em latência
+- ❌ Trocar modelo de LLM (gpt-4o-mini) sem testar custo/performance
+
+**OBRIGATÓRIO ANTES DE ALTERAÇÕES:**
+1. Ler e entender prompts atuais em `supabase/functions/ia-coach-chat/index.ts`
+2. Testar mudanças localmente:
+   ```bash
+   supabase functions serve ia-coach-chat
+   node scripts/test_ia_coach_real.mjs
+   ```
+3. Validar que os 4 estágios continuam funcionando:
+   - SDR: Acolhimento e identificação de dor
+   - Specialist: Diagnóstico profundo (4 pilares)
+   - Seller: Oferta de teste gratuito
+   - Partner: Acompanhamento diário
+4. Deploy gradual: Preview → Production
+5. Monitorar logs por 24h após deploy
+
+#### 3.3.5. Detecção de Emergências - NUNCA DESABILITAR
+
+**CONTEXTO:**
+IA Coach inclui detecção de mensagens de emergência (suicídio, violência) com resposta imediata e priorizada.
+
+**PALAVRAS-CHAVE MONITORADAS:**
+- Pensamentos suicidas: "quero morrer", "suicídio", "acabar com tudo"
+- Violência: "vou me machucar", "não aguento mais"
+- Crise emocional: "desespero", "sem saída"
+
+**RESPOSTA AUTOMÁTICA:**
+```typescript
+const emergencyKeywords = ['suicid', 'morrer', 'acabar com tudo', 'machucar'];
+if (emergencyKeywords.some(kw => message.toLowerCase().includes(kw))) {
+  return {
+    reply: "Percebi que você está passando por um momento difícil. " +
+           "Por favor, entre em contato imediatamente: CVV 188 (24h). " +
+           "Estou aqui para apoiar você.",
+    isEmergency: true,
+    stage: currentStage
+  };
+}
+```
+
+**REGRAS:**
+- Detecção SEMPRE ativa (primeiro check em qualquer mensagem)
+- NÃO usar IA para gerar resposta de emergência (usar texto fixo + CVV)
+- Logar emergências em tabela separada para follow-up humano
+- NÃO bloquear conversa após emergência (usuário pode continuar)
+
+#### 3.3.6. Anti-Duplicação de Mensagens
+
+**PROBLEMA:**
+Evolution API pode enviar webhooks duplicados (retry automático), causando respostas duplicadas da IA.
+
+**SOLUÇÃO IMPLEMENTADA:**
+```typescript
+// Cache de mensagens processadas (in-memory)
+const processedMessages = new Map<string, number>();
+const MESSAGE_CACHE_TTL = 300000; // 5 minutos
+
+function isDuplicate(messageId: string): boolean {
+  if (processedMessages.has(messageId)) {
+    return true;
+  }
+  processedMessages.set(messageId, Date.now());
+  // Cleanup de mensagens antigas
+  for (const [id, timestamp] of processedMessages) {
+    if (Date.now() - timestamp > MESSAGE_CACHE_TTL) {
+      processedMessages.delete(id);
+    }
+  }
+  return false;
+}
+```
+
+**VALIDAÇÃO:**
+- Toda mensagem tem ID único (`data.key.id` no webhook)
+- Se ID já processado nos últimos 5min, ignorar
+- Cleanup automático do cache para evitar memory leak
+
+#### 3.3.7. Checklist de Validação Pós-Deploy
+
+Após qualquer alteração em IA Coach ou Evolution webhook, executar:
+
+**TESTES MANUAIS:**
+- [ ] Enviar mensagem teste via WhatsApp para número cadastrado
+- [ ] Verificar que IA responde com contexto correto (não genérico)
+- [ ] Testar transição SDR → Specialist (fazer 3-4 perguntas)
+- [ ] Validar que histórico é salvo em `ia_coach_history`
+- [ ] Testar com número NÃO cadastrado (deve retornar msg de cadastro)
+
+**TESTES AUTOMATIZADOS:**
+```bash
+# Teste completo do fluxo
+node scripts/test_ia_coach_real.mjs
+
+# Debug de webhook específico
+node scripts/debug_ia_coach.js
+
+# Validar normalização de telefone
+node scripts/test_phone_normalization.js
+```
+
+**MONITORAMENTO (primeiras 24h):**
+- Verificar logs em Supabase → Edge Functions → Logs
+- Buscar por erros de autenticação OpenAI
+- Verificar latência média (deve ser < 3s)
+- Confirmar que taxa de erro < 1%
+
+**ROLLBACK SE:**
+- Taxa de erro > 5%
+- Latência média > 5s
+- Reclamações de usuários sobre respostas incorretas
+- Detecção de emergências não ativando
+
+#### 3.3.8. Documentação de Alterações
+
+**ANTES de modificar IA Coach ou Evolution webhook:**
+
+1. Criar issue no GitHub descrevendo a mudança
+2. Documentar estado atual dos prompts/lógica
+3. Justificar necessidade da alteração
+4. Planejar testes de validação
+
+**APÓS deploy:**
+
+1. Atualizar este documento se arquitetura mudou
+2. Commitar com mensagem clara: `feat(ia-coach): descrição da melhoria`
+3. Registrar em `docs/CHANGELOG_IA_COACH.md`
+4. Notificar time sobre mudanças
+
+**TEMPLATE DE COMMIT:**
+```
+feat(ia-coach): adiciona contexto de histórico de 30 dias
+
+- Modifica prompt do estágio Specialist para incluir últimos 30 dias
+- Ajusta query em ia_coach_history para filtrar por período
+- Testa com usuário real: melhoria de 40% na personalização
+
+Validação:
+- [x] Testes automatizados passando
+- [x] Deploy em preview validado
+- [x] Monitoramento de 24h OK
+```
+
+### 3.4. Fluxo de Dados e Interações entre Componentes
 
 1.  **Entrada do Usuário:** O usuário interage com o Frontend (Web) ou via Evolution API (WhatsApp).
 2.  **Roteamento:** As requisições são roteadas para a Supabase Edge Function apropriada (ex: `ia-coach-chat`).
@@ -389,8 +653,197 @@ O desenvolvimento do Vida Smart Coach segue um ciclo contínuo e iterativo, onde
 
 ### 5.3. Gerenciamento de Segredos e Credenciais
 
+#### 🔒 REGRAS CRÍTICAS DE SEGURANÇA - LEITURA OBRIGATÓRIA PARA TODOS OS AGENTES DE IA
+
+**⚠️ ATENÇÃO:** Estas regras foram criadas após múltiplos incidentes de exposição de chaves. A violação destas regras resulta em:
+- Comprometimento de credenciais de produção
+- Custos de rotação de segredos em todos os provedores
+- Risco de segurança para dados de usuários
+- Tempo significativo de correção e re-deploy
+
+#### 5.3.1. Regra #1: `.env.local` É APENAS PARA USO LOCAL - NUNCA COMMITAR
+
+**PROIBIDO ABSOLUTAMENTE:**
+- ❌ Modificar, sanitizar ou apagar `.env.local` sem backup explícito aprovado pelo usuário
+- ❌ Commitar `.env.local` ou qualquer arquivo `.env.*` (exceto `.env.example`) no repositório
+- ❌ Incluir valores reais de chaves em commits, mesmo em comentários ou docs
+- ❌ Criar scripts que leiam `.env.local` e gravem valores em outros arquivos versionados
+- ❌ Expor conteúdo de `.env.local` em logs, outputs de terminal ou documentação
+
+**OBRIGATÓRIO:**
+- ✅ `.env.local` deve permanecer apenas na máquina local do desenvolvedor
+- ✅ O arquivo `.gitignore` já contém regras para ignorar `.env` e `.env.*` — NUNCA remover essas regras
+- ✅ Toda chave de API, token ou senha DEVE ser lida via `process.env.VARIAVEL` ou `import.meta.env.VITE_VARIAVEL`
+- ✅ Antes de qualquer alteração em arquivos de ambiente, criar backup em `local_secrets_backup/` (já ignorado pelo git)
+- ✅ Validar que `.gitignore` contém as regras antes de qualquer commit:
+  ```
+  # Environment variables
+  .env
+  .env.*
+  !.env.example
+  INTERNAL_FUNCTION_SECRET.txt
+  local_secrets_backup/
+  ```
+
+#### 5.3.2. Regra #2: NUNCA Expor Chaves em Código ou Documentação
+
+**PADRÕES DE CHAVES QUE NUNCA DEVEM APARECER LITERALMENTE:**
+- `sb_secret_*` (Supabase Service Role)
+- `eyJ*` (JWTs - exceto se claramente marcado como exemplo público)
+- `sk_live_*` / `sk_test_*` (Stripe Secret Keys)
+- `whsec_*` (Stripe Webhook Secrets)
+- `sk-proj-*` / `sk-*` (OpenAI API Keys)
+- `AIza*` (Google API Keys)
+- Qualquer UUID ou token da Evolution API
+- `NEXTAUTH_SECRET` ou outros secrets de autenticação
+
+**SE ENCONTRAR CHAVE HARDCODED:**
+1. PARAR imediatamente
+2. Substituir por referência de ambiente: `process.env.NOME_DA_VARIAVEL`
+3. Documentar no commit: "security: remove hardcoded secret"
+4. Alertar usuário sobre necessidade de rotação
+
+**EXEMPLO CORRETO (teste ou debug script):**
+```javascript
+// ❌ ERRADO
+const response = await fetch(url, {
+  headers: {
+    'Authorization': 'Bearer sb_secret_ABC123...'
+  }
+});
+
+// ✅ CORRETO
+const response = await fetch(url, {
+  headers: {
+    'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+  }
+});
+```
+
+#### 5.3.3. Regra #3: Gestão de Variáveis de Ambiente por Contexto
+
+**FRONTEND (Vite/React):**
+- Prefixar com `VITE_` para expor ao bundle do browser
+- Usar apenas chaves públicas (ANON key, URLs públicas)
+- Acessar via `import.meta.env.VITE_VARIAVEL`
+- Exemplo: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+**BACKEND (Edge Functions, Scripts Node):**
+- Sem prefixo `VITE_`
+- Usar chaves privadas (Service Role, API secrets)
+- Acessar via `Deno.env.get('VARIAVEL')` (Edge Functions) ou `process.env.VARIAVEL` (Node)
+- Exemplo: `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`
+
+**DEPLOY (Vercel/Supabase):**
+- Configurar secrets em Vercel Project Settings → Environment Variables
+- Configurar Function Secrets em Supabase Dashboard → Settings → Edge Functions
+- NUNCA incluir valores reais em `vercel.json` ou outros arquivos de config versionados
+
+#### 5.3.4. Regra #4: Tratamento de Fallbacks e Valores Padrão
+
+**PROIBIDO:**
+- ❌ Fallback com URL/chave hardcoded: `const url = import.meta.env.VITE_SUPABASE_URL || 'https://project.supabase.co'`
+- ❌ Valores padrão que incluam segredos ou dados sensíveis
+
+**PERMITIDO:**
+- ✅ Fallback para valores não-sensíveis: `const debug = import.meta.env.VITE_DEBUG_MODE || 'false'`
+- ✅ Guard clause com erro explícito:
+  ```javascript
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) {
+    console.error('[Context] VITE_SUPABASE_URL ausente');
+    toast.error('Configuração ausente');
+    return { success: false };
+  }
+  ```
+
+#### 5.3.5. Regra #5: Arquivo `.env.example` como Referência
+
+**PROPÓSITO:**
+- Serve como template para desenvolvedores configurarem seu `.env.local`
+- Documenta TODAS as variáveis necessárias
+- NUNCA contém valores reais — apenas placeholders e instruções
+
+**ESTRUTURA OBRIGATÓRIA:**
+```bash
+##############################################
+# NUNCA COMMITAR ARQUIVOS .env EM REPOSITÓRIO #
+##############################################
+
+# Supabase (Frontend - público)
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Supabase (Backend - privado)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# OpenAI
+OPENAI_API_KEY=sk-... (substitua)
+
+# Evolution API (WhatsApp)
+EVOLUTION_API_SECRET=your-secret-here
+...
+```
+
+#### 5.3.6. Checklist Pré-Commit para Agentes de IA
+
+Antes de fazer qualquer commit, TODOS os agentes DEVEM verificar:
+
+- [ ] Nenhum arquivo `.env.local`, `.env.production` ou similar está sendo commitado
+- [ ] Nenhuma string literal de chave API está presente em arquivos alterados
+- [ ] Todos os usos de credenciais são via `process.env` ou `import.meta.env`
+- [ ] `.gitignore` contém as regras de proteção de ambiente
+- [ ] Se modificou `.env.example`, contém APENAS placeholders (sem valores reais)
+- [ ] Se criou novo secret, documentou no `.env.example`
+- [ ] Se removeu/alterou código com credenciais, criou backup se necessário
+
+**PROCESSO DE VALIDAÇÃO:**
+```bash
+# Verificar arquivos staged
+git status
+
+# Verificar conteúdo dos arquivos staged
+git diff --cached
+
+# Buscar padrões de segredos antes de commit
+git diff --cached | grep -E "(sb_secret_|sk_live_|sk-proj-|AIza|whsec_)"
+# Se retornar matches, PARAR e corrigir
+```
+
+#### 5.3.7. Rotação de Segredos - Procedimento de Emergência
+
+**QUANDO ROTACIONAR:**
+- Imediatamente após qualquer exposição (commit acidental, log público, etc.)
+- Periodicamente (trimestral) como boa prática
+- Após saída de membro da equipe com acesso
+
+**PROCEDIMENTO:**
+1. **Gerar novas chaves nos provedores:**
+   - Supabase: Dashboard → Settings → API → Generate new keys
+   - Stripe: Dashboard → Developers → API keys → Create key
+   - OpenAI: Platform → API keys → Create new key
+   - Evolution API: Provider dashboard → Regenerate tokens
+
+2. **Atualizar em TODOS os ambientes:**
+   - Vercel: Project Settings → Environment Variables (Development, Preview, Production)
+   - Supabase: Project Settings → Edge Functions → Function Secrets
+   - `.env.local` na máquina local do desenvolvedor
+
+3. **Validar deploy:**
+   - Fazer push trivial para forçar re-deploy
+   - Testar funcionalidades críticas: login, geração de planos, webhook WhatsApp
+   - Verificar logs para erros de autenticação
+
+4. **Revogar chaves antigas:**
+   - SOMENTE após confirmar que novas chaves funcionam
+   - Revogar nas mesmas interfaces onde foram geradas
+
+**DOCUMENTAÇÃO DA ROTAÇÃO:**
+- Atualizar `local_secrets_backup/rotation_log.md` com data e chaves rotacionadas
+- Commitar menção genérica: "security: rotated compromised keys (see internal log)"
+
 *   **Armazenamento Seguro:** Todas as chaves de API, senhas e outras credenciais são armazenadas de forma segura como segredos no Supabase e no Vercel, e nunca são hard-coded no código-fonte.
-*   **Rotação de Segredos:** A rotação de segredos foi realizada e está em conformidade com as melhores práticas de segurança.
+*   **Rotação de Segredos:** A rotação de segredos deve seguir o procedimento documentado na seção 5.3.7 sempre que houver suspeita de exposição.
 
 ### 5.4. Segurança da Aplicação
 

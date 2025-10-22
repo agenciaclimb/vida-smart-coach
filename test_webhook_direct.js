@@ -25,7 +25,7 @@ const test_webhook_direct = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'C26C953E32F6-4223-A0FF-7552BBE45822'
+        'apikey': process.env.EVOLUTION_API_SECRET
       },
       body: JSON.stringify(testPayload)
     });

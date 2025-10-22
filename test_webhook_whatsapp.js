@@ -23,7 +23,7 @@ const test_evolution_webhook = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'C26C953E32F6-4223-A0FF-7552BBE45822' // EVOLUTION_API_SECRET
+        'apikey': process.env.EVOLUTION_API_SECRET // from env
       },
       body: JSON.stringify(testPayload)
     });

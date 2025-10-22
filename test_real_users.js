@@ -6,7 +6,7 @@ const check_real_users = async () => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer process.env.VITE_SUPABASE_ANON_KEY',
+        'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`,
         'apikey': process.env.VITE_SUPABASE_ANON_KEY
       }
     });
@@ -60,7 +60,7 @@ const test_webhook_with_real_user = async (user) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'C26C953E32F6-4223-A0FF-7552BBE45822'
+        'apikey': process.env.EVOLUTION_API_SECRET
       },
       body: JSON.stringify(testPayload)
     });
