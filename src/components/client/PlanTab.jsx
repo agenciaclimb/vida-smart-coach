@@ -12,6 +12,8 @@ import { useGamification } from '@/contexts/data/GamificationContext';
 import CheckinSystem from '@/components/checkin/CheckinSystem';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
+import { usePlanCompletions } from '@/hooks/usePlanCompletions';
+import { CompletionCheckbox } from '@/components/client/CompletionCheckbox';
 import {
   Accordion,
   AccordionContent,
@@ -468,6 +470,13 @@ const PhysicalPlanDisplay = ({ planData }) => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const plan = planData.plan_data;
+  
+  // 🎯 Hook de completions
+  const { user } = useAuth();
+  const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+    user?.id, 
+    'physical'
+  );
 
   if (!plan || !plan.weeks) {
     return (
@@ -490,6 +499,12 @@ const PhysicalPlanDisplay = ({ planData }) => {
     toast.success('Feedback enviado! Vamos revisar seu plano.');
     setFeedback('');
     setFeedbackOpen(false);
+  };
+  
+  // 🎯 Handler para toggle de exercícios
+  const handleExerciseToggle = async (weekIndex, workoutIndex, exerciseIndex) => {
+    const itemIdentifier = `week_${weekIndex}_workout_${workoutIndex}_exercise_${exerciseIndex}`;
+    await toggleCompletion(itemIdentifier, 'exercise', 10); // 10 XP por exercício
   };
 
   return (
@@ -565,21 +580,32 @@ const PhysicalPlanDisplay = ({ planData }) => {
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-3 pt-4">
-                      {workout.exercises?.map((ex, exIdx) => (
-                        <div key={exIdx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                          <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="font-medium">{ex.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {ex.sets} séries × {ex.reps} repetições
-                              {ex.rest_seconds && ` • ${ex.rest_seconds}s descanso`}
-                            </p>
-                            {ex.notes && (
-                              <p className="text-xs text-muted-foreground mt-1 italic">💡 {ex.notes}</p>
-                            )}
+                      {workout.exercises?.map((ex, exIdx) => {
+                        const itemIdentifier = `week_${activeWeek}_workout_${idx}_exercise_${exIdx}`;
+                        const isCompleted = isItemCompleted(itemIdentifier);
+                        
+                        return (
+                          <div key={exIdx} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                            <CompletionCheckbox
+                              id={itemIdentifier}
+                              checked={isCompleted}
+                              onCheckedChange={() => handleExerciseToggle(activeWeek, idx, exIdx)}
+                              disabled={completionsLoading}
+                              points={10}
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium">{ex.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {ex.sets} séries × {ex.reps} repetições
+                                {ex.rest_seconds && ` • ${ex.rest_seconds}s descanso`}
+                              </p>
+                              {ex.notes && (
+                                <p className="text-xs text-muted-foreground mt-1 italic">💡 {ex.notes}</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -624,6 +650,13 @@ const NutritionalPlanDisplay = ({ planData }) => {
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
     
+    // 🎯 Hook de completions
+    const { user } = useAuth();
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+      user?.id, 
+      'nutritional'
+    );
+    
     if (!plan) {
       return (
         <Card>
@@ -643,6 +676,12 @@ const NutritionalPlanDisplay = ({ planData }) => {
       toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
       setFeedback('');
       setFeedbackOpen(false);
+    };
+    
+    // 🎯 Handler para toggle de refeições
+    const handleMealToggle = async (mealIndex) => {
+      const itemIdentifier = `meal_${mealIndex}`;
+      await toggleCompletion(itemIdentifier, 'meal', 5); // 5 XP por refeição
     };
 
     return (
@@ -723,12 +762,23 @@ const NutritionalPlanDisplay = ({ planData }) => {
                     </AccordionTrigger>
                     <AccordionContent>
                       <ul className="space-y-2 pt-3">
-                        {meal.items?.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                            <span className="text-sm">{item}</span>
-                          </li>
-                        ))}
+                        {meal.items?.map((item, idx) => {
+                          const itemIdentifier = `meal_${i}_item_${idx}`;
+                          const isCompleted = isItemCompleted(itemIdentifier);
+                          
+                          return (
+                            <li key={idx} className="flex items-start gap-2">
+                              <CompletionCheckbox
+                                id={itemIdentifier}
+                                checked={isCompleted}
+                                onCheckedChange={() => toggleCompletion(itemIdentifier, 'meal', 5)}
+                                disabled={completionsLoading}
+                                points={5}
+                              />
+                              <span className="text-sm flex-1">{item}</span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </AccordionContent>
                   </AccordionItem>
@@ -793,6 +843,13 @@ const EmotionalPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
+    
+    // 🎯 Hook de completions
+    const { user } = useAuth();
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+      user?.id, 
+      'emotional'
+    );
     
     if (!plan) {
       return (
@@ -874,20 +931,32 @@ const EmotionalPlanDisplay = ({ planData }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {plan.daily_routines?.map((routine, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-pink-700">{routine.duration_minutes || '10'}min</span>
+                {plan.daily_routines?.map((routine, i) => {
+                  const itemIdentifier = `routine_${i}`;
+                  const isCompleted = isItemCompleted(itemIdentifier);
+                  
+                  return (
+                    <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-pink-700">{routine.duration_minutes || '10'}min</span>
+                        </div>
                       </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-pink-900">{routine.time}</p>
+                        <p className="text-sm text-pink-700 mt-1">{routine.activity}</p>
+                      </div>
+                      <CompletionCheckbox
+                        id={itemIdentifier}
+                        checked={isCompleted}
+                        onCheckedChange={() => toggleCompletion(itemIdentifier, 'routine', 8)}
+                        disabled={completionsLoading}
+                        points={8}
+                        className="flex-shrink-0"
+                      />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-pink-900">{routine.time}</p>
-                      <p className="text-sm text-pink-700 mt-1">{routine.activity}</p>
-                    </div>
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -976,6 +1045,13 @@ const SpiritualPlanDisplay = ({ planData }) => {
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
     
+    // 🎯 Hook de completions
+    const { user } = useAuth();
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+      user?.id, 
+      'spiritual'
+    );
+    
     if (!plan) {
       return (
         <Card>
@@ -1056,20 +1132,32 @@ const SpiritualPlanDisplay = ({ planData }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {plan.daily_practices?.map((practice, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                        <Wind className="w-6 h-6 text-purple-700" />
+                {plan.daily_practices?.map((practice, i) => {
+                  const itemIdentifier = `practice_${i}`;
+                  const isCompleted = isItemCompleted(itemIdentifier);
+                  
+                  return (
+                    <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
+                          <Wind className="w-6 h-6 text-purple-700" />
+                        </div>
                       </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-purple-900">{practice.time}</p>
+                        <p className="text-sm text-purple-700 mt-1">{practice.activity}</p>
+                      </div>
+                      <CompletionCheckbox
+                        id={itemIdentifier}
+                        checked={isCompleted}
+                        onCheckedChange={() => toggleCompletion(itemIdentifier, 'practice', 8)}
+                        disabled={completionsLoading}
+                        points={8}
+                        className="flex-shrink-0"
+                      />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-purple-900">{practice.time}</p>
-                      <p className="text-sm text-purple-700 mt-1">{practice.activity}</p>
-                    </div>
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
