@@ -6,7 +6,7 @@ const EXPOSED_KEYS = [
   process.env.VITE_SUPABASE_ANON_KEY,
   process.env.VITE_SUPABASE_ANON_KEY,
   process.env.VITE_SUPABASE_ANON_KEY,
-  'sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8'
+  'sb_secret_REDACTED'
 ];
 
 const FILES_TO_SKIP = [

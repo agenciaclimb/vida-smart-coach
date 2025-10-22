@@ -11,8 +11,8 @@ const debug_deep_investigation = async () => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8',
-        'apikey': 'sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8'
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
       }
     });
     
@@ -80,8 +80,8 @@ const testFindUserFunction = async (targetPhone) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8',
-        'apikey': 'sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8'
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY
       }
     });
     

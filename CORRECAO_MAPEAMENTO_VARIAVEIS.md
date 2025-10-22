@@ -18,13 +18,14 @@ EVOLUTION_INSTANCE_ID   // ✅ d8cfea03-bf0f-4ce0-a8aa-2faaec309bfd
 
 ---
 
-## 🔧 **VARIÁVEIS CORRETAS DO SEU .env.local:**
+## 🔧 **VARIÁVEIS CORRETAS DO SEU .env.local (exemplo):**
 
 ```env
-✅ SUPABASE_SERVICE_ROLE_KEY=sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8
-✅ EVOLUTION_API_KEY=bad6ff73-1582-4464-b231-5f6752f3a6fb
-✅ EVOLUTION_API_URL=https://api.evoapicloud.com
-✅ EVOLUTION_INSTANCE_ID=d8cfea03-bf0f-4ce0-a8aa-2faaec309bfd
+# Valores reais REDIGIDOS neste documento. Substitua por suas chaves válidas.
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+EVOLUTION_API_KEY=your-evolution-api-key
+EVOLUTION_API_URL=https://api.evoapicloud.com
+EVOLUTION_INSTANCE_ID=your-evolution-instance-id
 ```
 
 ---

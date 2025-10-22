@@ -16,7 +16,7 @@ const test_ia_coach_with_service_key = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer sb_secret_F3HUJCLX2VdRiuah8bAMlQ_hhn0gyC8'
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
       },
       body: JSON.stringify({
         messageContent: messageContent,
