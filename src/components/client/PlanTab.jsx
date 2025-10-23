@@ -494,9 +494,20 @@ const PhysicalPlanDisplay = ({ planData }) => {
       toast.error('Por favor, escreva seu feedback');
       return;
     }
-    
-    // Salvar feedback (implementar endpoint ou salvamento local)
-    toast.success('Feedback enviado! Vamos revisar seu plano.');
+    try {
+      const { error } = await supabase.from('plan_feedback').insert({
+        user_id: user?.id,
+        plan_type: 'physical',
+        feedback_text: feedback.trim(),
+        status: 'pending'
+      });
+      if (error) throw error;
+      toast.success('Feedback enviado! Vamos revisar seu plano.');
+    } catch (err) {
+      console.error('Erro ao salvar feedback:', err);
+      toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+      return;
+    }
     setFeedback('');
     setFeedbackOpen(false);
   };
@@ -673,7 +684,20 @@ const NutritionalPlanDisplay = ({ planData }) => {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
-      toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
+      try {
+        const { error } = await supabase.from('plan_feedback').insert({
+          user_id: user?.id,
+          plan_type: 'nutritional',
+          feedback_text: feedback.trim(),
+          status: 'pending'
+        });
+        if (error) throw error;
+        toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
+      } catch (err) {
+        console.error('Erro ao salvar feedback:', err);
+        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        return;
+      }
       setFeedback('');
       setFeedbackOpen(false);
     };
@@ -867,7 +891,20 @@ const EmotionalPlanDisplay = ({ planData }) => {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
-      toast.success('Feedback enviado! Vamos ajustar seu plano de bem-estar emocional.');
+      try {
+        const { error } = await supabase.from('plan_feedback').insert({
+          user_id: user?.id,
+          plan_type: 'emotional',
+          feedback_text: feedback.trim(),
+          status: 'pending'
+        });
+        if (error) throw error;
+        toast.success('Feedback enviado! Vamos ajustar seu plano de bem-estar emocional.');
+      } catch (err) {
+        console.error('Erro ao salvar feedback:', err);
+        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        return;
+      }
       setFeedback('');
       setFeedbackOpen(false);
     };
@@ -1068,7 +1105,20 @@ const SpiritualPlanDisplay = ({ planData }) => {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
-      toast.success('Feedback enviado! Vamos ajustar seu plano espiritual.');
+      try {
+        const { error } = await supabase.from('plan_feedback').insert({
+          user_id: user?.id,
+          plan_type: 'spiritual',
+          feedback_text: feedback.trim(),
+          status: 'pending'
+        });
+        if (error) throw error;
+        toast.success('Feedback enviado! Vamos ajustar seu plano espiritual.');
+      } catch (err) {
+        console.error('Erro ao salvar feedback:', err);
+        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        return;
+      }
       setFeedback('');
       setFeedbackOpen(false);
     };

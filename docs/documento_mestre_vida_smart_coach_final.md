@@ -175,6 +175,10 @@ Para acessar o histórico completo de desenvolvimento, bugs corrigidos e logs op
 *   [`docs/documento_mestre_vida_smart_coach_HISTORICO.md`](https://github.com/agenciaclimb/vida-smart-coach/blob/main/docs/documento_mestre_vida_smart_coach_HISTORICO.md) - Logs detalhados de 2024-2025
 *   [Commits do GitHub](https://github.com/agenciaclimb/vida-smart-coach/commits/main) - Histórico completo de alterações
 
+**INICIANDO TAREFA P0:** Loop de feedback → IA (integração completa)
+**Objetivo:** Fechar o loop de feedback salvando respostas dos usuários em `plan_feedback` e incluindo feedback pendente no contexto da IA (ia-coach-chat) para ajuste proativo dos planos.
+**Status:** 🚀 EM ANDAMENTO (22/10/2025)
+
 ### 1.4. Glossário de Termos Técnicos e de Negócio
 
 *   **P0 (Crítico):** Item que bloqueia operação ou causa risco direto ao produto. Exige ação imediata; pode permanecer em estado BLOQUEADO quando depende de terceiros (ex.: rotação de segredos).

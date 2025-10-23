@@ -621,6 +621,7 @@ type UserContextData = {
   activePlans: any[];
   gamification: any | null;
   memorySnippets: any[];
+  pendingFeedback?: Array<{ id: string; plan_type: string; feedback_text: string; created_at: string }>;
 };
 
 async function fetchUserContext(userId: string, supabase: any): Promise<UserContextData> {
@@ -644,7 +645,8 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
     actions,
     plans,
     gamification,
-    memories
+    memories,
+    feedback
   ] = await Promise.all([
     runQuery(
       () => supabase
@@ -710,6 +712,16 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
         .order('last_referenced', { ascending: false })
         .limit(5),
       []
+    ),
+    runQuery(
+      () => supabase
+        .from('plan_feedback')
+        .select('id, plan_type, feedback_text, created_at')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(3),
+      []
     )
   ]);
 
@@ -722,7 +734,8 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
     pendingActions: actions.slice(0, 3),
     activePlans: plans.slice(0, 2),
     gamification,
-    memorySnippets: memories.slice(0, 3)
+    memorySnippets: memories.slice(0, 3),
+    pendingFeedback: (feedback || []).slice(0, 3)
   };
 }
 
@@ -829,6 +842,15 @@ function buildContextPrompt(userProfile: any, context: UserContextData, stage: s
       .map((memory: any) => `${memory.memory_type}: ${limitText(memory.content, 80)}`)
       .join(' | ');
     lines.push(`Notas importantes: ${memories}.`);
+  }
+  
+  if (context.pendingFeedback && context.pendingFeedback.length > 0) {
+    const fb = context.pendingFeedback
+      .slice(0, 2)
+      .map((f: any) => `${f.plan_type}: "${limitText(f.feedback_text, 80)}"`)
+      .join(' | ');
+    lines.push(`Feedback pendente do usuário: ${fb}.`);
+    lines.push(`Ação sugerida: reconheça o feedback e ofereça ajustar/regenerar o plano correspondente, confirmando preferências em 1 pergunta curta.`);
   }
 
   if (lines.length === 0) {
