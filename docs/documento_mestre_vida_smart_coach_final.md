@@ -217,12 +217,20 @@ Escopo: Substituir `SECURITY_KEY_ROTATION_CHECKLIST.md` por `SECURITY_ROTATION_G
 Objetivo: Testar fluxo completo de feedback do usuário até resposta da IA.
 Escopo: Testar localmente (dev server) e criar checklist de validação manual.
 
-**RESULTADO PARCIAL (22/10/2025):** 🔄 Em andamento
+**RESULTADO PARCIAL (22/10/2025):** 🔄 Em andamento - Diagnóstico de RLS
 - ✅ Servidor de desenvolvimento iniciado (http://localhost:5173)
 - ✅ Criado checklist completo de validação E2E (`VALIDACAO_E2E_FEEDBACK_IA.md`)
 - ✅ Verificado que Edge Function `ia-coach-chat` já contém código de feedback
-- ⏳ Pendente: Executar teste manual no app web + WhatsApp seguindo checklist
-- ⏳ Pendente: Publicar Edge Functions se houver mudanças não deployadas
+- ✅ Scripts de debug criados (`debug_feedback.mjs`, `test_frontend_insert.mjs`)
+- ✅ Diagnóstico realizado:
+  - Tabela `plan_feedback` existe e está correta
+  - INSERT funciona com Service Role Key (admin)
+  - RLS está ATIVO e funcionando corretamente (bloqueia não-autenticados)
+  - **Problema identificado**: Usuário não autenticado ao enviar feedback
+- ✅ Logs de debug adicionados nos 4 handlers de feedback (PlanTab.jsx)
+- ✅ Guia rápido de debug criado (`GUIA_DEBUG_FEEDBACK.md`)
+- ⏳ Pendente: Usuário fazer login e testar novamente seguindo `GUIA_DEBUG_FEEDBACK.md`
+- ⏳ Pendente: Após funcionar, remover logs de debug e marcar P0 como concluído
 
 
 ### 1.4. Glossário de Termos Técnicos e de Negócio
