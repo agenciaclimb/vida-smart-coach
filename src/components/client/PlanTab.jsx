@@ -474,10 +474,23 @@ const PhysicalPlanDisplay = ({ planData }) => {
   
   // 🎯 Hook de completions
   const { user } = useAuth();
-  const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+  const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
     user?.id, 
     'physical'
   );
+
+  // 📊 Total de itens marcáveis (exercícios) no plano físico (todas as semanas)
+  const totalPhysicalItems = (() => {
+    if (!plan?.weeks) return 0;
+    try {
+      return plan.weeks.reduce((sum, w) => sum + (w.workouts?.reduce((s, wk) => s + (wk.exercises?.length || 0), 0) || 0), 0);
+    } catch {
+      return 0;
+    }
+  })();
+
+  const { total: completedPhysical } = getStats?.() || { total: 0 };
+  const physicalPercent = Math.round((completedPhysical / Math.max(1, totalPhysicalItems)) * 100);
 
   if (!plan || !plan.weeks) {
     return (
@@ -487,6 +500,17 @@ const PhysicalPlanDisplay = ({ planData }) => {
           <p>Plano físico não disponível.</p>
         </CardContent>
       </Card>
+
+      {/* Progresso do Plano Físico */}
+      <div className="px-2 md:px-0">
+        <div className="flex items-center justify-between text-xs mb-1 text-white/80">
+          <span>Progresso do Plano</span>
+          <span>{completedPhysical}/{totalPhysicalItems} • {physicalPercent}%</span>
+        </div>
+        <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-full bg-white/80" style={{ width: `${physicalPercent}%` }} />
+        </div>
+      </div>
     );
   }
 
@@ -693,10 +717,20 @@ const NutritionalPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'nutritional'
     );
+
+    // 📊 Total de itens (alimentos) do plano
+    const totalNutritionalItems = (() => {
+      if (!plan?.meals) return 0;
+      try {
+        return plan.meals.reduce((sum, m) => sum + (m.items?.length || 0), 0);
+      } catch { return 0; }
+    })();
+    const { total: completedNutritional } = getStats?.() || { total: 0 };
+    const nutritionalPercent = Math.round((completedNutritional / Math.max(1, totalNutritionalItems)) * 100);
     
     if (!plan) {
       return (
@@ -793,6 +827,17 @@ const NutritionalPlanDisplay = ({ planData }) => {
               </div>
             </CardHeader>
           </Card>
+
+          {/* Progresso do Plano Nutricional */}
+          <div className="px-2 md:px-0">
+            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
+              <span>Progresso do Plano</span>
+              <span>{completedNutritional}/{totalNutritionalItems} • {nutritionalPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-green-500" style={{ width: `${nutritionalPercent}%` }} />
+            </div>
+          </div>
 
           {/* Métricas */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -929,10 +974,15 @@ const EmotionalPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'emotional'
     );
+
+    // 📊 Total de rotinas no plano emocional
+    const totalEmotionalItems = Array.isArray(plan?.daily_routines) ? plan.daily_routines.length : 0;
+    const { total: completedEmotional } = getStats?.() || { total: 0 };
+    const emotionalPercent = Math.round((completedEmotional / Math.max(1, totalEmotionalItems)) * 100);
     
     if (!plan) {
       return (
@@ -1023,6 +1073,17 @@ const EmotionalPlanDisplay = ({ planData }) => {
               </div>
             </CardHeader>
           </Card>
+
+          {/* Progresso do Plano Emocional */}
+          <div className="px-2 md:px-0">
+            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
+              <span>Progresso do Plano</span>
+              <span>{completedEmotional}/{totalEmotionalItems} • {emotionalPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-rose-500" style={{ width: `${emotionalPercent}%` }} />
+            </div>
+          </div>
 
           {/* Áreas de Foco */}
           {plan.focus_areas && plan.focus_areas.length > 0 && (
@@ -1172,10 +1233,15 @@ const SpiritualPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'spiritual'
     );
+
+    // 📊 Total de práticas diárias no plano espiritual
+    const totalSpiritualItems = Array.isArray(plan?.daily_practices) ? plan.daily_practices.length : 0;
+    const { total: completedSpiritual } = getStats?.() || { total: 0 };
+    const spiritualPercent = Math.round((completedSpiritual / Math.max(1, totalSpiritualItems)) * 100);
     
     if (!plan) {
       return (
@@ -1266,6 +1332,17 @@ const SpiritualPlanDisplay = ({ planData }) => {
               </div>
             </CardHeader>
           </Card>
+
+          {/* Progresso do Plano Espiritual */}
+          <div className="px-2 md:px-0">
+            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
+              <span>Progresso do Plano</span>
+              <span>{completedSpiritual}/{totalSpiritualItems} • {spiritualPercent}%</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-violet-500" style={{ width: `${spiritualPercent}%` }} />
+            </div>
+          </div>
 
           {/* Áreas de Foco */}
           {plan.focus_areas && plan.focus_areas.length > 0 && (
