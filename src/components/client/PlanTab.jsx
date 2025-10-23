@@ -490,22 +490,47 @@ const PhysicalPlanDisplay = ({ planData }) => {
   }
 
   const handleFeedbackSubmit = async () => {
+    console.log('[DEBUG FEEDBACK] Iniciando envio de feedback...');
+    console.log('[DEBUG FEEDBACK] user:', user);
+    console.log('[DEBUG FEEDBACK] user?.id:', user?.id);
+    console.log('[DEBUG FEEDBACK] feedback:', feedback);
+    
     if (!feedback.trim()) {
       toast.error('Por favor, escreva seu feedback');
       return;
     }
+    
+    if (!user?.id) {
+      console.error('[DEBUG FEEDBACK] ❌ ERRO: Usuário não autenticado!');
+      toast.error('Você precisa estar logado para enviar feedback');
+      return;
+    }
+    
     try {
-      const { error } = await supabase.from('plan_feedback').insert({
-        user_id: user?.id,
+      const feedbackData = {
+        user_id: user.id,
         plan_type: 'physical',
         feedback_text: feedback.trim(),
         status: 'pending'
-      });
-      if (error) throw error;
+      };
+      
+      console.log('[DEBUG FEEDBACK] Dados a inserir:', feedbackData);
+      
+      const { data, error } = await supabase.from('plan_feedback').insert(feedbackData).select();
+      
+      console.log('[DEBUG FEEDBACK] Resposta do Supabase:', { data, error });
+      
+      if (error) {
+        console.error('[DEBUG FEEDBACK] ❌ Erro do Supabase:', error);
+        throw error;
+      }
+      
+      console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
       toast.success('Feedback enviado! Vamos revisar seu plano.');
     } catch (err) {
-      console.error('Erro ao salvar feedback:', err);
-      toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+      console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
+      console.error('[DEBUG FEEDBACK] Stack:', err.stack);
+      toast.error(`Erro: ${err.message || 'Não foi possível salvar seu feedback'}`);
       return;
     }
     setFeedback('');
@@ -680,22 +705,39 @@ const NutritionalPlanDisplay = ({ planData }) => {
     }
 
     const handleFeedbackSubmit = async () => {
+      console.log('[DEBUG FEEDBACK NUTRICIONAL] Iniciando...');
+      console.log('[DEBUG FEEDBACK NUTRICIONAL] user?.id:', user?.id);
+      
       if (!feedback.trim()) {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
+      
+      if (!user?.id) {
+        console.error('[DEBUG FEEDBACK NUTRICIONAL] ❌ Usuário não autenticado!');
+        toast.error('Você precisa estar logado para enviar feedback');
+        return;
+      }
+      
       try {
-        const { error } = await supabase.from('plan_feedback').insert({
-          user_id: user?.id,
+        const feedbackData = {
+          user_id: user.id,
           plan_type: 'nutritional',
           feedback_text: feedback.trim(),
           status: 'pending'
-        });
+        };
+        
+        console.log('[DEBUG FEEDBACK NUTRICIONAL] Dados:', feedbackData);
+        const { data, error } = await supabase.from('plan_feedback').insert(feedbackData).select();
+        console.log('[DEBUG FEEDBACK NUTRICIONAL] Resposta:', { data, error });
+        
         if (error) throw error;
+        
+        console.log('[DEBUG FEEDBACK NUTRICIONAL] ✅ Sucesso!');
         toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
       } catch (err) {
-        console.error('Erro ao salvar feedback:', err);
-        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        console.error('[DEBUG FEEDBACK NUTRICIONAL] ❌ Erro:', err);
+        toast.error(`Erro: ${err.message || 'Não foi possível salvar seu feedback'}`);
         return;
       }
       setFeedback('');
@@ -887,22 +929,39 @@ const EmotionalPlanDisplay = ({ planData }) => {
     }
 
     const handleFeedbackSubmit = async () => {
+      console.log('[DEBUG FEEDBACK EMOCIONAL] Iniciando...');
+      console.log('[DEBUG FEEDBACK EMOCIONAL] user?.id:', user?.id);
+      
       if (!feedback.trim()) {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
+      
+      if (!user?.id) {
+        console.error('[DEBUG FEEDBACK EMOCIONAL] ❌ Usuário não autenticado!');
+        toast.error('Você precisa estar logado para enviar feedback');
+        return;
+      }
+      
       try {
-        const { error } = await supabase.from('plan_feedback').insert({
-          user_id: user?.id,
+        const feedbackData = {
+          user_id: user.id,
           plan_type: 'emotional',
           feedback_text: feedback.trim(),
           status: 'pending'
-        });
+        };
+        
+        console.log('[DEBUG FEEDBACK EMOCIONAL] Dados:', feedbackData);
+        const { data, error } = await supabase.from('plan_feedback').insert(feedbackData).select();
+        console.log('[DEBUG FEEDBACK EMOCIONAL] Resposta:', { data, error });
+        
         if (error) throw error;
+        
+        console.log('[DEBUG FEEDBACK EMOCIONAL] ✅ Sucesso!');
         toast.success('Feedback enviado! Vamos ajustar seu plano de bem-estar emocional.');
       } catch (err) {
-        console.error('Erro ao salvar feedback:', err);
-        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        console.error('[DEBUG FEEDBACK EMOCIONAL] ❌ Erro:', err);
+        toast.error(`Erro: ${err.message || 'Não foi possível salvar seu feedback'}`);
         return;
       }
       setFeedback('');
@@ -1101,22 +1160,39 @@ const SpiritualPlanDisplay = ({ planData }) => {
     }
 
     const handleFeedbackSubmit = async () => {
+      console.log('[DEBUG FEEDBACK ESPIRITUAL] Iniciando...');
+      console.log('[DEBUG FEEDBACK ESPIRITUAL] user?.id:', user?.id);
+      
       if (!feedback.trim()) {
         toast.error('Por favor, escreva seu feedback');
         return;
       }
+      
+      if (!user?.id) {
+        console.error('[DEBUG FEEDBACK ESPIRITUAL] ❌ Usuário não autenticado!');
+        toast.error('Você precisa estar logado para enviar feedback');
+        return;
+      }
+      
       try {
-        const { error } = await supabase.from('plan_feedback').insert({
-          user_id: user?.id,
+        const feedbackData = {
+          user_id: user.id,
           plan_type: 'spiritual',
           feedback_text: feedback.trim(),
           status: 'pending'
-        });
+        };
+        
+        console.log('[DEBUG FEEDBACK ESPIRITUAL] Dados:', feedbackData);
+        const { data, error } = await supabase.from('plan_feedback').insert(feedbackData).select();
+        console.log('[DEBUG FEEDBACK ESPIRITUAL] Resposta:', { data, error });
+        
         if (error) throw error;
+        
+        console.log('[DEBUG FEEDBACK ESPIRITUAL] ✅ Sucesso!');
         toast.success('Feedback enviado! Vamos ajustar seu plano espiritual.');
       } catch (err) {
-        console.error('Erro ao salvar feedback:', err);
-        toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
+        console.error('[DEBUG FEEDBACK ESPIRITUAL] ❌ Erro:', err);
+        toast.error(`Erro: ${err.message || 'Não foi possível salvar seu feedback'}`);
         return;
       }
       setFeedback('');
