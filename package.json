@@ -9,6 +9,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview --port 4173",
     "test": "vitest",
+    "check:secrets": "node tools/secret-scan.js",
+    "setup:githooks": "git config core.hooksPath .githooks",
+    "ci": "pnpm lint && tsc --noEmit && node tools/secret-scan.js",
     "migrate": "node scripts/automated-migration.mjs",
     "migrate:supabase": "node scripts/supabase-migration-runner.mjs",
     "deploy": "node scripts/deploy-complete.mjs",
@@ -22,7 +25,6 @@
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
-    "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.15",

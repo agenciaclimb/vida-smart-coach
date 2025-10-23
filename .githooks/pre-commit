@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Pre-commit hook: blocks secrets from being committed
+# Requires Node.js installed
+
+# Run secret scan on staged changes
+node tools/secret-scan.js
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "\n❌ Pre-commit aborted: Secret scan failed. See details above."
+  exit $STATUS
+fi
+
+exit 0
