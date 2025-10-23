@@ -470,6 +470,7 @@ const PhysicalPlanDisplay = ({ planData }) => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const plan = planData.plan_data;
+  const navigate = useNavigate();
   
   // 🎯 Hook de completions
   const { user } = useAuth();
@@ -523,9 +524,16 @@ const PhysicalPlanDisplay = ({ planData }) => {
       }
       
       console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-      toast.success('Feedback enviado! Vamos revisar seu plano.');
+      toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+        duration: 2000
+      });
       setFeedback('');
       setFeedbackOpen(false);
+      
+      // Redirecionar para IA Coach após 1.5s
+      setTimeout(() => {
+        navigate('/ia-coach');
+      }, 1500);
     } catch (err) {
       console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
       toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -681,6 +689,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
+    const navigate = useNavigate();
     
     // 🎯 Hook de completions
     const { user } = useAuth();
@@ -734,9 +743,16 @@ const NutritionalPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('Feedback enviado! Vamos ajustar seu plano nutricional.');
+        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+          duration: 2000
+        });
         setFeedback('');
         setFeedbackOpen(false);
+        
+        // Redirecionar para IA Coach após 1.5s
+        setTimeout(() => {
+          navigate('/ia-coach');
+        }, 1500);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -909,6 +925,7 @@ const EmotionalPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
+    const navigate = useNavigate();
     
     // 🎯 Hook de completions
     const { user } = useAuth();
@@ -962,9 +979,16 @@ const EmotionalPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('Feedback enviado! Vamos ajustar seu plano de bem-estar emocional.');
+        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+          duration: 2000
+        });
         setFeedback('');
         setFeedbackOpen(false);
+        
+        // Redirecionar para IA Coach após 1.5s
+        setTimeout(() => {
+          navigate('/ia-coach');
+        }, 1500);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -1144,6 +1168,7 @@ const SpiritualPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
+    const navigate = useNavigate();
     
     // 🎯 Hook de completions
     const { user } = useAuth();
@@ -1197,9 +1222,16 @@ const SpiritualPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('Feedback enviado! Vamos ajustar seu plano espiritual.');
+        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+          duration: 2000
+        });
         setFeedback('');
         setFeedbackOpen(false);
+        
+        // Redirecionar para IA Coach após 1.5s
+        setTimeout(() => {
+          navigate('/ia-coach');
+        }, 1500);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
