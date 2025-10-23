@@ -179,6 +179,24 @@ Para acessar o histórico completo de desenvolvimento, bugs corrigidos e logs op
 **Objetivo:** Fechar o loop de feedback salvando respostas dos usuários em `plan_feedback` e incluindo feedback pendente no contexto da IA (ia-coach-chat) para ajuste proativo dos planos.
 **Status:** 🚀 EM ANDAMENTO (22/10/2025)
 
+**RESULTADO PARCIAL TAREFA P0 (22/10/2025):**
+- ✅ Migration criada: `supabase/migrations/20251022_create_plan_feedback.sql` (tabela `plan_feedback` + índices + RLS)
+- ✅ Frontend: `PlanTab.jsx` agora persiste feedback do usuário (4 planos) em `plan_feedback`
+- ✅ IA Contexto: `ia-coach-chat` carrega `pendingFeedback` e adiciona instrução para reconhecer e oferecer ajuste do plano
+- ⏳ Pendente: aplicar a migration em ambientes (Dev/Preview/Prod) e validar E2E com WhatsApp
+
+**INTENÇÃO (22/10/2025):** Aplicar migrações de banco pendentes
+Objetivo: Executar `is_bonus`, `activity key enforcement` e `plan_feedback` para habilitar o loop de feedback e manter integridade da gamificação.
+Escopo: Rodar scripts de migration com `scripts/run_sql_file.js` e registrar o resultado abaixo.
+
+**RESULTADO (22/10/2025):** Migrações aplicadas
+- ✅ `20251022_create_plan_feedback.sql` — aplicada com sucesso (tabela, índices, RLS)
+- ✅ `20251019_add_is_bonus_to_daily_activities.sql` — aplicada com sucesso
+- ⚠️ `20251019180500_add_activity_key_enforcement.sql` — 1ª tentativa falhou por conflito com índice único já existente durante o backfill (violação de `uniq_daily_activity_key_per_day`).
+  - 🔧 Correção aplicada: `20251022_fix_activity_key_enforcement.sql` (deduplicação por chave derivada antes do backfill)
+  - ✅ 2ª tentativa da migration original — aplicada com sucesso
+
+
 ### 1.4. Glossário de Termos Técnicos e de Negócio
 
 *   **P0 (Crítico):** Item que bloqueia operação ou causa risco direto ao produto. Exige ação imediata; pode permanecer em estado BLOQUEADO quando depende de terceiros (ex.: rotação de segredos).
