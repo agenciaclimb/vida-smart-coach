@@ -211,9 +211,18 @@ Escopo: Substituir `SECURITY_KEY_ROTATION_CHECKLIST.md` por `SECURITY_ROTATION_G
 **VALIDAÇÃO RÁPIDA (22/10/2025):**
 - ✅ Git status limpo (5 commits ahead of origin/main, nenhum arquivo staged/untracked problemático)
 - ✅ Erros de compilação: apenas Edge Functions Deno (esperado — tipos Deno não disponíveis em ambiente Node/VS Code)
-- ✅ Pre-commit hook ativo e funcional (bloqueou commits com padrões sensíveis conforme esperado)
-- ✅ Scanner de segredos operacional (`.githooks/pre-commit` + `tools/secret-scan.js`)
 
+
+**INTENÇÃO (22/10/2025):** Validação E2E do loop feedback→IA
+Objetivo: Testar fluxo completo de feedback do usuário até resposta da IA.
+Escopo: Testar localmente (dev server) e criar checklist de validação manual.
+
+**RESULTADO PARCIAL (22/10/2025):** 🔄 Em andamento
+- ✅ Servidor de desenvolvimento iniciado (http://localhost:5173)
+- ✅ Criado checklist completo de validação E2E (`VALIDACAO_E2E_FEEDBACK_IA.md`)
+- ✅ Verificado que Edge Function `ia-coach-chat` já contém código de feedback
+- ⏳ Pendente: Executar teste manual no app web + WhatsApp seguindo checklist
+- ⏳ Pendente: Publicar Edge Functions se houver mudanças não deployadas
 
 
 ### 1.4. Glossário de Termos Técnicos e de Negócio
