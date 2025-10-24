@@ -591,9 +591,9 @@ async function processPartnerStage(message: string, profile: any, openaiKey: str
   
   const systemPrompt = `Você é uma PARCEIRA DE TRANSFORMAÇÃO do Vida Smart Coach.
 
-PERSONALIDADE: Amiga próxima, motivadora, uma pergunta por vez
+PERSONALIDADE: Amiga próxima, motivadora, proativa mas natural
 
-MISSÃO: Acompanhar diariamente com foco simples.
+MISSÃO: Acompanhar diariamente com foco simples e sugerir ações específicas dos planos quando apropriado.
 
 NOME: ${profile.full_name}
 
@@ -606,7 +606,16 @@ ${currentHour >= 20 ?
 }
 ` : 'Conversa natural como amiga, uma pergunta por vez.'}
 
-Sempre uma pergunta focada por resposta!`;
+💡 SUGESTÕES PROATIVAS:
+- Se o contexto mencionar "Sugestões proativas para agora", use-as naturalmente na conversa
+- Exemplo: "Já que estamos no meio do dia, que tal fazer aquela prática de respiração do seu plano emocional?"
+- NÃO force sugestões se não fizer sentido no contexto da conversa
+- Seja sutil e motivadora, não robótica
+
+REGRAS:
+- Uma pergunta ou sugestão por vez
+- Tom de amiga próxima, não de coach formal
+- Se sugerir algo do plano, seja específica (nome do exercício/prática)`;
 
   // Construir mensagens com histórico se disponível
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -774,6 +783,7 @@ type UserContextData = {
   gamification: any | null;
   memorySnippets: any[];
   pendingFeedback?: Array<{ id: string; plan_type: string; feedback_text: string; created_at: string }>;
+  planCompletions?: Array<{ plan_type: string; item_identifier: string; completed_at: string }>;
 };
 
 async function fetchUserContext(userId: string, supabase: any): Promise<UserContextData> {
@@ -798,7 +808,8 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
     plans,
     gamification,
     memories,
-    feedback
+    feedback,
+    completions
   ] = await Promise.all([
     runQuery(
       () => supabase
@@ -874,6 +885,16 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
         .order('created_at', { ascending: false })
         .limit(3),
       []
+    ),
+    runQuery(
+      () => supabase
+        .from('plan_completions')
+        .select('plan_type, item_identifier, completed_at')
+        .eq('user_id', userId)
+        .gte('completed_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('completed_at', { ascending: false })
+        .limit(50),
+      []
     )
   ]);
 
@@ -887,8 +908,162 @@ async function fetchUserContext(userId: string, supabase: any): Promise<UserCont
     activePlans: plans.slice(0, 2),
     gamification,
     memorySnippets: memories.slice(0, 3),
-    pendingFeedback: (feedback || []).slice(0, 3)
+    pendingFeedback: (feedback || []).slice(0, 3),
+    planCompletions: (completions || []).slice(0, 50)
   };
+}
+
+/**
+ * Seleciona sugestões proativas baseadas nos planos ativos e completions
+ * Aplica lógica de horário do dia para priorizar tipos de planos
+ */
+function selectProactiveSuggestions(context: UserContextData): Array<{ plan_type: string; item: string; reason: string }> {
+  const { activePlans, planCompletions } = context;
+  
+  if (!activePlans || activePlans.length === 0) return [];
+
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Lógica de horário: manhã (5-12) = físico/nutricional, tarde (12-18) = emocional, noite (18-23) = espiritual
+  let priorityTypes: string[] = [];
+  if (hour >= 5 && hour < 12) {
+    priorityTypes = ['physical', 'nutritional'];
+  } else if (hour >= 12 && hour < 18) {
+    priorityTypes = ['emotional'];
+  } else {
+    priorityTypes = ['spiritual'];
+  }
+
+  const completedIdentifiers = new Set(
+    (planCompletions || [])
+      .filter(c => {
+        const completedDate = new Date(c.completed_at);
+        const today = new Date();
+        return completedDate.toDateString() === today.toDateString();
+      })
+      .map(c => c.item_identifier)
+  );
+
+  const suggestions: Array<{ plan_type: string; item: string; reason: string }> = [];
+
+  // Primeiro tenta planos prioritários por horário
+  for (const plan of activePlans) {
+    if (priorityTypes.includes(plan.plan_type) && suggestions.length < 2) {
+      const items = extractPlanItems(plan.plan_data, plan.plan_type);
+      const incompleteItems = items.filter(item => !completedIdentifiers.has(item.identifier));
+      
+      if (incompleteItems.length > 0) {
+        const selectedItem = incompleteItems[0];
+        suggestions.push({
+          plan_type: plan.plan_type,
+          item: selectedItem.description,
+          reason: getTimeBasedReason(hour, plan.plan_type)
+        });
+      }
+    }
+  }
+
+  // Se não tiver sugestões suficientes, pega de outros planos
+  if (suggestions.length < 2) {
+    for (const plan of activePlans) {
+      if (!priorityTypes.includes(plan.plan_type) && suggestions.length < 2) {
+        const items = extractPlanItems(plan.plan_data, plan.plan_type);
+        const incompleteItems = items.filter(item => !completedIdentifiers.has(item.identifier));
+        
+        if (incompleteItems.length > 0) {
+          const selectedItem = incompleteItems[0];
+          suggestions.push({
+            plan_type: plan.plan_type,
+            item: selectedItem.description,
+            reason: 'Item pendente do seu plano'
+          });
+        }
+      }
+    }
+  }
+
+  return suggestions;
+}
+
+function extractPlanItems(planData: any, planType: string): Array<{ identifier: string; description: string }> {
+  if (!planData) return [];
+
+  const items: Array<{ identifier: string; description: string }> = [];
+
+  try {
+    const data = typeof planData === 'string' ? JSON.parse(planData) : planData;
+
+    if (planType === 'physical') {
+      // Treinos por dia da semana
+      const workouts = data.workouts || data.weekly_workouts || [];
+      workouts.forEach((workout: any, idx: number) => {
+        const day = workout.day || workout.dayOfWeek || `Dia ${idx + 1}`;
+        const exercises = workout.exercises || [];
+        exercises.forEach((ex: any) => {
+          const exName = ex.name || ex.exercise;
+          if (exName) {
+            items.push({
+              identifier: `${planType}:${day}:${exName}`,
+              description: `${exName} (${day})`
+            });
+          }
+        });
+      });
+    } else if (planType === 'nutritional') {
+      // Refeições
+      const meals = data.meals || data.daily_meals || [];
+      meals.forEach((meal: any) => {
+        const mealName = meal.name || meal.meal_type;
+        if (mealName) {
+          items.push({
+            identifier: `${planType}:${mealName}`,
+            description: meal.description || mealName
+          });
+        }
+      });
+    } else if (planType === 'emotional') {
+      // Práticas emocionais
+      const practices = data.practices || data.daily_practices || [];
+      practices.forEach((practice: any) => {
+        const practiceName = practice.name || practice.title;
+        if (practiceName) {
+          items.push({
+            identifier: `${planType}:${practiceName}`,
+            description: practice.description || practiceName
+          });
+        }
+      });
+    } else if (planType === 'spiritual') {
+      // Práticas espirituais
+      const practices = data.practices || data.daily_practices || [];
+      practices.forEach((practice: any) => {
+        const practiceName = practice.name || practice.title;
+        if (practiceName) {
+          items.push({
+            identifier: `${planType}:${practiceName}`,
+            description: practice.description || practiceName
+          });
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Erro ao extrair itens do plano:', err);
+  }
+
+  return items;
+}
+
+function getTimeBasedReason(hour: number, planType: string): string {
+  if (hour >= 5 && hour < 12) {
+    if (planType === 'physical') return 'Ótimo horário para treinar pela manhã';
+    if (planType === 'nutritional') return 'Momento ideal para um café da manhã nutritivo';
+  } else if (hour >= 12 && hour < 18) {
+    if (planType === 'emotional') return 'Que tal uma pausa para cuidar das emoções?';
+  } else {
+    if (planType === 'spiritual') return 'Hora perfeita para uma prática espiritual';
+  }
+  return 'Item do seu plano ativo';
 }
 
 // Fora de fetchUserContext: helper de metadados
@@ -987,6 +1162,16 @@ function buildContextPrompt(userProfile: any, context: UserContextData, stage: s
       })
       .join(' | ');
     lines.push(`Planos ativos: ${planSummary}.`);
+    
+    // Adicionar sugestões proativas
+    const suggestions = selectProactiveSuggestions(context);
+    if (suggestions.length > 0) {
+      const suggestionText = suggestions
+        .map(s => `"${s.item}" (${s.plan_type}) - ${s.reason}`)
+        .join(' | ');
+      lines.push(`💡 Sugestões proativas para agora: ${suggestionText}.`);
+      lines.push(`INSTRUÇÃO: Mencione naturalmente uma dessas sugestões na conversa quando apropriado, sem forçar.`);
+    }
   }
 
   if (context.memorySnippets.length > 0) {
