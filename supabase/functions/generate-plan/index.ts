@@ -92,7 +92,7 @@ serve(async (req) => {
     const extraSection = extraNotes.length ? `\n\nINFORMAÇÕES ADICIONAIS FORNECIDAS PELO USUÁRIO:\n- ${extraNotes.join('\n- ')}` : '';
 
     const planPrompts = {
-      physical: `Você é um Personal Trainer expert. Crie um plano de treino personalizado em JSON.
+      physical: `Você é um Personal Trainer com base científica (NSCA/ACSM). Gere um plano de treino em JSON ESTRUTURADO e COMPLETO.
 
 PERFIL:
 - Nome: ${profile.full_name}
@@ -101,30 +101,59 @@ PERFIL:
 - Altura: ${profile.height || 'não informada'}cm
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 - Nível: ${profile.activity_level || 'iniciante'}
+- Limitações: ${(userProfile as any)?.limitations || 'nenhuma informada'}
 
-${extraSection}
+PRINCÍPIOS OBRIGATÓRIOS:
+- Periodização curta de 4 semanas: Semana 1 adaptação técnica; Semanas 2-3 progressão; Semana 4 consolidar/deload leve se iniciante. O array "weeks" DEVE ter 4 itens (1,2,3,4).
+- Frequência: 3 sessões/semana (Segunda, Quarta, Sexta) ou respeite restrição de tempo se informada.
+- Cada treino DEVE ter entre 5 e 7 exercícios (array exercises com 5-7 itens), cobrindo padrões: empurrar, puxar, joelhos/quadris, core.
+- Volume semanal por grupo muscular (objetivo hipertrofia): 10-16 séries; força: 8-12 séries pesadas; emagrecimento: 8-12 séries moderadas + 1-2 condicionamentos.
+- Faixas de repetições por objetivo: força 3-6; hipertrofia 6-12; resistência/definição 12-20. Ajuste o descanso (força 120-180s; hipertrofia 60-120s; resistência 30-60s).
+- Respeite limitações (ex.: joelho/coluna): substitua exercícios por variações seguras e acrescente nota.
+- Inclua pelo menos 1 exercício de core por sessão.
+- Progrida semana a semana (em sets, reps OU carga sugerida) e registre em notes: "Progredir +1-2 reps ou +2,5-5%".
 
-ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
+FORMATO JSON (RETORNE SOMENTE O JSON VÁLIDO):
 {
-  "title": "Nome do Plano",
-  "description": "Descrição breve",
+  "title": "Plano de Treino ${profile.goal_type || 'Personalizado'}",
+  "description": "Plano de ${profile.activity_level || 'iniciante'} focado em ${profile.goal_type || 'saúde'} com progressão semanal",
   "duration_weeks": 4,
   "weeks": [
     {
       "week": 1,
-      "focus": "Adaptação",
+      "focus": "Adaptação técnica e mobilidade",
       "workouts": [
         {
           "day": "Segunda",
-          "name": "Treino A - Peito/Tríceps",
+          "name": "Treino A - Peito/Tríceps e Core",
           "exercises": [
-            {
-              "name": "Supino reto",
-              "sets": 3,
-              "reps": "10-12",
-              "rest_seconds": 90,
-              "notes": "Foco na execução"
-            }
+            { "name": "Supino reto", "sets": 3, "reps": "8-10", "rest_seconds": 90, "notes": "Técnica; RPE 6-7" },
+            { "name": "Supino inclinado com halteres", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Controle excêntrico" },
+            { "name": "Crucifixo em máquina", "sets": 3, "reps": "12-15", "rest_seconds": 60, "notes": "Amplitude confortável" },
+            { "name": "Tríceps testa ou corda", "sets": 3, "reps": "10-12", "rest_seconds": 60, "notes": "Evite dor nas articulações" },
+            { "name": "Prancha", "sets": 3, "reps": "30-45s", "rest_seconds": 45, "notes": "Core estável" }
+          ]
+        },
+        {
+          "day": "Quarta",
+          "name": "Treino B - Costas/Bíceps e Core",
+          "exercises": [
+            { "name": "Remada curvada ou máquina", "sets": 3, "reps": "8-12", "rest_seconds": 90, "notes": "Coluna neutra" },
+            { "name": "Puxada na frente", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Controle escapular" },
+            { "name": "Remada baixa", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Amplitude completa" },
+            { "name": "Rosca direta", "sets": 3, "reps": "10-12", "rest_seconds": 60, "notes": "Evite balanço" },
+            { "name": "Prancha lateral", "sets": 3, "reps": "25-40s", "rest_seconds": 45, "notes": "Core anti-rotação" }
+          ]
+        },
+        {
+          "day": "Sexta",
+          "name": "Treino C - Pernas/Glúteos e Core",
+          "exercises": [
+            { "name": "Agachamento livre ou goblet", "sets": 3, "reps": "8-10", "rest_seconds": 120, "notes": "Se joelho sensível, agachamento caixa" },
+            { "name": "Levantamento terra romeno", "sets": 3, "reps": "8-10", "rest_seconds": 120, "notes": "Quadril dominante" },
+            { "name": "Leg press ou passada", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Amplitude confortável" },
+            { "name": "Elevação pélvica (hip thrust)", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Foco em glúteos" },
+            { "name": "Abdominal infra", "sets": 3, "reps": "12-15", "rest_seconds": 45, "notes": "Controle lombar" }
           ]
         }
       ]
@@ -229,15 +258,15 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
     }
 
     // Chamar OpenAI
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: 'POST',
       headers: { 
         Authorization: `Bearer ${openaiKey}`, 
         "Content-Type": "application/json" 
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.7,
+  model: 'gpt-4o-mini',
+  temperature: 0.4,
         response_format: { type: "json_object" },
         messages: [
           {

@@ -14,7 +14,7 @@ export const usePlanCompletions = (userId, planType) => {
   const [completions, setCompletions] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processing, setProcessing] = useState(new Set()); // Track items being processed
+  const [processing, setProcessing] = useState(new Set()); // Itens sendo processados (bloqueio por item)
 
   /**
    * Carrega conclusões do Supabase para o plano atual
@@ -72,7 +72,7 @@ export const usePlanCompletions = (userId, planType) => {
       return false;
     }
 
-    const isCompleted = completions.has(itemIdentifier);
+  const isCompleted = completions.has(itemIdentifier);
 
     try {
       // Mark as processing
@@ -80,6 +80,11 @@ export const usePlanCompletions = (userId, planType) => {
 
       if (isCompleted) {
         // DESMARCAR - deletar do banco
+        // Otimista: atualiza estado local imediatamente
+        const optimistic = new Map(completions);
+        optimistic.delete(itemIdentifier);
+        setCompletions(optimistic);
+
         const { error: deleteError } = await supabase
           .from('plan_completions')
           .delete()
@@ -89,19 +94,31 @@ export const usePlanCompletions = (userId, planType) => {
 
         if (deleteError) {
           console.error('[usePlanCompletions] Delete error:', deleteError);
+          // rollback
+          const rollback = new Map(optimistic);
+          rollback.set(itemIdentifier, {
+            item_identifier: itemIdentifier,
+            completed_at: new Date().toISOString(),
+            points_awarded: points
+          });
+          setCompletions(rollback);
           throw deleteError;
         }
-
-        // Atualizar estado local
-        const newCompletions = new Map(completions);
-        newCompletions.delete(itemIdentifier);
-        setCompletions(newCompletions);
 
         toast.success('Item desmarcado');
         return true;
 
       } else {
         // MARCAR - inserir no banco com upsert para evitar duplicatas
+        // Otimista: atualiza estado local imediatamente
+        const optimistic = new Map(completions);
+        optimistic.set(itemIdentifier, {
+          item_identifier: itemIdentifier,
+          completed_at: new Date().toISOString(),
+          points_awarded: points
+        });
+        setCompletions(optimistic);
+
         const { error: insertError } = await supabase
           .from('plan_completions')
           .upsert({
@@ -117,17 +134,12 @@ export const usePlanCompletions = (userId, planType) => {
 
         if (insertError) {
           console.error('[usePlanCompletions] Insert error:', insertError);
+          // rollback
+          const rollback = new Map(optimistic);
+          rollback.delete(itemIdentifier);
+          setCompletions(rollback);
           throw insertError;
         }
-
-        // Atualizar estado local
-        const newCompletions = new Map(completions);
-        newCompletions.set(itemIdentifier, {
-          item_identifier: itemIdentifier,
-          completed_at: new Date().toISOString(),
-          points_awarded: points
-        });
-        setCompletions(newCompletions);
 
         // Feedback visual
         toast.success(`+${points} XP! 🎉`, {
@@ -189,11 +201,13 @@ export const usePlanCompletions = (userId, planType) => {
 
   return {
     completions: completions,
-    loading: loading || processing.size > 0, // Include processing state in loading
+    // loading indica apenas carregamento inicial/sync; processamento é por item
+    loading,
     error,
     toggleCompletion,
     isItemCompleted,
     getStats,
-    reload: loadCompletions
+    reload: loadCompletions,
+    isProcessing: (itemIdentifier) => processing.has(itemIdentifier)
   };
 };

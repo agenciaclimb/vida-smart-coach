@@ -474,7 +474,7 @@ const PhysicalPlanDisplay = ({ planData }) => {
   
   // 🎯 Hook de completions
   const { user } = useAuth();
-  const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
+  const { toggleCompletion, isItemCompleted, isProcessing, loading: completionsLoading, getStats } = usePlanCompletions(
     user?.id, 
     'physical'
   );
@@ -676,7 +676,7 @@ const PhysicalPlanDisplay = ({ planData }) => {
                               id={itemIdentifier}
                               checked={isCompleted}
                               onCheckedChange={() => handleExerciseToggle(activeWeek, idx, exIdx)}
-                              disabled={completionsLoading}
+                              disabled={isProcessing?.(itemIdentifier)}
                               points={10}
                             />
                             <div className="flex-1">
@@ -739,7 +739,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, isProcessing, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'nutritional'
     );
@@ -926,7 +926,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
                                 id={itemIdentifier}
                                 checked={isCompleted}
                                 onCheckedChange={() => toggleCompletion(itemIdentifier, 'meal', 5)}
-                                disabled={completionsLoading}
+                                disabled={isProcessing?.(itemIdentifier)}
                                 points={5}
                               />
                               <span className="text-sm flex-1">{item}</span>
@@ -1001,7 +1001,7 @@ const EmotionalPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, isProcessing, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'emotional'
     );
@@ -1167,7 +1167,7 @@ const EmotionalPlanDisplay = ({ planData }) => {
                         id={itemIdentifier}
                         checked={isCompleted}
                         onCheckedChange={() => toggleCompletion(itemIdentifier, 'routine', 8)}
-                        disabled={completionsLoading}
+                        disabled={isProcessing?.(itemIdentifier)}
                         points={8}
                         className="flex-shrink-0"
                       />
@@ -1265,7 +1265,7 @@ const SpiritualPlanDisplay = ({ planData }) => {
     
     // 🎯 Hook de completions
     const { user } = useAuth();
-    const { toggleCompletion, isItemCompleted, loading: completionsLoading, getStats } = usePlanCompletions(
+    const { toggleCompletion, isItemCompleted, isProcessing, loading: completionsLoading, getStats } = usePlanCompletions(
       user?.id, 
       'spiritual'
     );
@@ -1431,7 +1431,7 @@ const SpiritualPlanDisplay = ({ planData }) => {
                         id={itemIdentifier}
                         checked={isCompleted}
                         onCheckedChange={() => toggleCompletion(itemIdentifier, 'practice', 8)}
-                        disabled={completionsLoading}
+                        disabled={isProcessing?.(itemIdentifier)}
                         points={8}
                         className="flex-shrink-0"
                       />
