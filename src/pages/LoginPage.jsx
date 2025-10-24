@@ -84,9 +84,15 @@ const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    console.log('[DEBUG] handleRegister iniciado', registerData);
 
     if (registerData.password !== registerData.confirmPassword) {
       toast.error('As senhas nao coincidem');
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
