@@ -14,6 +14,7 @@ export const usePlanCompletions = (userId, planType) => {
   const [completions, setCompletions] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processing, setProcessing] = useState(new Set()); // Track items being processed
 
   /**
    * Carrega conclusões do Supabase para o plano atual
@@ -65,9 +66,18 @@ export const usePlanCompletions = (userId, planType) => {
       return false;
     }
 
+    // Prevent double-clicking
+    if (processing.has(itemIdentifier)) {
+      console.log('[usePlanCompletions] ⚠️ Já processando:', itemIdentifier);
+      return false;
+    }
+
     const isCompleted = completions.has(itemIdentifier);
 
     try {
+      // Mark as processing
+      setProcessing(prev => new Set(prev).add(itemIdentifier));
+
       if (isCompleted) {
         // DESMARCAR - deletar do banco
         const { error: deleteError } = await supabase
@@ -77,7 +87,10 @@ export const usePlanCompletions = (userId, planType) => {
           .eq('plan_type', planType)
           .eq('item_identifier', itemIdentifier);
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('[usePlanCompletions] Delete error:', deleteError);
+          throw deleteError;
+        }
 
         // Atualizar estado local
         const newCompletions = new Map(completions);
@@ -88,18 +101,24 @@ export const usePlanCompletions = (userId, planType) => {
         return true;
 
       } else {
-        // MARCAR - inserir no banco
+        // MARCAR - inserir no banco com upsert para evitar duplicatas
         const { error: insertError } = await supabase
           .from('plan_completions')
-          .insert({
+          .upsert({
             user_id: userId,
             plan_type: planType,
             item_type: itemType,
             item_identifier: itemIdentifier,
             points_awarded: points
+          }, {
+            onConflict: 'user_id,plan_type,item_identifier',
+            ignoreDuplicates: false
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('[usePlanCompletions] Insert error:', insertError);
+          throw insertError;
+        }
 
         // Atualizar estado local
         const newCompletions = new Map(completions);
@@ -119,11 +138,26 @@ export const usePlanCompletions = (userId, planType) => {
         return true;
       }
     } catch (err) {
-      console.error('Erro ao alternar conclusão:', err);
-      toast.error('Erro ao salvar progresso');
+      console.error('[usePlanCompletions] ❌ Erro ao alternar conclusão:', err);
+      
+      // Check for specific errors
+      if (err.message?.includes('duplicate key')) {
+        toast.error('Item já marcado');
+        // Reload to sync state
+        await loadCompletions();
+      } else {
+        toast.error('Erro ao salvar progresso');
+      }
       return false;
+    } finally {
+      // Remove from processing
+      setProcessing(prev => {
+        const next = new Set(prev);
+        next.delete(itemIdentifier);
+        return next;
+      });
     }
-  }, [userId, planType, completions]);
+  }, [userId, planType, completions, processing, loadCompletions]);
 
   /**
    * Verifica se um item está concluído
@@ -155,7 +189,7 @@ export const usePlanCompletions = (userId, planType) => {
 
   return {
     completions: completions,
-    loading,
+    loading: loading || processing.size > 0, // Include processing state in loading
     error,
     toggleCompletion,
     isItemCompleted,
