@@ -178,8 +178,13 @@ async function testCompleteIACoach() {
       ]
     };
 
+    const headers = {};
+    if (env.INTERNAL_FUNCTION_SECRET) {
+      headers['X-Internal-Secret'] = env.INTERNAL_FUNCTION_SECRET;
+    }
     const { data: functionData, error: functionError } = await supabase.functions.invoke('ia-coach-chat', {
-      body: functionPayload
+      body: functionPayload,
+      headers
     });
 
     if (functionError) {

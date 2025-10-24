@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useData } from '@/contexts/DataContext';
 
 import ClientHeader from '@/components/client/ClientHeader';
+import MobileBottomNav from '@/components/client/MobileBottomNav';
 import DashboardTab from '@/components/client/DashboardTab';
 import PlanTab from '@/components/client/PlanTab';
 import ChatTab from '@/components/client/ChatTab';
@@ -98,7 +99,7 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
       </Helmet>
       <div className="flex flex-col min-h-screen bg-gray-50">
         <ClientHeader user={user} onLogout={signOut} />
-        <main className="flex-grow">
+        <main className="flex-grow pb-20 md:pb-0">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="container mx-auto py-8 px-4 md:px-6">
             <ScrollArea className="w-full whitespace-nowrap rounded-md">
               <TabsList className="grid-cols-none">
@@ -117,6 +118,7 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
             {renderTabContent()}
           </Tabs>
         </main>
+        <MobileBottomNav activeTab={activeTab} onChange={handleTabChange} />
       </div>
     </>
   );

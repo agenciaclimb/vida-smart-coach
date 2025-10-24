@@ -412,18 +412,18 @@ const NoPlanState = () => {
                 Gerar Plano Manualmente
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Gerar Plano Manual</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Gerar Plano Manual</DialogTitle>
+                <DialogDescription className="px-4 sm:px-0">
                   Escolha a área e preencha as informações para gerar um plano personalizado.
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleManualSubmit} className="space-y-4">
+              <form onSubmit={handleManualSubmit} className="space-y-4 px-4 sm:px-0 pb-6">
                 <div>
-                  <label className="block mb-1 font-medium">Área do Plano</label>
+                  <label className="block mb-1 font-medium text-sm">Área do Plano</label>
                   <select
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-3 py-2 text-base sm:text-sm"
                     value={selectedArea}
                     onChange={e => setSelectedArea(e.target.value)}
                   >
@@ -434,24 +434,28 @@ const NoPlanState = () => {
                 </div>
                 {areaQuestions[selectedArea].map(q => (
                   <div key={q.name}>
-                    <label className="block mb-1 font-medium">{q.label}</label>
+                    <label className="block mb-1 font-medium text-sm">{q.label}</label>
                     {q.type === 'textarea' ? (
                       <Textarea
                         value={form[q.name] || ''}
                         onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                         required
+                        placeholder={q.placeholder}
+                        className="min-h-[100px] sm:min-h-[80px] text-base sm:text-sm"
                       />
                     ) : (
                       <Input
                         value={form[q.name] || ''}
                         onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                         required
+                        placeholder={q.placeholder}
+                        className="text-base sm:text-sm"
                       />
                     )}
                   </div>
                 ))}
-                <DialogFooter>
-                  <Button type="submit" disabled={submitting} className="vida-smart-gradient text-white">
+                <DialogFooter className="px-0 sm:px-0">
+                  <Button type="submit" disabled={submitting} className="vida-smart-gradient text-white w-full sm:w-auto">
                     {submitting ? 'Gerando...' : 'Gerar Plano'}
                   </Button>
                 </DialogFooter>
@@ -703,27 +707,30 @@ const PhysicalPlanDisplay = ({ planData }) => {
 
       {/* Dialog de Feedback */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent>
+        <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Feedback do Plano Físico</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Físico</DialogTitle>
+            <DialogDescription className="px-4 sm:px-0">
               Conte-nos o que você gostaria de ajustar no seu plano de treino
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            placeholder="Ex: Gostaria de mais foco em pernas, menos exercícios de cardio..."
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            rows={5}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
-              Enviar Feedback
-            </Button>
-          </DialogFooter>
+          <div className="px-4 sm:px-0 pb-6">
+            <Textarea
+              placeholder="Ex: Gostaria de mais foco em pernas, menos exercícios de cardio..."
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              rows={5}
+              className="min-h-[120px] sm:min-h-[100px] text-base sm:text-sm"
+            />
+            <DialogFooter className="mt-4 px-0 sm:px-0">
+              <Button variant="outline" onClick={() => setFeedbackOpen(false)} className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+              <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white w-full sm:w-auto">
+                Enviar Feedback
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -965,27 +972,30 @@ const NutritionalPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent>
+            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Feedback do Plano Nutricional</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Nutricional</DialogTitle>
+                <DialogDescription className="px-4 sm:px-0">
                   Conte-nos o que você gostaria de ajustar na sua alimentação
                 </DialogDescription>
               </DialogHeader>
-              <Textarea
-                placeholder="Ex: Tenho alergia a frutos do mar, prefiro refeições vegetarianas..."
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={5}
-              />
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
-                  Enviar Feedback
-                </Button>
-              </DialogFooter>
+              <div className="px-4 sm:px-0 pb-6">
+                <Textarea
+                  placeholder="Ex: Tenho alergia a frutos do mar, prefiro refeições vegetarianas..."
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={5}
+                  className="min-h-[120px] sm:min-h-[100px] text-base sm:text-sm"
+                />
+                <DialogFooter className="mt-4 px-0 sm:px-0">
+                  <Button variant="outline" onClick={() => setFeedbackOpen(false)} className="w-full sm:w-auto">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white w-full sm:w-auto">
+                    Enviar Feedback
+                  </Button>
+                </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -1229,27 +1239,30 @@ const EmotionalPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent>
+            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Feedback do Plano Emocional</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Emocional</DialogTitle>
+                <DialogDescription className="px-4 sm:px-0">
                   Conte-nos o que você gostaria de ajustar no seu bem-estar emocional
                 </DialogDescription>
               </DialogHeader>
-              <Textarea
-                placeholder="Ex: Gostaria de mais técnicas para ansiedade, menos meditação guiada..."
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={5}
-              />
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
-                  Enviar Feedback
-                </Button>
-              </DialogFooter>
+              <div className="px-4 sm:px-0 pb-6">
+                <Textarea
+                  placeholder="Ex: Gostaria de mais técnicas para ansiedade, menos meditação guiada..."
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={5}
+                  className="min-h-[120px] sm:min-h-[100px] text-base sm:text-sm"
+                />
+                <DialogFooter className="mt-4 px-0 sm:px-0">
+                  <Button variant="outline" onClick={() => setFeedbackOpen(false)} className="w-full sm:w-auto">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white w-full sm:w-auto">
+                    Enviar Feedback
+                  </Button>
+                </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -1488,27 +1501,30 @@ const SpiritualPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent>
+            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Feedback do Plano Espiritual</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Espiritual</DialogTitle>
+                <DialogDescription className="px-4 sm:px-0">
                   Conte-nos o que você gostaria de ajustar no seu crescimento espiritual
                 </DialogDescription>
               </DialogHeader>
-              <Textarea
-                placeholder="Ex: Gostaria de mais práticas de meditação, menos reflexões escritas..."
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={5}
-              />
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setFeedbackOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white">
-                  Enviar Feedback
-                </Button>
-              </DialogFooter>
+              <div className="px-4 sm:px-0 pb-6">
+                <Textarea
+                  placeholder="Ex: Gostaria de mais práticas de meditação, menos reflexões escritas..."
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={5}
+                  className="min-h-[120px] sm:min-h-[100px] text-base sm:text-sm"
+                />
+                <DialogFooter className="mt-4 px-0 sm:px-0">
+                  <Button variant="outline" onClick={() => setFeedbackOpen(false)} className="w-full sm:w-auto">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleFeedbackSubmit} className="vida-smart-gradient text-white w-full sm:w-auto">
+                    Enviar Feedback
+                  </Button>
+                </DialogFooter>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -1577,41 +1593,42 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
     const areaLabel = PLAN_AREAS.find(a => a.key === selectedArea)?.label || 'Plano';
     
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Gerar Novo Plano {areaLabel}</DialogTitle>
-                    <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Gerar Novo Plano {areaLabel}</DialogTitle>
+          <DialogDescription className="px-4 sm:px-0">
                         Preencha as informações para regenerar seu plano {areaLabel.toLowerCase()} personalizado.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 px-4 sm:px-0 pb-6">
                     {areaQuestions[selectedArea]?.map(q => (
                         <div key={q.name}>
-                            <label className="block mb-1 font-medium text-sm">{q.label}</label>
+              <label className="block mb-1 font-medium text-sm">{q.label}</label>
                             {q.type === 'textarea' ? (
                                 <Textarea
                                     value={form[q.name] || ''}
                                     onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                                     required
                                     placeholder={q.placeholder}
-                                    className="min-h-[80px]"
+                  className="min-h-[100px] sm:min-h-[80px] text-base sm:text-sm"
                                 />
                             ) : (
                                 <Input
                                     value={form[q.name] || ''}
                                     onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                                     required
-                                    placeholder={q.placeholder}
+                  placeholder={q.placeholder}
+                  className="text-base sm:text-sm"
                                 />
                             )}
                         </div>
                     ))}
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="px-4 sm:px-0">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={submitting || generatingPlan} className="vida-smart-gradient text-white">
+            <Button type="submit" disabled={submitting || generatingPlan} className="vida-smart-gradient text-white w-full sm:w-auto">
                             {submitting || generatingPlan ? (
                                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Gerando...</>
                             ) : (
