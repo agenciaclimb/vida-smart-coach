@@ -1554,14 +1554,21 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+        console.log('[RegeneratePlanDialog] 🔄 Iniciando regeneração...', { selectedArea, form });
         try {
-            await generateSpecificPlan(selectedArea, form);
-            toast.success(`Plano ${PLAN_AREAS.find(a => a.key === selectedArea)?.label} gerado com sucesso!`);
-            onOpenChange(false);
-            setForm({});
+            const result = await generateSpecificPlan(selectedArea, form);
+            console.log('[RegeneratePlanDialog] ✅ Resultado:', result);
+            
+            if (result?.success) {
+                toast.success(`Plano ${PLAN_AREAS.find(a => a.key === selectedArea)?.label} regenerado com sucesso!`);
+                onOpenChange(false);
+                setForm({});
+            } else {
+                throw new Error(result?.error || 'Erro desconhecido');
+            }
         } catch (err) {
-            console.error('Erro ao gerar plano:', err);
-            toast.error('Erro ao gerar plano');
+            console.error('[RegeneratePlanDialog] ❌ Erro ao gerar plano:', err);
+            toast.error(`Erro ao gerar plano: ${err.message}`);
         } finally {
             setSubmitting(false);
         }
