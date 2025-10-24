@@ -42,7 +42,55 @@ serve(async (req) => {
       profile = data;
     }
 
+    // ===== Regeneração: normalizar inputs personalizados para influenciar a IA =====
+    // Os diálogos de regeneração enviam campos como goal/experience/limitations etc.
+    // Aqui mapeamos esses campos para os utilizados no prompt e reforçamos no PERFIL.
+    const normalizeString = (s?: string) => (s || '').toString().toLowerCase();
+
+    const mapExperience = (exp?: string) => {
+      const e = normalizeString(exp);
+      if (!e) return undefined;
+      if (/(inic|begin|start|baixo|low)/.test(e)) return 'beginner';
+      if (/(inter|m[eé]dio|moderado)/.test(e)) return 'intermediate';
+      if (/(avan|alto|high|experiente|pro)/.test(e)) return 'advanced';
+      return undefined;
+    };
+
+    const mapGoal = (goal?: string) => {
+      const g = normalizeString(goal);
+      if (!g) return undefined;
+      if (/(massa|hipertrof|ganhar|aumentar m[úu]sculo)/.test(g)) return 'gain_muscle';
+      if (/(perder|emagre|defin|gordura|fat)/.test(g)) return 'fat_loss';
+      if (/(resist|enduran|cardio)/.test(g)) return 'endurance';
+      if (/(for[çc]a|strength)/.test(g)) return 'strength';
+      if (/(equil[ií]brio|bem-estar|sa[úu]de)/.test(g)) return 'general_health';
+      return undefined;
+    };
+
+    // Clonar para evitar mutação inesperada
+    profile = { ...profile } as any;
+    // Aplicar overrides quando presentes nos inputs
+    const expOverride = mapExperience((userProfile as any)?.experience);
+    if (expOverride) (profile as any).activity_level = expOverride;
+    const goalOverride = mapGoal((userProfile as any)?.goal);
+    if (goalOverride) (profile as any).goal_type = goalOverride;
+
+    // Montar observações adicionais para o prompt
+    const extraNotes: string[] = [];
+    if ((userProfile as any)?.goal) extraNotes.push(`Objetivo específico informado: ${(userProfile as any).goal}`);
+    if ((userProfile as any)?.experience) extraNotes.push(`Nível de experiência informado: ${(userProfile as any).experience}`);
+    if ((userProfile as any)?.limitations) extraNotes.push(`Limitações/restrições físicas: ${(userProfile as any).limitations}`);
+    if ((userProfile as any)?.restrictions) extraNotes.push(`Restrições alimentares: ${(userProfile as any).restrictions}`);
+    if ((userProfile as any)?.preferences) extraNotes.push(`Preferências alimentares: ${(userProfile as any).preferences}`);
+    if ((userProfile as any)?.challenges) extraNotes.push(`Desafios emocionais: ${(userProfile as any).challenges}`);
+    if ((userProfile as any)?.stressors) extraNotes.push(`Fontes de estresse: ${(userProfile as any).stressors}`);
+    if ((userProfile as any)?.practices) extraNotes.push(`Práticas espirituais atuais: ${(userProfile as any).practices}`);
+    if ((userProfile as any)?.interests) extraNotes.push(`Interesses espirituais: ${(userProfile as any).interests}`);
+    if ((userProfile as any)?.time) extraNotes.push(`Tempo diário disponível: ${(userProfile as any).time}`);
+
     // Prompts específicos por tipo de plano
+    const extraSection = extraNotes.length ? `\n\nINFORMAÇÕES ADICIONAIS FORNECIDAS PELO USUÁRIO:\n- ${extraNotes.join('\n- ')}` : '';
+
     const planPrompts = {
       physical: `Você é um Personal Trainer expert. Crie um plano de treino personalizado em JSON.
 
@@ -53,6 +101,8 @@ PERFIL:
 - Altura: ${profile.height || 'não informada'}cm
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 - Nível: ${profile.activity_level || 'iniciante'}
+
+${extraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -82,7 +132,7 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
   ]
 }`,
 
-      nutritional: `Você é um Nutricionista expert. Crie um plano alimentar personalizado em JSON.
+  nutritional: `Você é um Nutricionista expert. Crie um plano alimentar personalizado em JSON.
 
 PERFIL:
 - Nome: ${profile.full_name}
@@ -91,6 +141,8 @@ PERFIL:
 - Peso alvo: ${profile.target_weight || 'não informado'}kg
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 - Restrições: ${profile.dietary_restrictions || 'nenhuma'}
+
+${extraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -114,12 +166,14 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
   "tips": ["Dica 1", "Dica 2"]
 }`,
 
-      emotional: `Você é um Psicólogo especialista em bem-estar. Crie um plano emocional personalizado em JSON.
+  emotional: `Você é um Psicólogo especialista em bem-estar. Crie um plano emocional personalizado em JSON.
 
 PERFIL:
 - Nome: ${profile.full_name}
 - Idade: ${profile.age || 'não informada'}
 - Objetivo: ${profile.goal_type || 'saúde geral'}
+
+${extraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -142,11 +196,13 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
   "weekly_goals": ["Meta 1", "Meta 2"]
 }`,
 
-      spiritual: `Você é um Coach espiritual. Crie um plano de crescimento espiritual personalizado em JSON.
+  spiritual: `Você é um Coach espiritual. Crie um plano de crescimento espiritual personalizado em JSON.
 
 PERFIL:
 - Nome: ${profile.full_name}
 - Idade: ${profile.age || 'não informada'}
+
+${extraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {

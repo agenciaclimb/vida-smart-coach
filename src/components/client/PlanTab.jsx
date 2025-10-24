@@ -1530,24 +1530,24 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
     
     const areaQuestions = {
         physical: [
-            { name: 'goal', label: 'Qual seu objetivo físico principal?', type: 'text' },
-            { name: 'experience', label: 'Nível de experiência com exercícios?', type: 'text' },
-            { name: 'limitations', label: 'Tem alguma limitação ou restrição física?', type: 'textarea' }
+            { name: 'goal', label: 'Qual seu objetivo físico principal?', type: 'text', placeholder: 'Ex: Ganhar massa muscular, emagrecer, definir...' },
+            { name: 'experience', label: 'Nível de experiência com exercícios?', type: 'text', placeholder: 'Ex: Iniciante, intermediário, avançado' },
+            { name: 'limitations', label: 'Tem alguma limitação ou restrição física?', type: 'textarea', placeholder: 'Ex: Dor no joelho, problemas na coluna, nenhuma...' }
         ],
         nutritional: [
-            { name: 'goal', label: 'Qual seu objetivo alimentar?', type: 'text' },
-            { name: 'restrictions', label: 'Alguma restrição alimentar ou alergia?', type: 'textarea' },
-            { name: 'preferences', label: 'Preferências alimentares?', type: 'text' }
+            { name: 'goal', label: 'Qual seu objetivo alimentar?', type: 'text', placeholder: 'Ex: Emagrecer, ganhar massa, manter peso...' },
+            { name: 'restrictions', label: 'Alguma restrição alimentar ou alergia?', type: 'textarea', placeholder: 'Ex: Intolerância à lactose, vegetariano, sem glúten...' },
+            { name: 'preferences', label: 'Preferências alimentares?', type: 'text', placeholder: 'Ex: Gosto de frango, evito carne vermelha...' }
         ],
         emotional: [
-            { name: 'challenges', label: 'Quais seus principais desafios emocionais?', type: 'textarea' },
-            { name: 'stressors', label: 'Principais fontes de estresse?', type: 'text' },
-            { name: 'goals', label: 'O que você quer melhorar emocionalmente?', type: 'textarea' }
+            { name: 'challenges', label: 'Quais seus principais desafios emocionais?', type: 'textarea', placeholder: 'Ex: Ansiedade, estresse, baixa autoestima...' },
+            { name: 'stressors', label: 'Principais fontes de estresse?', type: 'text', placeholder: 'Ex: Trabalho, relacionamentos, finanças...' },
+            { name: 'goals', label: 'O que você quer melhorar emocionalmente?', type: 'textarea', placeholder: 'Ex: Controlar ansiedade, melhorar autoestima...' }
         ],
         spiritual: [
-            { name: 'practices', label: 'Tem alguma prática espiritual atual?', type: 'text' },
-            { name: 'interests', label: 'O que te interessa explorar espiritualmente?', type: 'textarea' },
-            { name: 'time', label: 'Quanto tempo pode dedicar por dia?', type: 'text' }
+            { name: 'practices', label: 'Tem alguma prática espiritual atual?', type: 'text', placeholder: 'Ex: Meditação, oração, yoga, nenhuma...' },
+            { name: 'interests', label: 'O que te interessa explorar espiritualmente?', type: 'textarea', placeholder: 'Ex: Conexão consigo mesmo, gratidão, propósito...' },
+            { name: 'time', label: 'Quanto tempo pode dedicar por dia?', type: 'text', placeholder: 'Ex: 10 minutos, 30 minutos, 1 hora...' }
         ]
     };
     
@@ -1594,6 +1594,7 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
                                     value={form[q.name] || ''}
                                     onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                                     required
+                                    placeholder={q.placeholder}
                                     className="min-h-[80px]"
                                 />
                             ) : (
@@ -1601,6 +1602,7 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
                                     value={form[q.name] || ''}
                                     onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
                                     required
+                                    placeholder={q.placeholder}
                                 />
                             )}
                         </div>
