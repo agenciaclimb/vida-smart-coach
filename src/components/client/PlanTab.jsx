@@ -494,23 +494,25 @@ const PhysicalPlanDisplay = ({ planData }) => {
 
   if (!plan || !plan.weeks) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Plano físico não disponível.</p>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Plano físico não disponível.</p>
+          </CardContent>
+        </Card>
 
-      {/* Progresso do Plano Físico */}
-      <div className="px-2 md:px-0">
-        <div className="flex items-center justify-between text-xs mb-1 text-white/80">
-          <span>Progresso do Plano</span>
-          <span>{completedPhysical}/{totalPhysicalItems} • {physicalPercent}%</span>
+        {/* Progresso do Plano Físico */}
+        <div className="px-2 md:px-0">
+          <div className="flex items-center justify-between text-xs mb-1 text-white/80">
+            <span>Progresso do Plano</span>
+            <span>{completedPhysical}/{totalPhysicalItems} • {physicalPercent}%</span>
+          </div>
+          <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full bg-white/80" style={{ width: `${physicalPercent}%` }} />
+          </div>
         </div>
-        <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full bg-white/80" style={{ width: `${physicalPercent}%` }} />
-        </div>
-      </div>
+      </>
     );
   }
 
@@ -548,16 +550,25 @@ const PhysicalPlanDisplay = ({ planData }) => {
       }
       
       console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-      toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+      toast.success('✅ Feedback enviado! A Vida vai te ajudar agora.', {
         duration: 2000
       });
+      
+      const feedbackMessage = `Quero ajustar meu plano ${
+        'physical' === 'physical' ? 'físico' : 
+        'physical' === 'nutritional' ? 'alimentar' : 
+        'physical' === 'emotional' ? 'emocional' : 'espiritual'
+      }: ${feedback.trim()}`;
+      
       setFeedback('');
       setFeedbackOpen(false);
       
-      // Redirecionar para IA Coach após 1.5s
+      // Redirecionar para Chat com mensagem automática após 1s
       setTimeout(() => {
-        navigate('/ia-coach');
-      }, 1500);
+        navigate('/dashboard?tab=chat', { 
+          state: { autoMessage: feedbackMessage }
+        });
+      }, 1000);
     } catch (err) {
       console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
       toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -598,6 +609,17 @@ const PhysicalPlanDisplay = ({ planData }) => {
           </div>
         </CardHeader>
       </Card>
+
+      {/* Progresso do Plano Físico */}
+      <div className="px-2 md:px-0">
+        <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
+          <span>Progresso do Plano</span>
+          <span>{completedPhysical}/{totalPhysicalItems} • {physicalPercent}%</span>
+        </div>
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-full bg-blue-500" style={{ width: `${physicalPercent}%` }} />
+        </div>
+      </div>
 
       {/* Seletor de Semanas */}
       {plan.weeks && plan.weeks.length > 0 && (
@@ -777,16 +799,21 @@ const NutritionalPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+        toast.success('✅ Feedback enviado! A Vida vai te ajudar agora.', {
           duration: 2000
         });
+        
+        const feedbackMessage = `Quero ajustar meu plano alimentar: ${feedback.trim()}`;
+        
         setFeedback('');
         setFeedbackOpen(false);
         
-        // Redirecionar para IA Coach após 1.5s
+        // Redirecionar para Chat com mensagem automática após 1s
         setTimeout(() => {
-          navigate('/ia-coach');
-        }, 1500);
+          navigate('/dashboard?tab=chat', { 
+            state: { autoMessage: feedbackMessage }
+          });
+        }, 1000);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -1029,16 +1056,21 @@ const EmotionalPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+        toast.success('✅ Feedback enviado! A Vida vai te ajudar agora.', {
           duration: 2000
         });
+        
+        const feedbackMessage = `Quero ajustar meu plano emocional: ${feedback.trim()}`;
+        
         setFeedback('');
         setFeedbackOpen(false);
         
-        // Redirecionar para IA Coach após 1.5s
+        // Redirecionar para Chat com mensagem automática após 1s
         setTimeout(() => {
-          navigate('/ia-coach');
-        }, 1500);
+          navigate('/dashboard?tab=chat', { 
+            state: { autoMessage: feedbackMessage }
+          });
+        }, 1000);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -1288,16 +1320,21 @@ const SpiritualPlanDisplay = ({ planData }) => {
         }
         
         console.log('[DEBUG FEEDBACK] ✅ Feedback inserido com sucesso!', data);
-        toast.success('✅ Feedback enviado! Redirecionando para o IA Coach...', {
+        toast.success('✅ Feedback enviado! A Vida vai te ajudar agora.', {
           duration: 2000
         });
+        
+        const feedbackMessage = `Quero ajustar meu plano espiritual: ${feedback.trim()}`;
+        
         setFeedback('');
         setFeedbackOpen(false);
         
-        // Redirecionar para IA Coach após 1.5s
+        // Redirecionar para Chat com mensagem automática após 1s
         setTimeout(() => {
-          navigate('/ia-coach');
-        }, 1500);
+          navigate('/dashboard?tab=chat', { 
+            state: { autoMessage: feedbackMessage }
+          });
+        }, 1000);
       } catch (err) {
         console.error('[DEBUG FEEDBACK] ❌ Erro ao salvar feedback:', err);
         toast.error('Não foi possível salvar seu feedback agora. Tente novamente.');
@@ -1478,31 +1515,192 @@ const SpiritualPlanDisplay = ({ planData }) => {
     );
 };
 
+// Componente de diálogo para regenerar plano específico
+const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
+    const { generateSpecificPlan, generatingPlan } = usePlans();
+    const [form, setForm] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    
+    const PLAN_AREAS = [
+        { key: 'physical', label: 'Físico' },
+        { key: 'nutritional', label: 'Alimentar' },
+        { key: 'emotional', label: 'Emocional' },
+        { key: 'spiritual', label: 'Espiritual' }
+    ];
+    
+    const areaQuestions = {
+        physical: [
+            { name: 'goal', label: 'Qual seu objetivo físico principal?', type: 'text' },
+            { name: 'experience', label: 'Nível de experiência com exercícios?', type: 'text' },
+            { name: 'limitations', label: 'Tem alguma limitação ou restrição física?', type: 'textarea' }
+        ],
+        nutritional: [
+            { name: 'goal', label: 'Qual seu objetivo alimentar?', type: 'text' },
+            { name: 'restrictions', label: 'Alguma restrição alimentar ou alergia?', type: 'textarea' },
+            { name: 'preferences', label: 'Preferências alimentares?', type: 'text' }
+        ],
+        emotional: [
+            { name: 'challenges', label: 'Quais seus principais desafios emocionais?', type: 'textarea' },
+            { name: 'stressors', label: 'Principais fontes de estresse?', type: 'text' },
+            { name: 'goals', label: 'O que você quer melhorar emocionalmente?', type: 'textarea' }
+        ],
+        spiritual: [
+            { name: 'practices', label: 'Tem alguma prática espiritual atual?', type: 'text' },
+            { name: 'interests', label: 'O que te interessa explorar espiritualmente?', type: 'textarea' },
+            { name: 'time', label: 'Quanto tempo pode dedicar por dia?', type: 'text' }
+        ]
+    };
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await generateSpecificPlan(selectedArea, form);
+            toast.success(`Plano ${PLAN_AREAS.find(a => a.key === selectedArea)?.label} gerado com sucesso!`);
+            onOpenChange(false);
+            setForm({});
+        } catch (err) {
+            console.error('Erro ao gerar plano:', err);
+            toast.error('Erro ao gerar plano');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+    
+    const areaLabel = PLAN_AREAS.find(a => a.key === selectedArea)?.label || 'Plano';
+    
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Gerar Novo Plano {areaLabel}</DialogTitle>
+                    <DialogDescription>
+                        Preencha as informações para regenerar seu plano {areaLabel.toLowerCase()} personalizado.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {areaQuestions[selectedArea]?.map(q => (
+                        <div key={q.name}>
+                            <label className="block mb-1 font-medium text-sm">{q.label}</label>
+                            {q.type === 'textarea' ? (
+                                <Textarea
+                                    value={form[q.name] || ''}
+                                    onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
+                                    required
+                                    className="min-h-[80px]"
+                                />
+                            ) : (
+                                <Input
+                                    value={form[q.name] || ''}
+                                    onChange={e => setForm(f => ({ ...f, [q.name]: e.target.value }))}
+                                    required
+                                />
+                            )}
+                        </div>
+                    ))}
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={submitting || generatingPlan} className="vida-smart-gradient text-white">
+                            {submitting || generatingPlan ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Gerando...</>
+                            ) : (
+                                <><Sparkles className="mr-2 h-4 w-4" />Gerar Plano</>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 // Novo componente que organiza os 4 planos em abas
 const MultiPlanDisplay = () => {
-    const { currentPlans } = usePlans();
+    const { currentPlans, generatingPlan } = usePlans();
+    const [manualDialogOpen, setManualDialogOpen] = useState(false);
+    const [selectedAreaForRegeneration, setSelectedAreaForRegeneration] = useState('physical');
+    
+    const handleRegeneratePlan = (areaKey) => {
+        setSelectedAreaForRegeneration(areaKey);
+        setManualDialogOpen(true);
+    };
 
     return (
-        <Tabs defaultValue="physical" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="physical"><Dumbbell className="w-4 h-4 mr-2"/>Físico</TabsTrigger>
-                <TabsTrigger value="nutritional"><Leaf className="w-4 h-4 mr-2"/>Alimentar</TabsTrigger>
-                <TabsTrigger value="emotional"><Heart className="w-4 h-4 mr-2"/>Emocional</TabsTrigger>
-                <TabsTrigger value="spiritual"><Wind className="w-4 h-4 mr-2"/>Espiritual</TabsTrigger>
-            </TabsList>
-            <TabsContent value="physical">
-                {currentPlans.physical ? <PhysicalPlanDisplay planData={currentPlans.physical} /> : <p>Plano físico não disponível.</p>}
-            </TabsContent>
-            <TabsContent value="nutritional">
-                {currentPlans.nutritional ? <NutritionalPlanDisplay planData={currentPlans.nutritional} /> : <p>Plano alimentar não disponível.</p>}
-            </TabsContent>
-            <TabsContent value="emotional">
-                {currentPlans.emotional ? <EmotionalPlanDisplay planData={currentPlans.emotional} /> : <p>Plano emocional não disponível.</p>}
-            </TabsContent>
-            <TabsContent value="spiritual">
-                {currentPlans.spiritual ? <SpiritualPlanDisplay planData={currentPlans.spiritual} /> : <p>Plano espiritual não disponível.</p>}
-            </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+            <Tabs defaultValue="physical" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="physical"><Dumbbell className="w-4 h-4 mr-2"/>Físico</TabsTrigger>
+                    <TabsTrigger value="nutritional"><Leaf className="w-4 h-4 mr-2"/>Alimentar</TabsTrigger>
+                    <TabsTrigger value="emotional"><Heart className="w-4 h-4 mr-2"/>Emocional</TabsTrigger>
+                    <TabsTrigger value="spiritual"><Wind className="w-4 h-4 mr-2"/>Espiritual</TabsTrigger>
+                </TabsList>
+                <TabsContent value="physical" className="space-y-4">
+                    <div className="flex justify-end">
+                        <Button 
+                            onClick={() => handleRegeneratePlan('physical')} 
+                            variant="outline" 
+                            size="sm"
+                            disabled={generatingPlan}
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Gerar Novo Plano Físico
+                        </Button>
+                    </div>
+                    {currentPlans.physical ? <PhysicalPlanDisplay planData={currentPlans.physical} /> : <p>Plano físico não disponível.</p>}
+                </TabsContent>
+                <TabsContent value="nutritional" className="space-y-4">
+                    <div className="flex justify-end">
+                        <Button 
+                            onClick={() => handleRegeneratePlan('nutritional')} 
+                            variant="outline" 
+                            size="sm"
+                            disabled={generatingPlan}
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Gerar Novo Plano Alimentar
+                        </Button>
+                    </div>
+                    {currentPlans.nutritional ? <NutritionalPlanDisplay planData={currentPlans.nutritional} /> : <p>Plano alimentar não disponível.</p>}
+                </TabsContent>
+                <TabsContent value="emotional" className="space-y-4">
+                    <div className="flex justify-end">
+                        <Button 
+                            onClick={() => handleRegeneratePlan('emotional')} 
+                            variant="outline" 
+                            size="sm"
+                            disabled={generatingPlan}
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Gerar Novo Plano Emocional
+                        </Button>
+                    </div>
+                    {currentPlans.emotional ? <EmotionalPlanDisplay planData={currentPlans.emotional} /> : <p>Plano emocional não disponível.</p>}
+                </TabsContent>
+                <TabsContent value="spiritual" className="space-y-4">
+                    <div className="flex justify-end">
+                        <Button 
+                            onClick={() => handleRegeneratePlan('spiritual')} 
+                            variant="outline" 
+                            size="sm"
+                            disabled={generatingPlan}
+                        >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Gerar Novo Plano Espiritual
+                        </Button>
+                    </div>
+                    {currentPlans.spiritual ? <SpiritualPlanDisplay planData={currentPlans.spiritual} /> : <p>Plano espiritual não disponível.</p>}
+                </TabsContent>
+            </Tabs>
+            
+            {/* Dialog de regeneração movido para fora dos TabsContent */}
+            <RegeneratePlanDialog 
+                open={manualDialogOpen}
+                onOpenChange={setManualDialogOpen}
+                selectedArea={selectedAreaForRegeneration}
+            />
+        </div>
     );
 }
 

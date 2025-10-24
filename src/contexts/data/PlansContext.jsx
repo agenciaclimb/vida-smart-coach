@@ -410,12 +410,83 @@ export const PlansProvider = ({ children }) => {
     }
   }, [authUser?.id, loadCurrentPlans]);
 
+  // Gera um plano específico (usado para regeneração)
+  const generateSpecificPlan = useCallback(async (planType, userInputs = {}) => {
+    if (!authUser?.id) {
+      toast.error('Usuário não autenticado');
+      return { success: false };
+    }
+
+    try {
+      setGeneratingPlan(true);
+      toast.loading(`Gerando novo plano ${planType}...`);
+
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Desativa o plano antigo desse tipo
+      await supabase
+        .from('user_training_plans')
+        .update({ is_active: false })
+        .eq('user_id', authUser.id)
+        .eq('plan_type', planType);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Configuração do Supabase ausente');
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          userId: authUser.id,
+          planType,
+          userProfile: { ...profile, ...userInputs }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`Erro ao gerar plano ${planType}:`, errorData);
+        throw new Error(`Falha ao gerar plano ${planType}`);
+      }
+
+      const result = await response.json();
+      await loadCurrentPlans();
+      
+      toast.dismiss();
+      toast.success(`✨ Plano ${planType} regenerado com sucesso!`);
+      
+      return { success: true, plan: result };
+
+    } catch (error) {
+      console.error('Error generating specific plan:', error);
+      toast.dismiss();
+      toast.error(`Erro ao gerar plano: ${error.message}`);
+      return { success: false, error };
+    } finally {
+      setGeneratingPlan(false);
+    }
+  }, [authUser?.id, loadCurrentPlans]);
+
   const value = useMemo(() => ({
     currentPlans,
     planHistory,
     loadingPlans,
     generatingPlan,
     generatePersonalizedPlan, // Gera/regera os 4 planos
+    generateSpecificPlan, // Gera/regenera 1 plano específico
     /**
      * Gera apenas os planos que estiverem faltando, mantendo os existentes ativos
      */
@@ -497,6 +568,7 @@ export const PlansProvider = ({ children }) => {
     loadingPlans,
     generatingPlan,
     generatePersonalizedPlan,
+    generateSpecificPlan,
     loadCurrentPlans,
     loadPlanHistory
   ]);
