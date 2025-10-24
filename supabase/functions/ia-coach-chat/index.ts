@@ -14,19 +14,24 @@ serve(async (req) => {
   }
 
   try {
-    // 🔐 Validação de chamada interna (opcional, mas recomendada)
+    const url = new URL(req.url);
+    const debugStage = url.searchParams.get('debugStage') === '1' || (req.headers.get('x-debug-stage') === '1');
+    
+    // 🔐 Validação de chamada: aceita chamadas internas (webhook) com secret OU chamadas autenticadas do frontend
     const configuredSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
-    if (configuredSecret) {
-      const callerSecret = req.headers.get('x-internal-secret') || '';
-      if (callerSecret !== configuredSecret) {
-        console.warn('Unauthorized call to ia-coach-chat: missing/invalid X-Internal-Secret');
+    const callerSecret = req.headers.get('x-internal-secret') || '';
+    const authHeader = req.headers.get('authorization') || '';
+    
+    // Se há secret configurado e a chamada NÃO tem secret válido, verifica se tem auth token
+    if (configuredSecret && callerSecret !== configuredSecret) {
+      // Permite se vier com Authorization header (chamadas do frontend autenticado)
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.warn('Unauthorized call to ia-coach-chat: missing auth or secret');
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...headers, 'Content-Type': 'application/json' }
         });
       }
-    } else {
-      console.warn('INTERNAL_FUNCTION_SECRET not set. Skipping internal call validation.');
     }
 
     const { messageContent, userProfile, chatHistory } = await req.json();
@@ -46,14 +51,17 @@ serve(async (req) => {
       throw new Error('OpenAI API key não configurada');
     }
 
-    // 🎯 Determinar estágio do cliente
-    const clientStage = await getCurrentStage(userProfile.id, supabase);
+  // 🎯 Determinar estágio do cliente (inclui fallback para client_stages)
+  const clientStage = await getCurrentStage(userProfile.id, supabase);
 
     // 📚 Carregar contexto operacional do cliente
     const contextData = await fetchUserContext(userProfile.id, supabase);
     
+    // 🚨 PRIORIDADE ABSOLUTA: Se há feedback pendente, força estágio Specialist
+    const hasPendingFeedback = contextData?.pendingFeedback && contextData.pendingFeedback.length > 0;
+    
     // 🧠 Detectar estágio automaticamente baseado em sinais da conversa
-    const detectedStage = detectStageFromSignals(messageContent, chatHistory, userProfile, clientStage);
+    const detectedStage = hasPendingFeedback ? 'specialist' : detectStageFromSignals(messageContent, chatHistory, userProfile, clientStage);
     const activeStage = detectedStage || clientStage.current_stage;
     const contextPrompt = buildContextPrompt(userProfile, contextData, activeStage) || undefined;
 
@@ -80,6 +88,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       reply: response.text,
       stage: activeStage,
+      ...(debugStage ? { debugStage: { detectedStage, persistedStage: clientStage.current_stage } } : {}),
       timestamp: new Date().toISOString(),
       model: "gpt-4o-mini"
     }), {
@@ -183,6 +192,18 @@ function detectStageFromSignals(message: string, chatHistory: any[], userProfile
 
 async function getCurrentStage(userId: string, supabase: any) {
   try {
+    // 1) Preferir estágio persistido em user_profiles (novo modelo)
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('ia_stage, stage_metadata')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profile?.ia_stage) {
+      return { current_stage: profile.ia_stage, stage_metadata: profile.stage_metadata || {} };
+    }
+
+    // 2) Fallback para client_stages (histórico legado)
     const { data } = await supabase
       .from('client_stages')
       .select('*')
@@ -199,6 +220,8 @@ async function getCurrentStage(userId: string, supabase: any) {
         stage_metadata: { first_interaction: true }
       };
       
+      // Criar valor inicial em user_profiles para padronizar
+      await supabase.from('user_profiles').update({ ia_stage: 'sdr', stage_metadata: newStage.stage_metadata }).eq('id', userId);
       await supabase.from('client_stages').insert(newStage);
       return { current_stage: 'sdr' };
     }
@@ -249,31 +272,41 @@ async function processSDRStage(
   // Contar quantas perguntas já foram feitas
   const assistantMessages = chatHistory?.filter(m => m.role === 'assistant') || [];
   const questionCount = assistantMessages.length;
+  const lastAssistantMsg = assistantMessages.slice(-1)[0]?.content || '';
   
-  const systemPrompt = `Você é uma SDR do Vida Smart Coach usando metodologia SPIN Selling.
+  const systemPrompt = `Você é a Vida, a IA SDR do Vida Smart Coach. Usa metodologia SPIN Selling de forma conversacional e gradual.
 
 NOME DO LEAD: ${profile.full_name || 'Lead'}
 
-MISSÃO: Acolher o cliente, entender sua realidade e conduzi-lo ao cadastro gratuito de 7 dias.
+MISSÃO: Acolher o cliente com empatia, criar rapport genuíno, entender sua realidade ANTES de oferecer qualquer solução.
 
 ESTRUTURA SPIN (seguir NESTA ORDEM):
 ${questionCount === 0 ? `
 1️⃣ SITUAÇÃO: Descobrir contexto atual
-   → "Oi ${profile.full_name}! Como está sua rotina de saúde hoje?"
-   → Adapte ao linguajar do cliente (formal/informal)
+  → "Oi ${profile.full_name || ''}, tudo bem? Eu sou a Vida 🙋🏽‍♀️, sua coach por aqui. Como você tem se sentido ultimamente em relação à sua saúde?"
+  → Adapte ao linguajar do cliente (formal/informal)
+  → Seja acolhedora e genuína
 ` : questionCount === 1 ? `
 2️⃣ PROBLEMA: Identificar dor específica
    → Foque na resposta anterior e pergunte sobre UM desafio específico
-   → "Qual é o maior desafio com [área mencionada]?"
+   → "E como está sendo isso no dia a dia? Tem algo que te incomoda mais?"
    → NÃO faça lista de perguntas, apenas UMA
+   → Demonstre interesse genuíno
 ` : questionCount === 2 ? `
 3️⃣ IMPLICAÇÃO: Amplificar consequências
-   → "Como isso tem afetado seu dia a dia?"
+   → "E isso tem afetado outras áreas da sua vida também?"
    → Foque no impacto emocional/prático
+   → Seja empática
+` : questionCount === 3 ? `
+🔄 EXPLORAÇÃO: Continue aprofundando
+   → Faça mais 1-2 perguntas para entender melhor o contexto
+   → "Me conta mais sobre isso" / "Há quanto tempo você sente isso?"
+   → Construa rapport ANTES de oferecer solução
 ` : `
-4️⃣ NECESSIDADE: Apresentar solução
-   → "Que tal conhecer uma solução personalizada para isso?"
-   → Se aceitar → Avançar para ESPECIALISTA (NÃO VENDER, só diagnosticar)
+4️⃣ NECESSIDADE: Apresentar diagnóstico (NÃO venda ainda)
+  → "Olha, eu poderia te ajudar a entender melhor o que está acontecendo com um diagnóstico personalizado. Topa?"
+  → Se aceitar claramente → Avançar para ESPECIALISTA (apenas para diagnosticar)
+  → NÃO mencione "teste grátis" ou "7 dias" ainda
 `}
 
 REGRAS CRÍTICAS ANTI-LOOP:
@@ -283,17 +316,23 @@ REGRAS CRÍTICAS ANTI-LOOP:
 4. UMA pergunta curta (máx 15-20 palavras)
 5. Progredir LINEARMENTE: Situação → Problema → Implicação → Necessidade
 6. Tom informal WhatsApp (sem excessos)
+7. Se a sua ÚLTIMA mensagem foi "${lastAssistantMsg}" NÃO repita. Mude o foco.
 
 ❌ NÃO FAÇA:
 - Listas de perguntas múltiplas
 - Repetir perguntas do histórico
+- Mencionar "teste grátis", "7 dias", "4 pilares" ou links prematuramente
 - Vender planos (isso é trabalho da VENDEDORA)
 - Ignorar respostas do cliente
+- Ser direta demais ou comercial no início
 
 ✅ FAÇA:
 - Uma pergunta focada por vez
-- Reconheça a resposta do cliente
+- Reconheça a resposta do cliente com empatia
 - Adapte ao tom dele (formal/informal)
+- Construa conexão genuína antes de avançar
+- Seja conversacional, não robótica
+- Aprofunde em 4-5 mensagens ANTES de oferecer diagnóstico
 
 Responda com a próxima pergunta do SPIN.`;
 
@@ -352,16 +391,36 @@ async function processSpecialistStage(message: string, profile: any, openaiKey: 
   const askedEmotional = /\b(emocional|ansiedade|estresse|humor|sentindo)\b/.test(fullHistory);
   const askedSpiritual = /\b(espiritual|propósito|meditação|gratidão)\b/.test(fullHistory);
   
-  const systemPrompt = `Você é uma ESPECIALISTA CONSULTIVA do Vida Smart Coach.
+  // Verificar se há feedback pendente
+  const hasFeedback = contextData?.pendingFeedback && contextData.pendingFeedback.length > 0;
+  // const feedbackInfo = hasFeedback 
+  //   ? contextData.pendingFeedback.map(f => `${f.plan_type}: "${f.feedback_text}"`).join(' | ')
+  //   : '';
+  
+  const systemPrompt = `Você é a Vida, ESPECIALISTA do Vida Smart Coach.
 
-PERSONALIDADE: Diagnóstica, focada, técnica e motivadora
+PERSONALIDADE: Empática, focada, técnica e solucionadora
 
-MISSÃO CRÍTICA: Gerar plano 100% personalizado e ENCANTAR o cliente durante o teste
+NOME: ${profile.full_name || 'querido(a)'}
+
+${hasFeedback ? `
+AÇÃO IMEDIATA:
+1. RECONHEÇA o feedback: "Oi ${profile.full_name || ''}! Entendi que você quer ajustar seu plano [área]."
+2. Pergunte 1-2 questões CURTAS: "O que especificamente você quer mudar? Está muito difícil? Falta algo?"
+3. Após a resposta do usuário, INSTRUA: "Perfeito! Para regenerar seu plano com esses ajustes, vá em 'Meu Plano' → clique no botão 'Gerar Novo Plano' e responda as perguntas considerando o que conversamos aqui. Ok?"
+
+REGRAS CRÍTICAS:
+❌ NÃO gere plano aqui no chat (não tem interface para isso)
+❌ NÃO faça perguntas de diagnóstico geral
+✅ Entenda o ajuste desejado em 1-2 mensagens
+✅ Direcione para regenerar o plano na aba correta
+
+` : `
+MISSÃO: Criar plano 100% personalizado fazendo diagnóstico técnico detalhado
 ❌ NÃO mencionar cadastro (trabalho do SDR)
 ❌ NÃO mencionar teste grátis (trabalho da VENDEDORA)
 ✅ FOCAR em diagnóstico técnico e construção de plano
-
-NOME: ${profile.full_name || 'querido(a)'}
+`}
 
 ÁREAS PARA DIAGNÓSTICO (perguntar UMA por vez):
 ${!askedPhysical ? '🏋️‍♂️ FÍSICA (próxima)' : '✅ FÍSICA (já diagnosticada)'}
@@ -410,8 +469,10 @@ UMA PERGUNTA POR VEZ!`;
   const aiResponse = await callOpenAI(messages, openaiKey);
 
   // Avançar para Seller após 3-4 perguntas OU se o usuário demonstrar interesse direto
-  const wantsToAdvance = /\b(quero|aceito|sim|vamos|pode ser|topo)\b/i.test(message);
-  const shouldAdvance = questionsAsked >= 3 || wantsToAdvance;
+  const wantsToAdvance = /\b(quero\s+testar|quero\s+assinar|aceito|sim|vamos|pode ser|topo)\b/i.test(message);
+  const askedCount = [askedPhysical, askedFood, askedEmotional, askedSpiritual].filter(Boolean).length;
+  // Só avança após diagnosticar pelo menos 3 áreas, ou se o cliente pedir para testar/assinar
+  const shouldAdvance = askedCount >= 3 || wantsToAdvance;
 
   const metadata = buildInteractionMetadata('specialist', message, aiResponse, contextData, {
     shouldAdvance,
@@ -451,11 +512,11 @@ NOME: ${profile.full_name || 'querido(a)'}
 ${wantsLink ? `
 ✅ CLIENTE ACEITOU! Envie o link AGORA:
 
-"Perfeito! 🎉 Aqui está seu link:
+"Perfeito! 🎉 Aqui está seu link de cadastro:
 
-🔗 https://appvidasmart.com/cadastro
+🔗 https://www.appvidasmart.com/login?tab=register
 
-Clica aí e faz o cadastro rapidinho. Depois disso, podemos trabalhar juntos nas suas metas! Qualquer dúvida, tô aqui! 😊"
+Clica e faz o cadastro rapidinho. Depois disso, seguimos juntos nas suas metas! Qualquer dúvida, tô aqui! 😊"
 ` : `
 OFERTA: 🆓 Teste grátis 7 dias, acesso completo aos 4 pilares!
 
@@ -466,7 +527,7 @@ GATILHOS MENTAIS:
 
 ESTRATÉGIA:
 1. Ser DIRETA: "Quer testar grátis por 7 dias?"
-2. Se aceitar → envie o link https://appvidasmart.com/cadastro IMEDIATAMENTE
+2. Se aceitar → envie o link https://www.appvidasmart.com/login?tab=register IMEDIATAMENTE
 3. Se hesitar → "O que te faz hesitar?" (máximo 1 vez)
 
 REGRAS:
@@ -610,15 +671,11 @@ async function callOpenAI(messages: any[], openaiKey: string) {
 }
 
 function analyzeAdvancementSDR(message: string): boolean {
-  const painLevel = extractPainLevel(message);
-  const hasTimeline = message.toLowerCase().includes('dias') || 
-                     message.toLowerCase().includes('semana') ||
-                     message.toLowerCase().includes('mês');
-  const hasInterest = message.toLowerCase().includes('interesse') ||
-                     message.toLowerCase().includes('ajuda') ||
-                     message.toLowerCase().includes('quero');
-
-  return painLevel >= 7 || (hasTimeline && hasInterest);
+  const text = message.toLowerCase();
+  const explicitConsent = /(quero\s+começar|quero começar|vamos|bora|topo|pode ser|aceito|sim|iniciar|começar|testar)/.test(text);
+  const interest = /(ajuda|quero|preciso|me\s+ajuda|interesse)/.test(text);
+  // SDR só avança com aceite explícito + interesse; não avança apenas por timeline/dor
+  return explicitConsent && interest;
 }
 
 function extractPainLevel(message: string): number {
@@ -634,6 +691,8 @@ function extractPainLevel(message: string): number {
   return 5;
 }
 
+// Função auxiliar para detectar objeções (atualmente não utilizada)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function detectObjection(message: string): string | null {
   const lowerMessage = message.toLowerCase();
   
@@ -673,10 +732,33 @@ async function saveInteraction(userId: string, stage: string, content: string, a
 async function updateClientStage(userId: string, newStage: string, supabase: any) {
   try {
     if (!newStage) return;
+    // descobrir estágio anterior
+    const { data: prev } = await supabase
+      .from('user_profiles')
+      .select('ia_stage, stage_metadata')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const fromStage = prev?.ia_stage || 'sdr';
+    const newMeta = { ...(prev?.stage_metadata || {}), transitioned_at: new Date().toISOString() };
+
+    // 1) Atualizar user_profiles (fonte de verdade)
+    await supabase.from('user_profiles').update({ ia_stage: newStage, stage_metadata: newMeta }).eq('id', userId);
+
+    // 2) Registrar em client_stages (histórico compatível)
     await supabase.from('client_stages').insert({
       user_id: userId,
       current_stage: newStage,
       stage_metadata: { transitioned_at: new Date().toISOString() }
+    });
+
+    // 3) Auditar transição
+    await supabase.from('stage_transitions').insert({
+      user_id: userId,
+      from_stage: fromStage,
+      to_stage: newStage,
+      reason: 'auto',
+      signals: null
     });
   } catch (error) {
     console.log('Erro ao atualizar estágio:', error);

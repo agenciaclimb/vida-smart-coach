@@ -1,6 +1,6 @@
 /** DO NOT import legacy modules. See src/legacy/ for deprecated variants. */
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "@/pages/LandingPage_ClienteFinal";
 import PartnersPage from "@/pages/PartnersPage_Corrigida";
 import LoginPage from "@/pages/LoginPage";
@@ -19,6 +19,9 @@ export default function App() {
       <Route path="/demo" element={<GamificationDemoPage />} />
       {/* pública */}
       <Route path="/login" element={<LoginPage />} />
+  {/* aliases para cadastro/registro */}
+  <Route path="/register" element={<Navigate to="/login?tab=register" replace />} />
+  <Route path="/cadastro" element={<Navigate to="/login?tab=register" replace />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* protegidas */}

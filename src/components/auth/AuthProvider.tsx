@@ -99,6 +99,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       }
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
 
   const signOut = async () => {
@@ -229,6 +230,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const value = useMemo(() => ({ session, user, loading, supabase, signOut, updateUserProfile }), [session, user, loading]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -9,12 +9,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { useChat } from '@/contexts/data/ChatContext';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useLocation } from 'react-router-dom';
 
 const ChatTab = () => {
     const { messages, sendMessage, loading: chatLoading } = useChat();
     const { user } = useAuth();
     const [inputMessage, setInputMessage] = useState('');
     const messagesEndRef = useRef(null);
+    const location = useLocation();
+    const autoMessageSentRef = useRef(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -23,6 +26,15 @@ const ChatTab = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Enviar mensagem automática se vier do feedback
+    useEffect(() => {
+        const autoMessage = location.state?.autoMessage;
+        if (autoMessage && user?.profile && !autoMessageSentRef.current) {
+            autoMessageSentRef.current = true;
+            sendMessage(autoMessage, user.profile);
+        }
+    }, [location.state, user, sendMessage]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();

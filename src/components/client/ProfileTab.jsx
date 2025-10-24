@@ -10,6 +10,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2, User, Bot, Bell, Smile, Zap, BrainCircuit, VenetianMask, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { supabase } from '@/core/supabase';
 import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
 import { ACTIVITY_LEVEL_OPTIONS, normalizeActivityLevel } from '@/domain/profile/activityLevels';
 import { GOAL_TYPE_OPTIONS, normalizeGoalType } from '@/domain/profile/goalTypes';
@@ -33,6 +34,15 @@ const ProfileTab = () => {
     const { user, updateUserProfile, loading: authLoading } = useAuth();
     const [formData, setFormData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingDiagnostics, setIsSavingDiagnostics] = useState(false);
+
+    // Questionário 4 pilares (beta)
+    const [diag, setDiag] = useState({
+        physical: { frequency: '', challenge: '', goal: '' },
+        nutrition: { frequency: '', challenge: '', goal: '' },
+        emotional: { frequency: '', challenge: '', goal: '' },
+        spiritual: { frequency: '', challenge: '', goal: '' },
+    });
 
     const aiPersonalities = [
         { name: "Amigável", icon: <Smile className="w-5 h-5" /> },
@@ -65,6 +75,57 @@ const ProfileTab = () => {
 
     const handleSwitchChange = (id, checked) => {
         setFormData(prev => ({ ...prev, [id]: checked }));
+    };
+    const setDiagField = (area, field, value) => {
+        setDiag(prev => ({ ...prev, [area]: { ...prev[area], [field]: value } }));
+    };
+
+    const saveDiagnostics = async () => {
+        if (!user?.id) return;
+        setIsSavingDiagnostics(true);
+        const toastId = toast.loading('Salvando questionário 4 pilares...');
+        try {
+            const entries = [
+                { area: 'physical', diagKey: 'physical', label: 'Física' },
+                { area: 'nutritional', diagKey: 'nutrition', label: 'Alimentar' },
+                { area: 'emotional', diagKey: 'emotional', label: 'Emocional' },
+                { area: 'spiritual', diagKey: 'spiritual', label: 'Espiritual' },
+            ];
+            
+            for (const e of entries) {
+                const diagData = diag[e.diagKey];
+                if (!diagData) continue;
+                
+                const payload = {
+                    user_id: user.id,
+                    area: e.area,
+                    current_state: {
+                        frequency: diagData.frequency || null,
+                    },
+                    pain_points: diagData.challenge ? [diagData.challenge] : [],
+                    goals: diagData.goal ? [diagData.goal] : [],
+                    score: null,
+                };
+                
+                console.log('Saving diagnostics for', e.area, payload);
+                
+                // upsert by (user_id, area)
+                const { error } = await supabase
+                  .from('area_diagnostics')
+                  .upsert(payload, { onConflict: 'user_id,area' });
+                  
+                if (error) {
+                    console.error('area_diagnostics upsert error', e.area, error);
+                    throw error;
+                }
+            }
+            toast.success('Questionário salvo! Isso ajuda a IA a personalizar seu plano.', { id: toastId });
+        } catch (err) {
+            console.error('saveDiagnostics error', err);
+            toast.error('Erro ao salvar questionário: ' + err.message, { id: toastId });
+        } finally {
+            setIsSavingDiagnostics(false);
+        }
     };
     
     const handleUnsupportedFeature = () => {
@@ -220,6 +281,50 @@ const ProfileTab = () => {
                                         {GOAL_TYPE_OPTIONS.map(option => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Questionário 4 Pilares (Beta) */}
+                    <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
+                        <CardHeader>
+                            <CardTitle>Questionário 4 Pilares (beta)</CardTitle>
+                            <CardDescription>Responda rapidamente para personalizar seu plano nas áreas Física, Alimentar, Emocional e Espiritual.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {/* Física */}
+                            <div className="space-y-3">
+                                <h4 className="font-medium">🏋️ Física</h4>
+                                <Input placeholder="Frequência semanal de exercícios (ex: 3x)" value={diag.physical.frequency} onChange={(e)=>setDiagField('physical','frequency',e.target.value)} />
+                                <Input placeholder="Maior desafio físico hoje" value={diag.physical.challenge} onChange={(e)=>setDiagField('physical','challenge',e.target.value)} />
+                                <Input placeholder="Objetivo físico principal" value={diag.physical.goal} onChange={(e)=>setDiagField('physical','goal',e.target.value)} />
+                            </div>
+                            {/* Alimentar */}
+                            <div className="space-y-3">
+                                <h4 className="font-medium">🥗 Alimentar</h4>
+                                <Input placeholder="Frequência de refeições equilibradas (ex: 2 por dia)" value={diag.nutrition.frequency} onChange={(e)=>setDiagField('nutrition','frequency',e.target.value)} />
+                                <Input placeholder="Maior desafio alimentar hoje" value={diag.nutrition.challenge} onChange={(e)=>setDiagField('nutrition','challenge',e.target.value)} />
+                                <Input placeholder="Objetivo alimentar principal" value={diag.nutrition.goal} onChange={(e)=>setDiagField('nutrition','goal',e.target.value)} />
+                            </div>
+                            {/* Emocional */}
+                            <div className="space-y-3">
+                                <h4 className="font-medium">🧠 Emocional</h4>
+                                <Input placeholder="Frequência de estresse/ansiedade (ex: 2x/semana)" value={diag.emotional.frequency} onChange={(e)=>setDiagField('emotional','frequency',e.target.value)} />
+                                <Input placeholder="Maior desafio emocional hoje" value={diag.emotional.challenge} onChange={(e)=>setDiagField('emotional','challenge',e.target.value)} />
+                                <Input placeholder="Objetivo emocional principal" value={diag.emotional.goal} onChange={(e)=>setDiagField('emotional','goal',e.target.value)} />
+                            </div>
+                            {/* Espiritual */}
+                            <div className="space-y-3">
+                                <h4 className="font-medium">✨ Espiritual</h4>
+                                <Input placeholder="Frequência de práticas (ex: meditação 10min/dia)" value={diag.spiritual.frequency} onChange={(e)=>setDiagField('spiritual','frequency',e.target.value)} />
+                                <Input placeholder="Maior desafio espiritual hoje" value={diag.spiritual.challenge} onChange={(e)=>setDiagField('spiritual','challenge',e.target.value)} />
+                                <Input placeholder="Objetivo espiritual principal" value={diag.spiritual.goal} onChange={(e)=>setDiagField('spiritual','goal',e.target.value)} />
+                            </div>
+                            <div className="flex justify-end">
+                                <Button type="button" onClick={saveDiagnostics} disabled={isSavingDiagnostics} className="vida-smart-gradient text-white">
+                                    {isSavingDiagnostics ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Salvar Questionário
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const sbSecretKey = process.env.SB_SECRET_KEY;
   
   let resolutionStatus = "";
+  // eslint-disable-next-line no-template-curly-in-string
   if (supabaseServiceKey === "${SB_SECRET_KEY}") {
     if (sbSecretKey) {
       resolutionStatus = "⚠️ SUPABASE_SERVICE_ROLE_KEY está como referência, mas SB_SECRET_KEY existe";

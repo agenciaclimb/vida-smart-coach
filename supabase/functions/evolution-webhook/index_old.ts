@@ -118,7 +118,7 @@ serve(async (req) => {
 
     // 🛡️ DEDUPLICAÇÃO: Verificar se mensagem já foi processada recentemente (últimos 30s)
     const messageId = data.key?.id;
-    const messageTimestamp = data.messageTimestamp || Math.floor(Date.now() / 1000);
+    // const messageTimestamp = data.messageTimestamp || Math.floor(Date.now() / 1000);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
