@@ -742,14 +742,14 @@ const GamificationTabEnhanced = () => {
                                 <CardContent className="space-y-4">
                                     <div className="flex gap-2">
                                         <Input 
-                                            value={`${window.location.origin}/register?ref=${authUser?.id}`}
+                                            value={`https://www.appvidasmart.com/login?tab=register&ref=${authUser?.id}`}
                                             readOnly
                                             className="text-xs"
                                         />
                                         <Button 
                                             size="sm"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(`${window.location.origin}/register?ref=${authUser?.id}`);
+                                                navigator.clipboard.writeText(`https://www.appvidasmart.com/login?tab=register&ref=${authUser?.id}`);
                                                 toast.success('Link copiado!');
                                             }}
                                         >
