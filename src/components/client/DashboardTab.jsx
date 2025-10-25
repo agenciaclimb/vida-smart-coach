@@ -258,7 +258,7 @@ const DashboardTab = () => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6"
+      className="space-y-6 pb-8 md:pb-0"
     >
       {/* Onboarding (mobile-first) */}
       <div className="md:hidden">
@@ -295,7 +295,7 @@ const DashboardTab = () => {
       {hasCompleteProfile && (
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Olá, {profile.name || profile.full_name || 'Cliente'}!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Olá, {profile.name || profile.full_name || 'Cliente'}!</h1>
             <p className="text-gray-500 mt-1">Bem-vindo(a) de volta. Pronto para evoluir hoje?</p>
           </div>
           <Button onClick={() => navigate('/dashboard?tab=profile')}>
@@ -305,7 +305,7 @@ const DashboardTab = () => {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           icon={<Dumbbell className="text-white" />} 
           title="Plano Atual" 
@@ -338,7 +338,7 @@ const DashboardTab = () => {
         <CompletionProgress />
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/dashboard?tab=plan')}>
           <CardHeader className="flex-row items-center gap-4">
             <Dumbbell className="w-8 h-8 text-primary" />
@@ -367,6 +367,8 @@ const DashboardTab = () => {
           </CardHeader>
         </Card>
       </div>
+      {/* Spacer extra para a bottom nav no mobile */}
+      <div className="h-6 md:hidden" />
     </motion.div>
   );
 };
