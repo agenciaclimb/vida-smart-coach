@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { usePlans } from '@/contexts/data/PlansContext';
 import GuidedTour from '@/components/onboarding/GuidedTour';
 import WhatsAppOnboardingPrompt from '@/components/onboarding/WhatsAppOnboardingPrompt';
+import CheckinSystem from '@/components/checkin/CheckinSystem';
 
 const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -309,11 +310,13 @@ const DashboardTab = () => {
           </CardContent>
         </Card>
       </div>
-
       {/* WhatsApp Onboarding Prompt */}
       {showWhatsAppPrompt && <WhatsAppOnboardingPrompt onDismiss={() => setShowWhatsAppPrompt(false)} />}
 
-      {/* Show WelcomeCard if profile is incomplete (desktop or below checklist) */}
+      {/* Check-in Reflexivo (IA Coach) - Promove engajamento diário */}
+      <CheckinSystem />
+
+      {/* Show WelcomeCard if profile is incomplete */}
       {!hasCompleteProfile && <WelcomeCard />}
       
       {/* Show greeting if profile is complete */}

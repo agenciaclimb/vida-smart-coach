@@ -9,7 +9,6 @@ import { usePlans } from '@/contexts/data/PlansContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 // Use the real Gamification context (not the lightweight demo hook)
 import { useGamification } from '@/contexts/data/GamificationContext';
-import CheckinSystem from '@/components/checkin/CheckinSystem';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { usePlanCompletions } from '@/hooks/usePlanCompletions';
@@ -1787,8 +1786,6 @@ const PlanTab = () => {
           {/* <IACoachIntegration /> */}
           {/* Gamification sempre visível quando há planos */}
           <GamificationDisplay />
-          {/* Check-in System sempre visível quando há planos */}
-          <CheckinSystem />
 
           {showGenerateButtons && (
             <div className="flex flex-col md:flex-row gap-3">
