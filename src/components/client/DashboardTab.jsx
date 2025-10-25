@@ -15,6 +15,8 @@ import WelcomeCard from '@/components/client/WelcomeCard';
 import { debugLog, validateCheckinData, trackError } from '@/utils/debugHelpers';
 import { supabase } from '@/lib/supabase';
 import { usePlans } from '@/contexts/data/PlansContext';
+import GuidedTour from '@/components/onboarding/GuidedTour';
+import WhatsAppOnboardingPrompt from '@/components/onboarding/WhatsAppOnboardingPrompt';
 
 const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -170,6 +172,8 @@ const DashboardTab = () => {
 
   const [completionsCount, setCompletionsCount] = useState(null);
   const [interactionsCount, setInteractionsCount] = useState(null);
+  const [runTour, setRunTour] = useState(false);
+  const [showWhatsAppPrompt, setShowWhatsAppPrompt] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,6 +194,18 @@ const DashboardTab = () => {
         if (!cancelled) {
           setCompletionsCount(compCount ?? 0);
           setInteractionsCount(interCount ?? 0);
+
+          // Trigger tour if user just generated first plan
+          const hasPlans = currentPlans && Object.keys(currentPlans).length > 0;
+          const tourCompleted = localStorage.getItem('vida_smart_tour_completed');
+          if (hasPlans && !tourCompleted) {
+            setRunTour(true);
+          }
+
+          // Show WhatsApp prompt after first plan is generated
+          if (hasPlans) {
+            setShowWhatsAppPrompt(true);
+          }
         }
       } catch (e) {
         // Silencioso: não quebra a UI
@@ -201,7 +217,7 @@ const DashboardTab = () => {
     }
     loadCounts();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, currentPlans]);
 
   // Exibe loading apenas enquanto a autenticação está carregando.
   // Se o perfil ainda não existir no banco, seguimos com valores padrão.
@@ -260,6 +276,8 @@ const DashboardTab = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6 pb-8 md:pb-0"
     >
+      <GuidedTour run={runTour} onComplete={() => setRunTour(false)} />
+
       {/* Onboarding (mobile-first) */}
       <div className="md:hidden">
         <Card className="border-primary/20">
@@ -287,6 +305,9 @@ const DashboardTab = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* WhatsApp Onboarding Prompt */}
+      {showWhatsAppPrompt && <WhatsAppOnboardingPrompt onDismiss={() => setShowWhatsAppPrompt(false)} />}
 
       {/* Show WelcomeCard if profile is incomplete (desktop or below checklist) */}
       {!hasCompleteProfile && <WelcomeCard />}

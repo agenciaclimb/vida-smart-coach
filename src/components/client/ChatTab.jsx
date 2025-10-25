@@ -9,16 +9,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { useChat } from '@/contexts/data/ChatContext';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useLocation, useNavigate } from 'react-router-dom';
-import WhatsAppPrompt from '@/components/whatsapp/WhatsAppPrompt';
-import { shouldShowChatTabPrompt, markPromptSeen } from '@/utils/whatsappOnboarding';
+import { useLocation } from 'react-router-dom';
 
 const ChatTab = () => {
     const { messages, sendMessage, loading: chatLoading } = useChat();
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [inputMessage, setInputMessage] = useState('');
-    const [showWhatsAppPrompt, setShowWhatsAppPrompt] = useState(false);
     const messagesEndRef = useRef(null);
     const location = useLocation();
     const autoMessageSentRef = useRef(false);
@@ -30,15 +26,6 @@ const ChatTab = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
-    // Verificar se deve mostrar prompt de WhatsApp
-    useEffect(() => {
-        if (shouldShowChatTabPrompt()) {
-            setTimeout(() => {
-                setShowWhatsAppPrompt(true);
-            }, 3000);
-        }
-    }, []);
 
     // Enviar mensagem automática se vier do feedback
     useEffect(() => {
@@ -57,25 +44,8 @@ const ChatTab = () => {
         }
     };
 
-    const handleWhatsAppConnect = () => {
-        setShowWhatsAppPrompt(false);
-        markPromptSeen('chat_tab');
-        navigate('/dashboard?tab=integrations');
-    };
-
-    const handleWhatsAppDismiss = () => {
-        setShowWhatsAppPrompt(false);
-        markPromptSeen('chat_tab');
-    };
-
     return (
         <TabsContent value="chat" className="mt-6">
-            <WhatsAppPrompt
-                trigger="chat_tab"
-                show={showWhatsAppPrompt}
-                onConnect={handleWhatsAppConnect}
-                onDismiss={handleWhatsAppDismiss}
-            />
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -126,7 +96,7 @@ const ChatTab = () => {
                         </ScrollArea>
                     </CardContent>
                     <CardFooter className="p-4 border-t bg-gray-50">
-                        <form onSubmit={handleSendMessage} className="flex w-full space-x-2">
+                        <form onSubmit={handleSendMessage} className="flex w-full space-x-2" data-tour="ia-chat">
                             <Input
                                 type="text"
                                 placeholder="Digite sua mensagem..."
