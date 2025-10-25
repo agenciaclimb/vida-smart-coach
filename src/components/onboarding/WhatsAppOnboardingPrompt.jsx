@@ -7,7 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
 const WHATSAPP_PROMPT_DISMISSED = 'vida_smart_whatsapp_prompt_dismissed';
-const WHATSAPP_NUMBER = '5511999998888'; // Substitua pelo número real da Evolution API
+const WHATSAPP_NUMBER = '5511934025008'; // Número oficial Vida Smart Coach
 
 const WhatsAppOnboardingPrompt = ({ onDismiss }) => {
   const { user } = useAuth();

@@ -195,14 +195,8 @@ const DashboardTab = () => {
           setCompletionsCount(compCount ?? 0);
           setInteractionsCount(interCount ?? 0);
 
-          // Trigger tour if user just generated first plan
-          const hasPlans = currentPlans && Object.keys(currentPlans).length > 0;
-          const tourCompleted = localStorage.getItem('vida_smart_tour_completed');
-          if (hasPlans && !tourCompleted) {
-            setRunTour(true);
-          }
-
           // Show WhatsApp prompt after first plan is generated
+          const hasPlans = currentPlans && Object.keys(currentPlans).length > 0;
           if (hasPlans) {
             setShowWhatsAppPrompt(true);
           }
@@ -253,6 +247,16 @@ const DashboardTab = () => {
       cta: hasPlans ? 'Concluído' : 'Gerar plano'
     },
     {
+      key: 'tour',
+      title: 'Faça o tour guiado',
+      done: !!localStorage.getItem('vida_smart_tour_completed'),
+      action: () => {
+        navigate('/dashboard?tab=plan');
+        setTimeout(() => setRunTour(true), 500);
+      },
+      cta: localStorage.getItem('vida_smart_tour_completed') ? 'Concluído' : 'Iniciar tour'
+    },
+    {
       key: 'complete_one',
       title: 'Conclua 1 item do plano',
       done: hasFirstCompletion,
@@ -283,7 +287,7 @@ const DashboardTab = () => {
         <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="text-lg">Comece por aqui</CardTitle>
-            <CardDescription>Quatro passos para começar sua transformação</CardDescription>
+            <CardDescription>Cinco passos para começar sua transformação</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {checklist.map(step => (

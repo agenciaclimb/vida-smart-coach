@@ -1483,3 +1483,146 @@ Todos os links neste documento são diretos e clicáveis. Ao processar tarefas:
 - Sugestões aparecem naturalmente na conversa, não forçadas
 - Sistema evita sugerir itens já completados no dia
 
+
+---
+
+**REGISTRO DE CICLO DE TRABALHO - 24/10/2025 - CICLO 8**
+
+**✅ TAREFA P0 CONCLUÍDA:** Melhorias de UX Mobile - Navegação Guiada e Onboarding
+**Objetivo:** Implementar experiência mobile-first completa com navegação inferior, diálogos otimizados, checklist de onboarding e tour guiado para novos usuários, com foco estratégico em direcionar o uso diário via WhatsApp.
+**Status:** ✅ CONCLUÍDO E DEPLOYED
+**Hora de Início:** 24/10/2025 20:00
+**Hora de Conclusão:** 24/10/2025 21:45
+
+**IMPLEMENTAÇÃO REALIZADA:**
+
+1. ✅ **Navegação Inferior Mobile (Bottom Tab Bar):**
+    - Arquivo: `src/components/client/MobileBottomNav.jsx`
+    - 4 tabs principais: Início (Dashboard), Plano, IA (Chat), Pontos (Gamificação)
+    - Fixed position com safe-area-inset support
+    - Hidden em desktop (md:hidden)
+    - Ícones lucide-react com labels compactas
+
+2. ✅ **Padronização de Diálogos Mobile:**
+    - Arquivo: `src/components/client/PlanTab.jsx`
+    - Todos DialogContent convertidos para full-screen no mobile:
+       - className: `p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto`
+    - Inputs com fonte maior (text-base no mobile, text-sm no desktop)
+    - Botões full-width no mobile (w-full sm:w-auto)
+    - Diálogos atualizados:
+       - Gerar Plano Manual
+       - Feedback Plano Físico
+       - Feedback Plano Nutricional
+       - Feedback Plano Emocional
+       - Feedback Plano Espiritual
+       - Regenerar Plano (dialog específico)
+
+3. ✅ **Checklist de Onboarding (Mobile-First):**
+    - Arquivo: `src/components/client/DashboardTab.jsx`
+    - Card "Comece por aqui" com 4 passos:
+       1. Completar perfil
+       2. Gerar primeiro plano
+       3. Concluir 1 item do plano
+       4. Falar com a IA Coach
+    - Detecção de progresso via Supabase:
+       - Perfil: verifica `user.profile.name`
+       - Planos: verifica `currentPlans` do PlansContext
+       - Conclusões: count em `plan_completions`
+       - Interações IA: count em `interactions`
+    - Cada step tem CTA que navega para a aba apropriada
+    - Visual: CheckCircle2 (verde) vs Circle (cinza), line-through quando concluído
+
+4. ✅ **Tour Guiado Interativo (react-joyride):**
+    - Arquivo: `src/components/onboarding/GuidedTour.jsx`
+    - Instalado: `pnpm add react-joyride`
+    - 3 passos sequenciais:
+       1. `data-tour="generate-plan"` → Botão "Gerar Planos" (PlanTab)
+       2. `data-tour="plan-item"` → Primeiro exercício/item (PlanTab)
+       3. `data-tour="ia-chat"` → Input do chat (ChatTab)
+    - Dispara automaticamente após gerar primeiro plano
+    - Salva conclusão em localStorage (`vida_smart_tour_completed`)
+    - Opcionalmente registra em `user_profiles.tour_completed_at`
+    - Estilos customizados: cor verde (#10b981), botões em português
+    - Permite pular (Skip) ou navegar (Voltar/Próximo/Concluir)
+
+5. ✅ **Prompt de WhatsApp Estratégico:**
+    - Arquivo: `src/components/onboarding/WhatsAppOnboardingPrompt.jsx`
+    - **Número oficial:** +55 11 93402-5008 (configurado)
+    - Aparece após gerar primeiro plano (detecta `currentPlans`)
+    - Verifica `whatsapp_messages` table para auto-dismiss
+    - Visual: Card verde gradiente com ícone WhatsApp
+    - 3 benefícios destacados:
+       - Receba lembretes e dicas ao longo do dia
+       - Tire dúvidas e ajuste seu plano a qualquer momento
+       - Reporte atividades rapidamente e ganhe pontos
+    - CTA: "Abrir WhatsApp e Começar" → abre wa.me com mensagem pré-formatada:
+       - "Olá! Acabei de gerar meu plano na plataforma Vida Smart e quero começar a usar a IA Coach pelo WhatsApp. 🚀"
+    - Dismiss manual (X) ou automático (após primeira mensagem WhatsApp)
+    - localStorage: `vida_smart_whatsapp_prompt_dismissed`
+
+6. ✅ **Otimizações de Spacing e Tipografia Mobile:**
+    - Arquivo: `src/components/client/DashboardTab.jsx`
+    - Heading responsivo: `text-2xl md:text-3xl`
+    - Gaps reduzidos em grids: `gap-3 md:gap-4`
+    - Bottom padding no container: `pb-8 md:pb-0` (evita overlap com bottom nav)
+    - Spacer extra: `<div className="h-6 md:hidden" />` no final
+
+7. ✅ **Navegação Superior Oculta no Mobile:**
+    - Arquivo: `src/pages/ClientDashboard.jsx`
+    - TabsList: `className="grid-cols-none hidden md:inline-grid"`
+    - Evita duplicação com bottom nav
+
+8. ✅ **Data-Tour Attributes:**
+    - `src/components/client/PlanTab.jsx`:
+       - Botão "Gerar Planos": `data-tour="generate-plan"`
+       - Primeiro exercício: `data-tour="plan-item"` (conditional no primeiro item)
+    - `src/components/client/ChatTab.jsx`:
+       - Form de chat: `data-tour="ia-chat"`
+
+**DEPLOYS REALIZADOS:**
+- Commit 1: `feat(mobile): bottom nav + full-screen dialogs on mobile; chore(scripts): reset_user_data utility; chore(db): add ia_stage and stage_transitions migration`
+- Commit 2: `feat(mobile-onboarding): add 'Comece por aqui' checklist on Dashboard (mobile), with progress detection via Supabase; hide header tabs on mobile`
+- Commit 3: `chore(mobile-ux): spacing and typography tweaks on Dashboard for small screens; add mobile spacer to avoid bottom nav overlap`
+- Commit 4: `feat(onboarding): add guided tour with react-joyride + WhatsApp onboarding prompt after first plan; encourage daily WhatsApp usage`
+
+**ARQUITETURA IMPLEMENTADA:**
+
+```
+Mobile Navigation Flow:
+1. Usuário acessa mobile → Bottom nav visível (Início, Plano, IA, Pontos)
+2. Header tabs hidden no mobile (evita duplicação)
+3. Dashboard → Card "Comece por aqui" (4 passos com status)
+
+Onboarding Journey:
+1. Novo usuário → WelcomeCard + Checklist
+2. Gera primeiro plano → Tour guiado inicia (3 passos)
+3. Após tour → WhatsApp prompt aparece
+4. Usuário clica WhatsApp → abre conversa pré-formatada
+5. Primeira mensagem → prompt auto-dismiss
+
+WhatsApp Integration:
+- Número oficial: 5511934025008
+- Mensagem padrão: "Olá! Acabei de gerar meu plano... quero começar a usar a IA Coach pelo WhatsApp 🚀"
+- Detecção de uso: query em whatsapp_messages (user_phone ou user_id)
+- Persistência: localStorage + Supabase opcional
+```
+
+**RESULTADO ESPERADO:**
+- Experiência mobile fluida e intuitiva
+- Navegação clara com bottom tabs fixos
+- Pop-ups/dialogs legíveis e fáceis de usar no celular
+- Novos usuários guiados passo a passo
+- Foco estratégico em migrar usuários para WhatsApp (canal de maior engajamento diário)
+- Tour interativo mostra os 3 pontos principais: gerar plano, completar item, falar com IA
+- WhatsApp prompt convence usuário dos benefícios do uso diário via WhatsApp
+
+**PRÓXIMOS PASSOS SUGERIDOS:**
+1. Notificações push web para lembrar de usar WhatsApp
+2. Dashboard de "Primeiros Passos" mais visual (progress ring, badges)
+3. Gamificação de onboarding (conquista "Primeiros Passos" ao completar checklist)
+4. A/B testing do WhatsApp prompt (timing, copy, visual)
+5. Analytics de conversão: % que abrem WhatsApp vs % que enviam primeira mensagem
+
+---
+
+
