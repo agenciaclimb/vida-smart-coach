@@ -102,7 +102,7 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
         <main className="flex-grow pb-20 md:pb-0">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="container mx-auto py-8 px-4 md:px-6">
             <ScrollArea className="w-full whitespace-nowrap rounded-md">
-              <TabsList className="grid-cols-none">
+              <TabsList className="grid-cols-none hidden md:inline-grid">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="plan">Meu Plano</TabsTrigger>
                 <TabsTrigger value="chat">IA Coach</TabsTrigger>

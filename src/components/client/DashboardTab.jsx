@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2 } from 'lucide-react';
+import { Award, BarChart3, Dumbbell, Zap, MessageSquare, Users, Edit, Loader2, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useCheckins } from '@/contexts/data/CheckinsContext';
 import { motion } from 'framer-motion';
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import toast from 'react-hot-toast';
 import WelcomeCard from '@/components/client/WelcomeCard';
 import { debugLog, validateCheckinData, trackError } from '@/utils/debugHelpers';
+import { supabase } from '@/lib/supabase';
+import { usePlans } from '@/contexts/data/PlansContext';
 
 const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -164,6 +166,42 @@ const DailyCheckInCard = () => {
 const DashboardTab = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { currentPlans } = usePlans?.() || { currentPlans: null };
+
+  const [completionsCount, setCompletionsCount] = useState(null);
+  const [interactionsCount, setInteractionsCount] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCounts() {
+      try {
+        if (!user?.id) return;
+
+        const [{ count: compCount }, { count: interCount }] = await Promise.all([
+          supabase
+            .from('plan_completions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('interactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+        ]);
+        if (!cancelled) {
+          setCompletionsCount(compCount ?? 0);
+          setInteractionsCount(interCount ?? 0);
+        }
+      } catch (e) {
+        // Silencioso: não quebra a UI
+        if (!cancelled) {
+          setCompletionsCount(0);
+          setInteractionsCount(0);
+        }
+      }
+    }
+    loadCounts();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // Exibe loading apenas enquanto a autenticação está carregando.
   // Se o perfil ainda não existir no banco, seguimos com valores padrão.
@@ -179,6 +217,40 @@ const DashboardTab = () => {
   
   // Check if profile is complete for conditional WelcomeCard display
   const hasCompleteProfile = profile?.name || profile?.full_name;
+  const hasPlans = !!(currentPlans && Object.keys(currentPlans).length > 0);
+  const hasFirstCompletion = (completionsCount ?? 0) > 0;
+  const hasFirstInteraction = (interactionsCount ?? 0) > 0;
+
+  const checklist = [
+    {
+      key: 'profile',
+      title: 'Complete seu perfil',
+      done: !!hasCompleteProfile,
+      action: () => navigate('/dashboard?tab=profile'),
+      cta: hasCompleteProfile ? 'Concluído' : 'Completar perfil'
+    },
+    {
+      key: 'plan',
+      title: 'Gere seu primeiro plano',
+      done: hasPlans,
+      action: () => navigate('/dashboard?tab=plan'),
+      cta: hasPlans ? 'Concluído' : 'Gerar plano'
+    },
+    {
+      key: 'complete_one',
+      title: 'Conclua 1 item do plano',
+      done: hasFirstCompletion,
+      action: () => navigate('/dashboard?tab=plan'),
+      cta: hasFirstCompletion ? 'Concluído' : 'Ir para o plano'
+    },
+    {
+      key: 'talk_ai',
+      title: 'Fale com a IA Coach',
+      done: hasFirstInteraction,
+      action: () => navigate('/dashboard?tab=chat'),
+      cta: hasFirstInteraction ? 'Concluído' : 'Abrir chat'
+    }
+  ];
 
   return (
     <motion.div
@@ -188,7 +260,35 @@ const DashboardTab = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      {/* Show WelcomeCard if profile is incomplete */}
+      {/* Onboarding (mobile-first) */}
+      <div className="md:hidden">
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg">Comece por aqui</CardTitle>
+            <CardDescription>Quatro passos para começar sua transformação</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {checklist.map(step => (
+              <div key={step.key} className="flex items-center justify-between p-3 rounded-lg border bg-white">
+                <div className="flex items-center gap-3">
+                  {step.done ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  )}
+                  <span className={`text-sm ${step.done ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{step.title}</span>
+                </div>
+                <Button size="sm" variant={step.done ? 'outline' : 'default'} className={step.done ? '' : 'vida-smart-gradient text-white'} onClick={step.action}>
+                  <span className="hidden xs:inline">{step.cta}</span>
+                  {!step.done && <ArrowRight className="w-4 h-4 ml-2" />}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Show WelcomeCard if profile is incomplete (desktop or below checklist) */}
       {!hasCompleteProfile && <WelcomeCard />}
       
       {/* Show greeting if profile is complete */}
