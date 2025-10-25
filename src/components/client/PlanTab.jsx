@@ -10,6 +10,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 // Use the real Gamification context (not the lightweight demo hook)
 import { useGamification } from '@/contexts/data/GamificationContext';
 import CheckinSystem from '@/components/checkin/CheckinSystem';
+import WhatsAppPrompt from '@/components/whatsapp/WhatsAppPrompt';
+import { shouldShowFirstPlanPrompt, markPromptSeen, shouldShowThirdCompletionPrompt } from '@/utils/whatsappOnboarding';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { usePlanCompletions } from '@/hooks/usePlanCompletions';
@@ -331,10 +333,12 @@ const NoPlanState = () => {
   const { generatePersonalizedPlan, generatingPlan } = usePlans();
   const { user: authUser } = useAuth();
   const { addDailyActivity } = useGamification();
+  const navigate = useNavigate();
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState('physical');
   const [form, setForm] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showWhatsAppPrompt, setShowWhatsAppPrompt] = useState(false);
 
   const handleGeneratePlan = async () => {
     if (!authUser?.profile?.name || !authUser?.profile?.goal_type) {
@@ -354,7 +358,25 @@ const NoPlanState = () => {
           generation_date: new Date().toISOString()
         }
       });
+      
+      // Mostrar prompt de WhatsApp após primeiro plano
+      if (shouldShowFirstPlanPrompt()) {
+        setTimeout(() => {
+          setShowWhatsAppPrompt(true);
+        }, 2000);
+      }
     }
+  };
+
+  const handleWhatsAppConnect = () => {
+    setShowWhatsAppPrompt(false);
+    markPromptSeen('first_plan');
+    navigate('/dashboard?tab=integrations');
+  };
+
+  const handleWhatsAppDismiss = () => {
+    setShowWhatsAppPrompt(false);
+    markPromptSeen('first_plan');
   };
 
   const handleManualSubmit = async (e) => {
@@ -375,6 +397,12 @@ const NoPlanState = () => {
 
   return (
     <div className="space-y-6">
+      <WhatsAppPrompt
+        trigger="first_plan"
+        show={showWhatsAppPrompt}
+        onConnect={handleWhatsAppConnect}
+        onDismiss={handleWhatsAppDismiss}
+      />
       <GamificationDisplay />
       <CheckinSystem />
       <motion.div 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +17,7 @@ import CommunityTab from '@/components/client/CommunityTab';
 import ProfileTab from '@/components/client/ProfileTab';
 import ReferralTab from '@/components/client/ReferralTab';
 import IntegrationsTab from '@/components/client/IntegrationsTab';
+import OnboardingTour from '@/components/onboarding/OnboardingTour';
 import { Loader2 } from 'lucide-react';
 
 const LoadingScreen = () => (
@@ -36,6 +37,25 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
 
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab') || defaultTab;
+
+  // Estado do tour guiado
+  const [runTour, setRunTour] = useState(false);
+
+  useEffect(() => {
+    // Verificar se é a primeira vez do usuário (localStorage)
+    const hasSeenTour = localStorage.getItem('vida_has_seen_tour');
+    if (!hasSeenTour && user) {
+      // Aguarda 2 segundos para garantir que a UI carregou
+      setTimeout(() => {
+        setRunTour(true);
+      }, 2000);
+    }
+  }, [user]);
+
+  const handleTourFinish = () => {
+    setRunTour(false);
+    localStorage.setItem('vida_has_seen_tour', 'true');
+  };
 
   const handleTabChange = (tab) => {
     navigate(`/dashboard?tab=${tab}`);
@@ -97,6 +117,7 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
         <title>Painel do Cliente - Vida Smart</title>
         <meta name="description" content="Acompanhe seu progresso, converse com a IA Coach, gerencie seu plano e muito mais." />
       </Helmet>
+      <OnboardingTour run={runTour} onFinish={handleTourFinish} />
       <div className="flex flex-col min-h-screen bg-gray-50">
         <ClientHeader user={user} onLogout={signOut} />
         <main className="flex-grow pb-20 md:pb-0">
@@ -104,13 +125,13 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
             <ScrollArea className="w-full whitespace-nowrap rounded-md">
               <TabsList className="grid-cols-none hidden md:inline-grid">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="plan">Meu Plano</TabsTrigger>
-                <TabsTrigger value="chat">IA Coach</TabsTrigger>
+                <TabsTrigger value="plan" data-tour="generate-plan">Meu Plano</TabsTrigger>
+                <TabsTrigger value="chat" data-tour="chat-ia">IA Coach</TabsTrigger>
                 <TabsTrigger value="gamification">Gamificação</TabsTrigger>
                 <TabsTrigger value="community">Comunidade</TabsTrigger>
                 <TabsTrigger value="profile">Perfil & Configurações</TabsTrigger>
                 <TabsTrigger value="referral">Indique e Ganhe</TabsTrigger>
-                <TabsTrigger value="integrations">Integrações</TabsTrigger>
+                <TabsTrigger value="integrations" data-tour="whatsapp-button">Integrações</TabsTrigger>
               </TabsList>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
