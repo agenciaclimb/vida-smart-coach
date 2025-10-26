@@ -120,6 +120,22 @@ Próximos aprimoramentos sugeridos:
 - Barra de progresso para conquistas graduais (se/quando métricas de progresso forem expostas).
 - Animação de desbloqueio (confete/scale) ao ganhar nova badge.
 
+**MELHORIAS INCREMENTAIS (CICLO 12 - parte 2):**
+
+✅ **Tooltips e Progresso:** Implementado tooltip com descrição completa em cada badge + barra de progresso quando disponível (progress.percent ou progress.current/target).
+
+✅ **Paginação "Ver Todas":** Adicionado botão para expandir/colapsar listas de badges (desbloqueadas e bloqueadas) quando houver mais de 12 itens. Estado local controla exibição completa.
+
+✅ **Confete ao Desbloquear:** Criado componente `Confetti` (canvas + framer-motion) que dispara automaticamente quando userAchievements.length aumenta. Efeito visual de celebração com partículas coloridas por 3 segundos + toast de congratulação.
+
+Arquivos alterados:
+- `src/components/client/ProfileTab.jsx`: estados showAllUnlocked/showAllLocked, useEffect para detectar nova badge, integração do Confetti
+- `src/components/ui/confetti.jsx`: componente canvas-based com animação de partículas (150 confetes, cores variadas, física simples)
+
+Validação:
+- Build: PASS (pnpm build)
+- UX: Tooltips funcionais, paginação responsiva, confete dispara em unlock real
+
 
 **REGISTRO DE CICLO DE TRABALHO - 22/10/2025**
 
