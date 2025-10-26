@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
-import { Save, Loader2, User, Bot, Bell, Smile, Zap, BrainCircuit, VenetianMask, Sparkles } from 'lucide-react';
+import { Save, Loader2, User, Bot, Bell, Smile, Zap, BrainCircuit, VenetianMask, Sparkles, Trophy, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase } from '@/core/supabase';
+import { useGamification } from '@/contexts/data/GamificationContext';
 import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
 import { ACTIVITY_LEVEL_OPTIONS, normalizeActivityLevel } from '@/domain/profile/activityLevels';
 import { GOAL_TYPE_OPTIONS, normalizeGoalType } from '@/domain/profile/goalTypes';
@@ -32,6 +33,7 @@ const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) =
 
 const ProfileTab = () => {
     const { user, updateUserProfile, loading: authLoading } = useAuth();
+    const { achievements, userAchievements, loading: gamificationLoading } = useGamification();
     const [formData, setFormData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingDiagnostics, setIsSavingDiagnostics] = useState(false);
@@ -205,6 +207,19 @@ const ProfileTab = () => {
             setIsSaving(false);
         }
     };
+
+    // =============== UI AUX: GRID DE BADGES ===============
+    const earnedMap = new Set((userAchievements || []).map((ua) => ua.achievement_id || ua.achievements?.id));
+    const unlocked = (userAchievements || []).slice(0, 12);
+    const locked = (achievements || []).filter(a => !earnedMap.has(a.id)).slice(0, 12);
+
+    const BadgeItem = ({ icon, label, description, locked }) => (
+        <div className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center h-28 ${locked ? 'bg-gray-50 opacity-70' : 'bg-white'} `}>
+            <div className={`text-2xl ${locked ? 'text-gray-400' : 'text-amber-600'}`}>{icon}</div>
+            <div className={`mt-1 text-sm font-medium ${locked ? 'text-gray-500' : 'text-gray-800'}`}>{label}</div>
+            <div className="text-xs text-gray-500 line-clamp-1">{description}</div>
+        </div>
+    );
     
     if (!user?.id || authLoading) {
         return (
@@ -367,6 +382,61 @@ const ProfileTab = () => {
                                 <Label htmlFor="wants_quotes">Frases Motivacionais</Label>
                                 <Switch id="wants_quotes" checked={formData.wants_quotes} onCheckedChange={(checked) => handleSwitchChange('wants_quotes', checked)}/>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Minhas Conquistas (Badges) */}
+                    <Card className="shadow-lg transition-all duration-300 hover:shadow-xl">
+                        <CardHeader>
+                            <CardTitle className="flex items-center"><Trophy className="w-6 h-6 mr-3 text-amber-600" />Minhas Conquistas</CardTitle>
+                            <CardDescription>Desbloqueie badges completando hábitos e metas diárias.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {gamificationLoading ? (
+                                <div className="flex justify-center items-center py-6">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <div className="text-sm font-semibold mb-2">Desbloqueadas ({unlocked?.length || 0})</div>
+                                        {unlocked && unlocked.length > 0 ? (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                                {unlocked.map((ua, idx) => (
+                                                    <BadgeItem
+                                                        key={`u-${ua?.achievement_id || ua?.achievements?.id || idx}`}
+                                                        icon={<Trophy className="w-6 h-6" />}
+                                                        label={ua?.achievements?.title || ua?.title || 'Conquista'}
+                                                        description={ua?.achievements?.description || ua?.description || ''}
+                                                        locked={false}
+                                                    />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-gray-500">Você ainda não desbloqueou conquistas. Complete hábitos para ganhar suas primeiras badges!</div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <div className="text-sm font-semibold mb-2">Bloqueadas ({locked?.length || 0})</div>
+                                        {locked && locked.length > 0 ? (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                                {locked.map((a) => (
+                                                    <BadgeItem
+                                                        key={`l-${a.id}`}
+                                                        icon={<Lock className="w-6 h-6" />}
+                                                        label={a?.title || 'Badge' }
+                                                        description={a?.description || ''}
+                                                        locked
+                                                    />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-gray-500">Parabéns! Você já desbloqueou todas as conquistas atuais.</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                     
