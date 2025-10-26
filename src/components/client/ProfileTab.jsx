@@ -10,6 +10,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { Save, Loader2, User, Bot, Bell, Smile, Zap, BrainCircuit, VenetianMask, Sparkles, Trophy, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/core/supabase';
 import { useGamification } from '@/contexts/data/GamificationContext';
 import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
@@ -213,12 +215,24 @@ const ProfileTab = () => {
     const unlocked = (userAchievements || []).slice(0, 12);
     const locked = (achievements || []).filter(a => !earnedMap.has(a.id)).slice(0, 12);
 
-    const BadgeItem = ({ icon, label, description, locked }) => (
-        <div className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center h-28 ${locked ? 'bg-gray-50 opacity-70' : 'bg-white'} `}>
-            <div className={`text-2xl ${locked ? 'text-gray-400' : 'text-amber-600'}`}>{icon}</div>
-            <div className={`mt-1 text-sm font-medium ${locked ? 'text-gray-500' : 'text-gray-800'}`}>{label}</div>
-            <div className="text-xs text-gray-500 line-clamp-1">{description}</div>
-        </div>
+    const BadgeItem = ({ icon, label, description, locked, progressPercent }) => (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center h-28 w-full ${locked ? 'bg-gray-50 opacity-70' : 'bg-white hover:shadow-sm'} `}>
+                    <div className={`text-2xl ${locked ? 'text-gray-400' : 'text-amber-600'}`}>{icon}</div>
+                    <div className={`mt-1 text-sm font-medium ${locked ? 'text-gray-500' : 'text-gray-800'}`}>{label}</div>
+                    <div className="text-xs text-gray-500 line-clamp-1">{description}</div>
+                    {typeof progressPercent === 'number' && !Number.isNaN(progressPercent) && (
+                        <div className="w-full mt-2">
+                            <Progress value={Math.max(0, Math.min(100, progressPercent))} />
+                        </div>
+                    )}
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+                <p className="text-sm">{description || 'Conquista do seu progresso no Vida Smart.'}</p>
+            </TooltipContent>
+        </Tooltip>
     );
     
     if (!user?.id || authLoading) {
@@ -402,15 +416,28 @@ const ProfileTab = () => {
                                         <div className="text-sm font-semibold mb-2">Desbloqueadas ({unlocked?.length || 0})</div>
                                         {unlocked && unlocked.length > 0 ? (
                                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                                {unlocked.map((ua, idx) => (
-                                                    <BadgeItem
-                                                        key={`u-${ua?.achievement_id || ua?.achievements?.id || idx}`}
-                                                        icon={<Trophy className="w-6 h-6" />}
-                                                        label={ua?.achievements?.title || ua?.title || 'Conquista'}
-                                                        description={ua?.achievements?.description || ua?.description || ''}
-                                                        locked={false}
-                                                    />
-                                                ))}
+                                                {unlocked.map((ua, idx) => {
+                                                    const prog = ua?.progress || ua?.achievements?.progress || null;
+                                                    let percent = null;
+                                                    if (prog && typeof prog.percent !== 'undefined') {
+                                                        const p = Number(prog.percent);
+                                                        percent = Number.isFinite(p) ? p : null;
+                                                    } else if (prog && typeof prog.current !== 'undefined' && typeof prog.target !== 'undefined') {
+                                                        const cur = Number(prog.current);
+                                                        const tgt = Number(prog.target);
+                                                        percent = Number.isFinite(cur) && Number.isFinite(tgt) && tgt > 0 ? (cur / tgt) * 100 : null;
+                                                    }
+                                                    return (
+                                                        <BadgeItem
+                                                            key={`u-${ua?.achievement_id || ua?.achievements?.id || idx}`}
+                                                            icon={<Trophy className="w-6 h-6" />}
+                                                            label={ua?.achievements?.name || ua?.achievements?.title || ua?.title || 'Conquista'}
+                                                            description={ua?.achievements?.description || ua?.description || ''}
+                                                            locked={false}
+                                                            progressPercent={percent}
+                                                        />
+                                                    );
+                                                })}
                                             </div>
                                         ) : (
                                             <div className="text-xs text-gray-500">Você ainda não desbloqueou conquistas. Complete hábitos para ganhar suas primeiras badges!</div>
