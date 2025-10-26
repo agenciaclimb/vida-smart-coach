@@ -108,6 +108,13 @@ Validação:
 - Build/Typecheck: PASS — verificação local sem erros neste arquivo.
 - UX: Estado de carregamento exibido quando `gamificationLoading` está ativo; contadores de desbloqueadas/bloqueadas mostrados; layout responsivo (2/3/6 colunas por breakpoint).
 
+Contrato de Dados (Badges):
+- achievements: { id: uuid, code: text, name: text, description?: text, icon?: text (emoji), category: text, points_reward: int, requirements: jsonb, is_active: boolean, created_at: timestamptz }
+- user_achievements: { id: uuid, user_id: uuid, achievement_id: uuid (FK achievements.id), earned_at: timestamptz, progress: jsonb, UNIQUE(user_id, achievement_id) }
+- Frontend (useGamification):
+   - achievements: lista direta de achievements ativos (ordenados por category)
+   - userAchievements: lista com join `achievements!inner(*)` e campos do vínculo (achievement_id, earned_at, progress)
+
 Próximos aprimoramentos sugeridos:
 - Tooltip com descrição completa ao passar o mouse/toque prolongado.
 - Barra de progresso para conquistas graduais (se/quando métricas de progresso forem expostas).
