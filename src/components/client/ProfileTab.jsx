@@ -17,6 +17,7 @@ import { useGamification } from '@/contexts/data/GamificationContext';
 import { debugLog, validateProfileData, trackError } from '@/utils/debugHelpers';
 import { ACTIVITY_LEVEL_OPTIONS, normalizeActivityLevel } from '@/domain/profile/activityLevels';
 import { GOAL_TYPE_OPTIONS, normalizeGoalType } from '@/domain/profile/goalTypes';
+import Confetti from '@/components/ui/confetti';
 
 const ProfileInput = ({ id, label, type, value, onChange, placeholder, step }) => (
     <div className="space-y-2">
@@ -39,6 +40,10 @@ const ProfileTab = () => {
     const [formData, setFormData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingDiagnostics, setIsSavingDiagnostics] = useState(false);
+    const [showAllUnlocked, setShowAllUnlocked] = useState(false);
+    const [showAllLocked, setShowAllLocked] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [previousBadgeCount, setPreviousBadgeCount] = useState(0);
 
     // Questionário 4 pilares (beta)
     const [diag, setDiag] = useState({
@@ -67,6 +72,24 @@ const ProfileTab = () => {
         };
         setFormData(normalizedData);
     }, [user]);
+
+    // Detect new badge unlock and trigger confetti
+    useEffect(() => {
+        if (!userAchievements || gamificationLoading) return;
+        
+        const currentCount = userAchievements.length;
+        
+        if (previousBadgeCount > 0 && currentCount > previousBadgeCount) {
+            // New badge unlocked!
+            setShowConfetti(true);
+            toast.success('🎉 Nova conquista desbloqueada!', {
+                duration: 4000,
+                icon: '🏆',
+            });
+        }
+        
+        setPreviousBadgeCount(currentCount);
+    }, [userAchievements, gamificationLoading]);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -212,8 +235,11 @@ const ProfileTab = () => {
 
     // =============== UI AUX: GRID DE BADGES ===============
     const earnedMap = new Set((userAchievements || []).map((ua) => ua.achievement_id || ua.achievements?.id));
-    const unlocked = (userAchievements || []).slice(0, 12);
-    const locked = (achievements || []).filter(a => !earnedMap.has(a.id)).slice(0, 12);
+    const allUnlocked = (userAchievements || []);
+    const allLocked = (achievements || []).filter(a => !earnedMap.has(a.id));
+    
+    const unlocked = showAllUnlocked ? allUnlocked : allUnlocked.slice(0, 12);
+    const locked = showAllLocked ? allLocked : allLocked.slice(0, 12);
 
     const BadgeItem = ({ icon, label, description, locked, progressPercent }) => (
         <Tooltip>
@@ -413,51 +439,79 @@ const ProfileTab = () => {
                             ) : (
                                 <>
                                     <div>
-                                        <div className="text-sm font-semibold mb-2">Desbloqueadas ({unlocked?.length || 0})</div>
+                                        <div className="text-sm font-semibold mb-2">Desbloqueadas ({allUnlocked?.length || 0})</div>
                                         {unlocked && unlocked.length > 0 ? (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                                {unlocked.map((ua, idx) => {
-                                                    const prog = ua?.progress || ua?.achievements?.progress || null;
-                                                    let percent = null;
-                                                    if (prog && typeof prog.percent !== 'undefined') {
-                                                        const p = Number(prog.percent);
-                                                        percent = Number.isFinite(p) ? p : null;
-                                                    } else if (prog && typeof prog.current !== 'undefined' && typeof prog.target !== 'undefined') {
-                                                        const cur = Number(prog.current);
-                                                        const tgt = Number(prog.target);
-                                                        percent = Number.isFinite(cur) && Number.isFinite(tgt) && tgt > 0 ? (cur / tgt) * 100 : null;
-                                                    }
-                                                    return (
-                                                        <BadgeItem
-                                                            key={`u-${ua?.achievement_id || ua?.achievements?.id || idx}`}
-                                                            icon={<Trophy className="w-6 h-6" />}
-                                                            label={ua?.achievements?.name || ua?.achievements?.title || ua?.title || 'Conquista'}
-                                                            description={ua?.achievements?.description || ua?.description || ''}
-                                                            locked={false}
-                                                            progressPercent={percent}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
+                                            <>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                                    {unlocked.map((ua, idx) => {
+                                                        const prog = ua?.progress || ua?.achievements?.progress || null;
+                                                        let percent = null;
+                                                        if (prog && typeof prog.percent !== 'undefined') {
+                                                            const p = Number(prog.percent);
+                                                            percent = Number.isFinite(p) ? p : null;
+                                                        } else if (prog && typeof prog.current !== 'undefined' && typeof prog.target !== 'undefined') {
+                                                            const cur = Number(prog.current);
+                                                            const tgt = Number(prog.target);
+                                                            percent = Number.isFinite(cur) && Number.isFinite(tgt) && tgt > 0 ? (cur / tgt) * 100 : null;
+                                                        }
+                                                        return (
+                                                            <BadgeItem
+                                                                key={`u-${ua?.achievement_id || ua?.achievements?.id || idx}`}
+                                                                icon={<Trophy className="w-6 h-6" />}
+                                                                label={ua?.achievements?.name || ua?.achievements?.title || ua?.title || 'Conquista'}
+                                                                description={ua?.achievements?.description || ua?.description || ''}
+                                                                locked={false}
+                                                                progressPercent={percent}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                                {allUnlocked.length > 12 && (
+                                                    <div className="mt-3 text-center">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            onClick={() => setShowAllUnlocked(!showAllUnlocked)}
+                                                            className="text-amber-600 hover:text-amber-700"
+                                                        >
+                                                            {showAllUnlocked ? '← Mostrar menos' : `Ver todas (${allUnlocked.length}) →`}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="text-xs text-gray-500">Você ainda não desbloqueou conquistas. Complete hábitos para ganhar suas primeiras badges!</div>
                                         )}
                                     </div>
 
                                     <div className="pt-2">
-                                        <div className="text-sm font-semibold mb-2">Bloqueadas ({locked?.length || 0})</div>
+                                        <div className="text-sm font-semibold mb-2">Bloqueadas ({allLocked?.length || 0})</div>
                                         {locked && locked.length > 0 ? (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                                {locked.map((a) => (
-                                                    <BadgeItem
-                                                        key={`l-${a.id}`}
-                                                        icon={<Lock className="w-6 h-6" />}
-                                                        label={a?.title || 'Badge' }
-                                                        description={a?.description || ''}
-                                                        locked
-                                                    />
-                                                ))}
-                                            </div>
+                                            <>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                                    {locked.map((a) => (
+                                                        <BadgeItem
+                                                            key={`l-${a.id}`}
+                                                            icon={<Lock className="w-6 h-6" />}
+                                                            label={a?.title || 'Badge' }
+                                                            description={a?.description || ''}
+                                                            locked
+                                                        />
+                                                    ))}
+                                                </div>
+                                                {allLocked.length > 12 && (
+                                                    <div className="mt-3 text-center">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            onClick={() => setShowAllLocked(!showAllLocked)}
+                                                            className="text-gray-600 hover:text-gray-700"
+                                                        >
+                                                            {showAllLocked ? '← Mostrar menos' : `Ver todas (${allLocked.length}) →`}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="text-xs text-gray-500">Parabéns! Você já desbloqueou todas as conquistas atuais.</div>
                                         )}
@@ -475,6 +529,9 @@ const ProfileTab = () => {
                     </div>
                 </form>
             </motion.div>
+            
+            {/* Confetti celebration for new badges */}
+            <Confetti show={showConfetti} onComplete={() => setShowConfetti(false)} />
         </TabsContent>
     );
 };
