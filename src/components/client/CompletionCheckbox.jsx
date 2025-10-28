@@ -2,6 +2,7 @@ import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { celebratePlanCompletion } from '@/utils/confetti';
 
 /**
  * Checkbox com animação para conclusão de itens dos planos
@@ -22,6 +23,13 @@ export const CompletionCheckbox = ({
   points,
   className = ''
 }) => {
+  
+  const handleCheckedChange = (newChecked) => {
+    if (newChecked && !checked) {
+      celebratePlanCompletion();
+    }
+    onCheckedChange(newChecked);
+  };
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <motion.div
@@ -32,7 +40,7 @@ export const CompletionCheckbox = ({
         <Checkbox
           id={id}
           checked={checked}
-          onCheckedChange={onCheckedChange}
+          onCheckedChange={handleCheckedChange}
           disabled={disabled}
           className={`
             h-5 w-5 

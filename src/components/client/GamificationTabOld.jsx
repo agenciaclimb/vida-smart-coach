@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { celebrateRewardRedemption } from '@/utils/confetti';
 
 const GamificationTabOld = () => {
     const { user } = useAuth();
@@ -26,6 +27,7 @@ const GamificationTabOld = () => {
         setRedeemingId(reward.id);
         try {
             await redeemReward(reward);
+            celebrateRewardRedemption();
         } catch (error) {
             toast.error(error.message);
         } finally {

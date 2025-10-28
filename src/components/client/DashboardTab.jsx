@@ -18,8 +18,11 @@ import { usePlans } from '@/contexts/data/PlansContext';
 import GuidedTour from '@/components/onboarding/GuidedTour';
 import WhatsAppOnboardingPrompt from '@/components/onboarding/WhatsAppOnboardingPrompt';
 import CheckinSystem from '@/components/checkin/CheckinSystem';
+import StreakCounter from '@/components/client/StreakCounter';
+import { useGamification } from '@/contexts/data/GamificationContext';
+import AnimatedCounter from '@/components/ui/AnimatedCounter';
 
-const StatCard = ({ icon, title, value, gradient, onClick }) => (
+const StatCard = ({ icon, title, value, gradient, onClick, animated = false }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
     <Card className="overflow-hidden" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <CardHeader className={`p-4 flex flex-row items-center justify-between space-y-0 pb-2 ${gradient}`}>
@@ -31,7 +34,13 @@ const StatCard = ({ icon, title, value, gradient, onClick }) => (
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="text-2xl font-bold">{value}</div>
+        {animated ? (
+          <div className="text-2xl font-bold">
+            <AnimatedCounter value={parseFloat(value) || 0} />
+          </div>
+        ) : (
+          <div className="text-2xl font-bold">{value}</div>
+        )}
       </CardContent>
     </Card>
   </motion.div>
@@ -170,11 +179,13 @@ const DashboardTab = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { currentPlans } = usePlans?.() || { currentPlans: null };
+  const { gamificationData, loading: gamLoading } = useGamification();
 
   const [completionsCount, setCompletionsCount] = useState(null);
   const [interactionsCount, setInteractionsCount] = useState(null);
   const [runTour, setRunTour] = useState(false);
   const [showWhatsAppPrompt, setShowWhatsAppPrompt] = useState(false);
+  const [lastActivityDate, setLastActivityDate] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +193,7 @@ const DashboardTab = () => {
       try {
         if (!user?.id) return;
 
-        const [{ count: compCount }, { count: interCount }] = await Promise.all([
+        const [{ count: compCount }, { count: interCount }, { data: recentActivity }] = await Promise.all([
           supabase
             .from('plan_completions')
             .select('*', { count: 'exact', head: true })
@@ -190,11 +201,19 @@ const DashboardTab = () => {
           supabase
             .from('interactions')
             .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('daily_activities')
+            .select('created_at')
             .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
         ]);
         if (!cancelled) {
           setCompletionsCount(compCount ?? 0);
           setInteractionsCount(interCount ?? 0);
+          setLastActivityDate(recentActivity?.created_at || null);
 
           // Show WhatsApp prompt after first plan is generated
           const hasPlans = currentPlans && Object.keys(currentPlans).length > 0;
@@ -316,6 +335,15 @@ const DashboardTab = () => {
       {/* Check-in Reflexivo (IA Coach) - Promove engajamento diário */}
       <CheckinSystem />
 
+      {/* Streak Counter - Incentiva consistência diária */}
+      {!gamLoading && gamificationData && (
+        <StreakCounter 
+          currentStreak={gamificationData.current_streak || 0}
+          longestStreak={gamificationData.longest_streak || 0}
+          lastActivityDate={lastActivityDate}
+        />
+      )}
+
       {/* Show WelcomeCard if profile is incomplete */}
       {!hasCompleteProfile && <WelcomeCard />}
       
@@ -341,8 +369,21 @@ const DashboardTab = () => {
           gradient={hasCompleteProfile ? "bg-gradient-to-tr from-blue-500 to-blue-400" : "bg-gradient-to-tr from-gray-400 to-gray-300"} 
           onClick={() => navigate('/dashboard?tab=plan')} 
         />
-        <StatCard icon={<Award className="text-white" />} title="Nível" value={profile.level || '1'} gradient="bg-gradient-to-tr from-amber-500 to-amber-400" />
-        <StatCard icon={<Zap className="text-white" />} title="Pontos" value={profile.points || '0'} gradient="bg-gradient-to-tr from-lime-500 to-lime-400" onClick={() => navigate('/dashboard?tab=gamification')} />
+        <StatCard 
+          icon={<Award className="text-white" />} 
+          title="Nível" 
+          value={profile.level || '1'} 
+          gradient="bg-gradient-to-tr from-amber-500 to-amber-400" 
+          animated={true}
+        />
+        <StatCard 
+          icon={<Zap className="text-white" />} 
+          title="Pontos" 
+          value={profile.points || '0'} 
+          gradient="bg-gradient-to-tr from-lime-500 to-lime-400" 
+          onClick={() => navigate('/dashboard?tab=gamification')} 
+          animated={true}
+        />
         <StatCard icon={<BarChart3 className="text-white" />} title="Peso Atual" value={`${profile.current_weight || '--'} kg`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
       </div>
 

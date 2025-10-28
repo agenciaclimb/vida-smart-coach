@@ -2,9 +2,12 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, Star, LogOut, Loader2 } from 'lucide-react';
 import { useUserXP } from '@/hooks/useUserXP';
+import { useGamification } from '@/contexts/data/GamificationContext';
+import StreakCounter from '@/components/client/StreakCounter';
 
 const ClientHeader = ({ user, onLogout }) => {
   const { xpData, loading } = useUserXP();
+  const { gamificationData, loading: gamLoading } = useGamification();
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-40">
@@ -20,6 +23,13 @@ const ClientHeader = ({ user, onLogout }) => {
         </div>
         
         <div className="flex items-center space-x-4">
+          {!gamLoading && gamificationData && (
+            <StreakCounter 
+              currentStreak={gamificationData.current_streak || 0}
+              longestStreak={gamificationData.longest_streak || 0}
+              compact={true}
+            />
+          )}
           <div className="flex items-center space-x-2 bg-yellow-100 px-3 py-1 rounded-full">
             <Star className="w-4 h-4 text-yellow-600" />
             {loading ? (
