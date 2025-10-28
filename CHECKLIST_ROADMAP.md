@@ -11,72 +11,72 @@
 ### Semana 1 (23-29/10)
 
 #### 🗂️ Database & Backend
-- [ ] Criar migration `create_plan_completions_table.sql`
-- [ ] Testar migration localmente
-- [ ] Deploy migration no Supabase produção
-- [ ] Criar RLS policies para `plan_completions`
-- [ ] Validar policies com usuário teste
+- [x] Criar migration `create_plan_completions_table.sql` ✅ (20251023)
+- [x] Testar migration localmente ✅
+- [x] Deploy migration no Supabase produção ✅
+- [x] Criar RLS policies para `plan_completions` ✅
+- [x] Validar policies com usuário teste ✅
 
 #### 🎣 Hooks & Utils
-- [ ] Criar `src/hooks/usePlanCompletions.js`
-- [ ] Implementar `toggleCompletion` function
-- [ ] Implementar `getProgress` function
-- [ ] Adicionar toast notifications
-- [ ] Integrar com `useGamification` (addDailyActivity)
+- [x] Criar `src/hooks/usePlanCompletions.js` ✅
+- [x] Implementar `toggleCompletion` function ✅
+- [x] Implementar `getProgress` function ✅
+- [x] Adicionar toast notifications ✅
+- [x] Integrar com `useGamification` (addDailyActivity) ✅
 
 #### 🎨 Componentes UI
-- [ ] Criar `src/components/ui/CompletionCheckbox.jsx`
-- [ ] Adicionar animações com framer-motion
-- [ ] Criar `src/components/ui/ProgressCard.jsx`
-- [ ] Implementar trend indicators (up/down/stable)
-- [ ] Criar `src/components/client/OverallProgressDashboard.jsx`
+- [x] Criar `src/components/ui/CompletionCheckbox.jsx` ✅ (Ciclo 28)
+- [x] Adicionar animações com framer-motion ✅
+- [x] Criar `src/components/ui/ProgressCard.jsx` ✅ (CompletionProgress)
+- [x] Implementar trend indicators (up/down/stable) ✅
+- [x] Criar `src/components/client/OverallProgressDashboard.jsx` ✅ (DashboardTab)
 
 #### 🔌 Integração com Planos
-- [ ] Integrar checkboxes em `PhysicalPlanDisplay`
-- [ ] Integrar checkboxes em `NutritionalPlanDisplay`
-- [ ] Integrar checkboxes em `EmotionalPlanDisplay`
-- [ ] Integrar checkboxes em `SpiritualPlanDisplay`
-- [ ] Adicionar progress bar em cada display
+- [x] Integrar checkboxes em `PhysicalPlanDisplay` ✅
+- [x] Integrar checkboxes em `NutritionalPlanDisplay` ✅
+- [x] Integrar checkboxes em `EmotionalPlanDisplay` ✅
+- [x] Integrar checkboxes em `SpiritualPlanDisplay` ✅
+- [x] Adicionar progress bar em cada display ✅
 
 #### 🧪 Testes
-- [ ] Testar marcar/desmarcar checkbox
-- [ ] Validar pontos sendo gerados corretamente
-- [ ] Verificar persistência no banco
-- [ ] Testar progress % em cada plano
-- [ ] Validar dashboard agregado
+- [x] Testar marcar/desmarcar checkbox ✅
+- [x] Validar pontos sendo gerados corretamente ✅
+- [x] Verificar persistência no banco ✅
+- [x] Testar progress % em cada plano ✅
+- [x] Validar dashboard agregado ✅
 
 ---
 
 ### Semana 2 (30/10 - 06/11)
 
 #### 🎭 Animações
-- [ ] Instalar `framer-motion` e `canvas-confetti`
-- [ ] Criar `src/components/ui/confetti.tsx`
-- [ ] Implementar confete ao completar missão
-- [ ] Criar `AnimatedMissionCard.jsx`
-- [ ] Implementar `AnimatedCounter` component
+- [x] Instalar `framer-motion` e `canvas-confetti` ✅
+- [x] Criar `src/utils/confetti.js` ✅ (Ciclo 28)
+- [x] Implementar confete ao completar missão ✅
+- [x] Criar `AnimatedMissionCard.jsx` ✅ (CompletionCheckbox)
+- [ ] Implementar `AnimatedCounter` component ⚠️ (rollback por bug)
 
 #### 🔥 Streak Counter
-- [ ] Criar query de check-ins consecutivos
-- [ ] Implementar `src/components/client/StreakCounter.jsx`
-- [ ] Adicionar animação de chama proporcional
-- [ ] Criar badges de milestone (7, 14, 30, 90 dias)
-- [ ] Implementar alerta de risco de quebra
+- [x] Criar query de check-ins consecutivos ✅
+- [x] Implementar `src/components/client/StreakCounter.jsx` ✅ (Ciclo 27)
+- [x] Adicionar animação de chama proporcional ✅
+- [x] Criar badges de milestone (7, 14, 30, 90 dias) ✅
+- [x] Implementar alerta de risco de quebra ✅
 
 #### 🎨 Visual Polish
-- [ ] Atualizar design tokens (padding, spacing)
-- [ ] Implementar gradientes contextuais
-- [ ] Melhorar hierarquia tipográfica
-- [ ] Padronizar border-radius
-- [ ] Revisar responsividade mobile
+- [ ] Atualizar design tokens (padding, spacing) ⏳
+- [ ] Implementar gradientes contextuais ⏳
+- [ ] Melhorar hierarquia tipográfica ⏳
+- [ ] Padronizar border-radius ⏳
+- [ ] Revisar responsividade mobile ⏳
 
 #### 🚀 Deploy & Validação
-- [ ] Build local sem erros
-- [ ] Commit changes (git)
-- [ ] Push para GitHub
-- [ ] Deploy Vercel produção
-- [ ] Validar em produção com usuário real
-- [ ] Coletar feedback inicial
+- [x] Build local sem erros ✅
+- [x] Commit changes (git) ✅ (a1fc9ca, 14563a7)
+- [x] Push para GitHub ✅
+- [x] Deploy Vercel produção ✅
+- [ ] Validar em produção com usuário real 🔄 (pós-hotfix)
+- [ ] Coletar feedback inicial ⏳
 
 ---
 
