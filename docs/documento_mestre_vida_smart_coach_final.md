@@ -2289,6 +2289,27 @@ Observações:
 3. Registrar resultado e orientar validação pós-deploy (abrir dashboard, checar console).
 
 ---
+
+**EXECUÇÃO (27/10/2025 22:23):**
+- Revisado diff e removidas pendências antigas da função Evolution para evitar bloqueio de segredos; commit preparado com foco em Calendário + hotfix.
+- `git commit` executado (eb1526a) consolidando calendário omnicanal, reward system e correção de `useCheckinNotifications`.
+- `git push origin main` enviado para disparar deploy automático na Vercel (deploy atual em progresso, monitorar painel).
+
+**VALIDAÇÃO (27/10/2025 22:23):**
+- Verificação local já coberta por `pnpm lint` e `pnpm build` no ciclo anterior.
+- Aguardando finalização do deploy Vercel: abrir `appvidasmarte.com/dashboard` e confirmar ausência do erro `supported is not defined`.
+
+**RESULTADO TAREFA P0 (CICLO 23): Publicação hotfix `supported is not defined`**
+
+Status: ⏳ EM MONITORAMENTO  
+Hora de Conclusão: 27/10/2025 22:23  
+
+Resumo:
+- Código publicado na branch `main` (commit eb1526a) com hotfix das notificações e novos módulos do Calendário/Rewards.
+- Deploy automático Vercel acionado; necessário validar assim que finalizado (console limpo + dashboard renderizando).
+- Próximo passo: confirmar sucesso do deploy e atualizar status para ✅ assim que o painel carregar sem erros.
+
+---
 # Fase 5.2 - **Guia de Desenvolvimento no VS Code** (com Autopilot da IA) - 2025-10-27 14:19
 
 > Objetivo: deixar o projeto **pronto para execução** com passos claros para a IA (e para humanos) implementar **Fase 5.1**: XP unificado, correção do Ranking/Header, **Loja de Recompensas**, **Calendário de Vida** e **Fluxo WhatsApp**.
