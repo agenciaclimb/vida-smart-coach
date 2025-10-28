@@ -903,14 +903,54 @@ function detectHeuristicCheckin(context: AutomationContext): AutomationAction | 
   };
 }
 
+function detectHeuristicPlanRegeneration(context: AutomationContext): AutomationAction | null {
+  const original = context.originalMessage || '';
+  const message = original.toLowerCase();
+  if (!message) return null;
+
+  const hasPlanWord = /(plano|treino|dieta|rotina)/.test(message);
+  const hasRegenerateIntent = /(regener|refaz|recria|ajustar|alterar|novo plano|gerar novo|atualizar plano|refazer)/.test(message);
+  const hasNegation = /(nao\s+(quero|preciso|faça|fazer)|não\s+(quero|preciso|faça|fazer))/.test(message);
+
+  if (!hasPlanWord || !hasRegenerateIntent || hasNegation) {
+    return null;
+  }
+
+  const planTypes: string[] = [];
+  if (/(físic|treino|academia|muscul)/.test(message)) planTypes.push('physical');
+  if (/(nutri|dieta|refeição|aliment)/.test(message)) planTypes.push('nutritional');
+  if (/(emoc|humor|ansiedade|terapia)/.test(message)) planTypes.push('emotional');
+  if (/(espirit|propósito|medita|espiritual)/.test(message)) planTypes.push('spiritual');
+
+  const payload: any = {
+    plan_type: planTypes.length === 0 ? 'all' : planTypes,
+    summary: original.trim(),
+    overrides: {
+      custom_notes: original.trim(),
+    },
+  };
+
+  return {
+    type: 'REGENERATE_PLAN',
+    payload,
+  };
+}
+
 async function handleAutomations(aiResponse: string, context: AutomationContext): Promise<{ text: string; executions: AutomationExecutionResult[] }> {
   const { cleanedText, actions } = extractAutomationActions(aiResponse);
   const actionQueue: AutomationAction[] = [...actions];
 
   if (actionQueue.length === 0) {
-    const heuristic = detectHeuristicCheckin(context);
-    if (heuristic) {
-      actionQueue.push(heuristic);
+    const heuristicCheckin = detectHeuristicCheckin(context);
+    if (heuristicCheckin) {
+      actionQueue.push(heuristicCheckin);
+    }
+  }
+
+  if (actionQueue.length === 0) {
+    const heuristicRegenerate = detectHeuristicPlanRegeneration(context);
+    if (heuristicRegenerate) {
+      actionQueue.push(heuristicRegenerate);
     }
   }
 
@@ -938,12 +978,12 @@ async function handleAutomations(aiResponse: string, context: AutomationContext)
         success: false,
         error: errMessage,
       });
-      messages.push('Nao consegui concluir "' + action.type + '". Vou encaminhar para nossa equipe revisar.');
+      messages.push('Não consegui concluir "' + action.type + '". Vou encaminhar para nossa equipe revisar.');
     }
   }
 
   const finalText = messages.length > 0
-    ? (cleanedText ? cleanedText.trim() + '\n\n' + messages.join('\n') : messages.join('\n'))
+    ? messages.join('\n\n')
     : cleanedText.trim();
 
   return { text: finalText.trim(), executions };

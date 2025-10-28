@@ -2326,11 +2326,11 @@ Resumo:
 
 ---
 
-**EXECUÇÃO (27/10/2025 23:40):**
-- Função `ia-coach-chat` ajustada para intepretação de ações estruturadas: parsing de `[[ACTION:...]]`, inclusão de heurística fallback para registrar check-ins quando o modelo não emitir a tag, e executores que:
+**EXECUÇÃO (27/10/2025 23:40 - 23:50):**
+- Função `ia-coach-chat` ajustada para interpretar ações estruturadas: parsing de `[[ACTION:...]]`, heurística fallback para registrar check-ins e regenerar planos mesmo quando o modelo não emitir a tag, e executores que:
   - Persistem check-ins no Supabase (`interactions` + `daily_activities`) com pontos de gamificação.
   - Chamam a edge `generate-plan` com overrides coletados na conversa, marcando feedback como processado.
-- Prompts do estágio Specialist foram atualizados para orientar o uso das ações (check-in / regeneração) com JSON válido; novas instruções garantem que a resposta oriente o usuário e gere a tag automática.
+- Prompts do estágio Specialist/Partner foram atualizados para orientar o uso das ações (check-in / regeneração) com JSON válido; novas instruções garantem que a resposta oriente o usuário e gere a tag automática.
 - Lint (`pnpm lint`) executado com sucesso para validar sintaxe/estilo.
 
 **VALIDAÇÃO (27/10/2025 23:42):**
