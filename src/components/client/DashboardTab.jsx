@@ -20,9 +20,8 @@ import WhatsAppOnboardingPrompt from '@/components/onboarding/WhatsAppOnboarding
 import CheckinSystem from '@/components/checkin/CheckinSystem';
 import StreakCounter from '@/components/client/StreakCounter';
 import { useGamification } from '@/contexts/data/GamificationContext';
-import AnimatedCounter from '@/components/ui/AnimatedCounter';
 
-const StatCard = ({ icon, title, value, gradient, onClick, animated = false }) => (
+const StatCard = ({ icon, title, value, gradient, onClick }) => (
   <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
     <Card className="overflow-hidden" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <CardHeader className={`p-4 flex flex-row items-center justify-between space-y-0 pb-2 ${gradient}`}>
@@ -34,13 +33,7 @@ const StatCard = ({ icon, title, value, gradient, onClick, animated = false }) =
         </div>
       </CardHeader>
       <CardContent className="p-4">
-        {animated ? (
-          <div className="text-2xl font-bold">
-            <AnimatedCounter value={parseFloat(value) || 0} />
-          </div>
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
+        <div className="text-2xl font-bold">{value}</div>
       </CardContent>
     </Card>
   </motion.div>
@@ -373,16 +366,14 @@ const DashboardTab = () => {
           icon={<Award className="text-white" />} 
           title="Nível" 
           value={profile.level || '1'} 
-          gradient="bg-gradient-to-tr from-amber-500 to-amber-400" 
-          animated={true}
+          gradient="bg-gradient-to-tr from-amber-500 to-amber-400"
         />
         <StatCard 
           icon={<Zap className="text-white" />} 
           title="Pontos" 
           value={profile.points || '0'} 
           gradient="bg-gradient-to-tr from-lime-500 to-lime-400" 
-          onClick={() => navigate('/dashboard?tab=gamification')} 
-          animated={true}
+          onClick={() => navigate('/dashboard?tab=gamification')}
         />
         <StatCard icon={<BarChart3 className="text-white" />} title="Peso Atual" value={`${profile.current_weight || '--'} kg`} gradient="bg-gradient-to-tr from-violet-500 to-violet-400" />
       </div>

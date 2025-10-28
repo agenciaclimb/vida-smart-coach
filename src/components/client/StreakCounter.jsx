@@ -67,7 +67,7 @@ export default function StreakCounter({
         setCelebratedMilestones(prev => new Set([...prev, milestone.days]));
       }
     });
-  }, [currentStreak, lastActivityDate]);
+  }, [currentStreak, lastActivityDate, celebratedMilestones]);
 
   const getFlameColor = () => {
     if (streakStatus === 'broken') return 'text-gray-400';
