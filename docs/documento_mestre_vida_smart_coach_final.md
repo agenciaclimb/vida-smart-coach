@@ -2310,6 +2310,38 @@ Resumo:
 - Próximo passo: confirmar sucesso do deploy e atualizar status para ✅ assim que o painel carregar sem erros.
 
 ---
+
+**REGISTRO DE CICLO DE TRABALHO - 27/10/2025 - CICLO 24**
+
+**INICIANDO TAREFA P0:** Restaurar automações da IA Specialist no WhatsApp  
+**Objetivo:** Fazer com que a IA registre check-ins e regenere planos diretamente pelo chat, usando os dados coletados na conversa, sem depender da interface web.  
+**Status:** 🚧 EM EXECUÇÃO  
+**Hora de Início:** 27/10/2025 22:47  
+**Prioridade:** P0 - garantir que 99% da experiência funcione via WhatsApp conforme diretriz mestre.
+
+**PLANO DE AÇÃO (ALTO NÍVEL):**
+1. Reintroduzir o mecanismo de ações estruturadas `[[ACTION:...]]` na função `ia-coach-chat`, instruindo o modelo a emitir ações para check-ins e ajustes de plano.
+2. Implementar executores seguros no backend (registrar check-ins, abrir feedback/regeneração de plano invocando `generate-plan` quando autorizado).
+3. Validar fluxo ponta a ponta (conversa simulada + dashboards) e atualizar este documento com o resultado.
+
+---
+
+**EXECUÇÃO (27/10/2025 23:40):**
+- Função `ia-coach-chat` ajustada para intepretação de ações estruturadas: parsing de `[[ACTION:...]]`, inclusão de heurística fallback para registrar check-ins quando o modelo não emitir a tag, e executores que:
+  - Persistem check-ins no Supabase (`interactions` + `daily_activities`) com pontos de gamificação.
+  - Chamam a edge `generate-plan` com overrides coletados na conversa, marcando feedback como processado.
+- Prompts do estágio Specialist foram atualizados para orientar o uso das ações (check-in / regeneração) com JSON válido; novas instruções garantem que a resposta oriente o usuário e gere a tag automática.
+- Lint (`pnpm lint`) executado com sucesso para validar sintaxe/estilo.
+
+**VALIDAÇÃO (27/10/2025 23:42):**
+- ✅ Lint (`pnpm lint`)
+- 🔜 Deverá ser validado via WhatsApp assim que o deploy da função for publicado (`supabase functions deploy ia-coach-chat`) verificando:
+  1. Pedido de check-in → IA responde e o item aparece resolvido no dashboard.
+  2. Pedido de ajuste de plano → IA coleta dados, responde com confirmação e plano regenerado aparece em “Meu Plano”.
+
+**STATUS:** ⏳ EM MONITORAMENTO — aguardando teste real no WhatsApp após publicar a função atualizada.
+
+---
 # Fase 5.2 - **Guia de Desenvolvimento no VS Code** (com Autopilot da IA) - 2025-10-27 14:19
 
 > Objetivo: deixar o projeto **pronto para execução** com passos claros para a IA (e para humanos) implementar **Fase 5.1**: XP unificado, correção do Ranking/Header, **Loja de Recompensas**, **Calendário de Vida** e **Fluxo WhatsApp**.
