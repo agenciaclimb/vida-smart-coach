@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS public.rewards RENAME TO rewards_legacy;

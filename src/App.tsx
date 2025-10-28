@@ -5,6 +5,7 @@ import LandingPage from "@/pages/LandingPage_ClienteFinal";
 import PartnersPage from "@/pages/PartnersPage_Corrigida";
 import LoginPage from "@/pages/LoginPage";
 import ClientDashboard from "@/pages/ClientDashboard";
+import RewardsPage from "@/pages/RewardsPage";
 import SafeStatus from "@/pages/SafeStatus";
 import GamificationDemoPage from "@/pages/GamificationDemoPage";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -34,6 +35,7 @@ export default function App() {
             </DataProvider>
           }
         />
+        <Route path="/rewards" element={<RewardsPage />} />
       </Route>
       <Route path="/safe" element={<SafeStatus />} />
       <Route path="*" element={<div className="p-8">404</div>} />

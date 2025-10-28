@@ -41,3 +41,8 @@ port = 54323
   [functions.ia-coach-chat]
     entrypoint = "./functions/ia-coach-chat/index.ts"
     verify_jwt = false # Desabilitado para permitir validação customizada via INTERNAL_FUNCTION_SECRET (mais adequada para server-to-server)
+
+  # Configuração para a função 'generate-plan'
+  [functions.generate-plan]
+    entrypoint = "./functions/generate-plan/index.ts"
+    verify_jwt = false # Permite chamadas internas autenticadas via service role key

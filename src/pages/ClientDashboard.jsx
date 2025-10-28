@@ -17,6 +17,7 @@ import CommunityTab from '@/components/client/CommunityTab';
 import ProfileTab from '@/components/client/ProfileTab';
 import ReferralTab from '@/components/client/ReferralTab';
 import IntegrationsTab from '@/components/client/IntegrationsTab';
+import CalendarTab from '@/components/client/CalendarTab';
 import { Loader2 } from 'lucide-react';
 
 const LoadingScreen = () => (
@@ -76,6 +77,8 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
         return <PlanTab />;
       case 'chat':
         return <ChatTab />;
+      case 'calendar':
+        return <CalendarTab />;
       case 'gamification':
         return <GamificationTab />;
       case 'community':
@@ -106,6 +109,7 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="plan">Meu Plano</TabsTrigger>
                 <TabsTrigger value="chat">IA Coach</TabsTrigger>
+                <TabsTrigger value="calendar">Calendário</TabsTrigger>
                 <TabsTrigger value="gamification">Gamificação</TabsTrigger>
                 <TabsTrigger value="community">Comunidade</TabsTrigger>
                 <TabsTrigger value="profile">Perfil & Configurações</TabsTrigger>

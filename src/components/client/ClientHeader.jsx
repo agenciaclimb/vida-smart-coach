@@ -1,8 +1,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, Star, LogOut } from 'lucide-react';
+import { Heart, Star, LogOut, Loader2 } from 'lucide-react';
+import { useUserXP } from '@/hooks/useUserXP';
 
 const ClientHeader = ({ user, onLogout }) => {
+  const { xpData, loading } = useUserXP();
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -19,8 +22,21 @@ const ClientHeader = ({ user, onLogout }) => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-yellow-100 px-3 py-1 rounded-full">
             <Star className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm font-semibold text-yellow-800">{user?.profile?.points || 0} pts</span>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-yellow-600" />
+            ) : (
+              <span className="text-sm font-semibold text-yellow-800">
+                {xpData?.xp_total || 0} pts
+              </span>
+            )}
           </div>
+          {xpData && xpData.level > 0 && (
+            <div className="flex items-center space-x-2 bg-purple-100 px-3 py-1 rounded-full">
+              <span className="text-sm font-semibold text-purple-800">
+                Nível {xpData.level}
+              </span>
+            </div>
+          )}
           <Button variant="ghost" size="sm" onClick={onLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Sair

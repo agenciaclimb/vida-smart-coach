@@ -1,14 +1,15 @@
 // 📅 COMPONENTE DE CHECK-INS DIÁRIOS INTEGRADO AO IA COACH
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Sun, Moon, CheckCircle, MessageCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, Sun, Moon, CheckCircle, MessageCircle, Loader2, Bell, BellOff, BellRing } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGamification } from '@/contexts/data/GamificationContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
+import { useCheckinNotifications } from '@/hooks/useCheckinNotifications';
 
 const CheckinSystem = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const CheckinSystem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkinMessage, setCheckinMessage] = useState('');
+  const [isHighlighted, setIsHighlighted] = useState(false);
 
   // Buscar check-ins do usuário
   useEffect(() => {
@@ -119,6 +121,35 @@ const CheckinSystem = () => {
     }
   };
 
+  const handleFocusRequest = useCallback(() => {
+    setIsHighlighted(true);
+    requestAnimationFrame(() => {
+      const target = document.getElementById('checkin-reflexivo-card');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isHighlighted) return undefined;
+    const timeout = setTimeout(() => setIsHighlighted(false), 2000);
+    return () => clearTimeout(timeout);
+  }, [isHighlighted]);
+
+  const wantsReminders = user?.profile?.wants_reminders !== false;
+
+  const {
+    supported: notificationsSupported,
+    permission: notificationPermission,
+    requestPermission: requestNotificationPermission,
+    hasNotificationsEnabled,
+    nextReminders,
+  } = useCheckinNotifications({
+    enabled: wantsReminders,
+    hasCompletedToday: Boolean(todayCheckin),
+    userName: user?.profile?.name || user?.profile?.full_name || user?.email,
+    onFocusRequest: handleFocusRequest,
+  });
+
   // Gerar resposta da IA baseada no estágio
   const getCheckinResponse = (message, stage) => {
     const responses = {
@@ -158,7 +189,10 @@ const CheckinSystem = () => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+    <Card
+      id="checkin-reflexivo-card"
+      className={`bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 transition-shadow ${isHighlighted ? 'ring-2 ring-offset-2 ring-blue-400 shadow-lg' : ''}`}
+    >
       <CardHeader>
         <CardTitle className="flex items-center">
           <Calendar className="w-5 h-5 mr-2 text-blue-600" />
@@ -216,6 +250,51 @@ const CheckinSystem = () => {
                 <><CheckCircle className="mr-2 h-4 w-4" />Fazer Check-in</>
               )}
             </Button>
+
+            {wantsReminders && notificationsSupported && (
+              <div className="space-y-3 rounded-lg border border-blue-200 bg-white/70 p-3 text-sm">
+                {notificationPermission === 'default' && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <Bell className="h-4 w-4" />
+                      <span className="font-medium">Receba lembretes automáticos do check-in diário</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={requestNotificationPermission}
+                      className="sm:w-auto"
+                    >
+                      Ativar lembretes web
+                    </Button>
+                  </div>
+                )}
+
+                {notificationPermission === 'denied' && (
+                  <div className="flex items-start gap-2 text-amber-700">
+                    <BellOff className="mt-0.5 h-4 w-4" />
+                    <span>
+                      Você desativou as notificações do navegador. Reative-as nas configurações se quiser receber lembretes automáticos.
+                    </span>
+                  </div>
+                )}
+
+                {notificationPermission === 'granted' && hasNotificationsEnabled && nextReminders.length > 0 && (
+                  <div className="flex items-start gap-2 text-blue-700">
+                    <BellRing className="mt-0.5 h-4 w-4" />
+                    <div>
+                      <p className="font-medium">Lembretes de check-in ativados</p>
+                      <ul className="mt-1 list-disc pl-4 text-xs text-blue-600 sm:text-sm">
+                        {nextReminders.map((reminder) => (
+                          <li key={reminder.id}>
+                            {reminder.id === 'morning' ? 'Manhã' : 'Noite'}: {reminder.formatted}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -273,3 +352,7 @@ const CheckinSystem = () => {
 };
 
 export default CheckinSystem;
+
+
+
+
