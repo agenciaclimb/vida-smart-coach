@@ -19,9 +19,11 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { normalizeActivityKey } from '@/utils/activityKeys';
+import { useNavigate } from 'react-router-dom';
 
 const GamificationTabEnhanced = () => {
     const { user: authUser } = useAuth();
+    const navigate = useNavigate();
     const {
         userStats,
         userRankings,
@@ -251,6 +253,13 @@ const GamificationTabEnhanced = () => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
+                                    <Button 
+                                        onClick={() => navigate('/rewards')}
+                                        className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+                                    >
+                                        <Gift className="w-4 h-4 mr-2" />
+                                        🎁 Loja de Recompensas
+                                    </Button>
                                     <Button 
                                         onClick={() => handleQuickActivity({ activityType: 'physical', activityName: 'Check-in de treino', activityKey: 'quick-checkin-treino', points: 15 })}
                                         disabled={isSubmitting || doneToday('quick-checkin-treino', 'Check-in de treino')}
