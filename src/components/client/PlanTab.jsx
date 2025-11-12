@@ -453,7 +453,7 @@ const NoPlanState = () => {
                     </Button>
                   </motion.div>
                 </DialogTrigger>
-            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+            <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Gerar Plano Manual</DialogTitle>
                 <DialogDescription className="px-4 sm:px-0">
@@ -806,7 +806,7 @@ const PhysicalPlanDisplay = ({ planData }) => {
 
       {/* Dialog de Feedback */}
       <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-        <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+        <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Físico</DialogTitle>
             <DialogDescription className="px-4 sm:px-0">
@@ -1071,7 +1071,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+            <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Nutricional</DialogTitle>
                 <DialogDescription className="px-4 sm:px-0">
@@ -1338,7 +1338,7 @@ const EmotionalPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+            <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Emocional</DialogTitle>
                 <DialogDescription className="px-4 sm:px-0">
@@ -1600,7 +1600,7 @@ const SpiritualPlanDisplay = ({ planData }) => {
 
           {/* Dialog de Feedback */}
           <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+            <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Feedback do Plano Espiritual</DialogTitle>
                 <DialogDescription className="px-4 sm:px-0">
@@ -1693,7 +1693,7 @@ const RegeneratePlanDialog = ({ open, onOpenChange, selectedArea }) => {
     
     return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
+      <DialogContent className="bg-white p-6 sm:max-w-2xl w-full rounded-xl shadow-2xl overflow-y-auto max-h-[85vh] border-2">
                 <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Gerar Novo Plano {areaLabel}</DialogTitle>
           <DialogDescription className="px-4 sm:px-0">
@@ -1906,3 +1906,4 @@ const PlanTab = () => {
 };
 
 export default PlanTab;
+
