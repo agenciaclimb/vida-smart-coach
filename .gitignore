@@ -5,6 +5,7 @@ tsconfig.tsbuildinfo
 .vercel/
 .vscode/
 coverage/
+.scannerwork/
 
 # Environment variables
 .env
@@ -22,5 +23,26 @@ audit/
 sandbox/
 .vercel
 
+# SonarQube analysis reports
+eslint-report.json
+sonar-report.json
+
 # Local secret backups (do not commit)
 local_secrets_backup/
+
+# Debug scripts com credenciais expostas (NUNCA commitar)
+debug_*.js
+debug_*.mjs
+debug_*.cjs
+diagnostico_*.js
+diagnostico_*.mjs
+fix_secrets.*
+test_*.js
+teste_*.js
+teste_*.mjs
+teste_*.cjs
+apply_*.js
+correcao_*.js
+evolution_webhook_*.js
+TESTE_*.sql
+CORRECAO_*.sql
