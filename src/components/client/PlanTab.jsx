@@ -512,7 +512,7 @@ const NoPlanState = () => {
 };
 
 // Display para o Plano Físico (antigo PlanDisplay)
-const PhysicalPlanDisplay = ({ planData }) => {
+export const PhysicalPlanDisplay = ({ planData }) => {
   const [activeWeek, setActiveWeek] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -837,7 +837,7 @@ const PhysicalPlanDisplay = ({ planData }) => {
 };
 
 // Display para o Plano Nutricional
-const NutritionalPlanDisplay = ({ planData }) => {
+export const NutritionalPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
@@ -1130,7 +1130,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
 };
 
 // Display para o Plano Emocional
-const EmotionalPlanDisplay = ({ planData }) => {
+export const EmotionalPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
@@ -1425,7 +1425,7 @@ const EmotionalPlanDisplay = ({ planData }) => {
 };
 
 // Display para o Plano Espiritual
-const SpiritualPlanDisplay = ({ planData }) => {
+export const SpiritualPlanDisplay = ({ planData }) => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
     const plan = planData.plan_data;
