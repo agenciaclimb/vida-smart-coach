@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dumbbell, MessageCircle, Loader2, Sparkles, Brain, Target, Heart, Bot, Cpu, Activity, Trophy, Leaf, Wind, Droplet, Flame, Zap, Award, Star } from 'lucide-react';
+import { Dumbbell, MessageCircle, Loader2, Sparkles, Brain, Target, Heart, Bot, Cpu, Activity, Trophy, Leaf, Wind, Droplet, Flame, Zap, Award, Star, Info } from 'lucide-react';
 import { usePlans } from '@/contexts/data/PlansContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 // Use the real Gamification context (not the lightweight demo hook)
