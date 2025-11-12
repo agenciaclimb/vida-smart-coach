@@ -240,11 +240,21 @@ const GamificationTabEnhanced = () => {
                     {/* Dashboard Tab */}
                     <TabsContent value="dashboard" className="mt-6">
                         {/* Bloco de progresso semanal/mensal de conclusões e XP */}
-                        <div className="mb-8">
+                        <motion.div
+                            className="mb-8"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
                             <CompletionProgress />
-                        </div>
+                        </motion.div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Quick Actions */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: 0.1 }}
+                            >
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -298,8 +308,14 @@ const GamificationTabEnhanced = () => {
                                     </Button>
                                 </CardContent>
                             </Card>
+                            </motion.div>
 
                             {/* Today's Progress */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: 0.2 }}
+                            >
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -319,8 +335,14 @@ const GamificationTabEnhanced = () => {
                                     <Progress value={((userStats?.completedMissions || 0) / 3) * 100} />
                                 </CardContent>
                             </Card>
+                            </motion.div>
 
                             {/* Points by Category */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: 0.3 }}
+                            >
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
@@ -359,6 +381,7 @@ const GamificationTabEnhanced = () => {
                                     </div>
                                 </CardContent>
                             </Card>
+                            </motion.div>
                         </div>
 
                         {/* Recent Activities */}

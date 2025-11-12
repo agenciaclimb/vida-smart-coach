@@ -1011,7 +1011,7 @@ const NutritionalPlanDisplay = ({ planData }) => {
             </Card>
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <CardContent className="pt-6 text-center">
-                <Droplets className="w-8 h-8 mx-auto mb-2 text-blue-500" />
+                <Droplet className="w-8 h-8 mx-auto mb-2 text-blue-500" />
                 <p className="text-3xl font-bold text-blue-700">{plan.water_intake_liters}L</p>
                 <p className="text-sm text-blue-600">água/dia</p>
               </CardContent>

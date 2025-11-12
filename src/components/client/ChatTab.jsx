@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
+import ChatSkeleton from '@/components/chat/ChatSkeleton';
 import { useChat } from '@/contexts/data/ChatContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useLocation } from 'react-router-dom';
@@ -43,6 +44,15 @@ const ChatTab = () => {
             setInputMessage('');
         }
     };
+
+    // Skeleton enquanto carrega a primeira resposta/conversa
+    if (chatLoading && (messages?.length ?? 0) === 0) {
+        return (
+            <TabsContent value="chat" className="mt-6">
+                <ChatSkeleton />
+            </TabsContent>
+        );
+    }
 
     return (
         <TabsContent value="chat" className="mt-6">
