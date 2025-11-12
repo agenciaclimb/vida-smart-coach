@@ -50,7 +50,8 @@ export const useDashboardStats = () => {
       // Buscar todas as atividades da última semana
       const { data: weeklyActivities, error: activitiesError } = await supabase
         .from('daily_activities')
-        .select('activity_key, xp_gained, created_at')
+        // xp_gained não existe em produção; não é usado no cálculo -> removido
+        .select('activity_key, created_at')
         .eq('user_id', user.id)
         .gte('created_at', sevenDaysAgoISO)
         .order('created_at', { ascending: false });
