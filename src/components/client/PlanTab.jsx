@@ -961,16 +961,44 @@ const NutritionalPlanDisplay = ({ planData }) => {
             </CardHeader>
           </Card>
 
-          {/* Progresso do Plano Nutricional */}
-          <div className="px-2 md:px-0">
-            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
-              <span>Progresso do Plano</span>
-              <span>{completedNutritional}/{totalNutritionalItems} • {nutritionalPercent}%</span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-green-500" style={{ width: `${nutritionalPercent}%` }} />
-            </div>
-          </div>
+          {/* Progresso do Plano Nutricional com Animação */}
+          <motion.div 
+            className="px-2 md:px-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-green-500" />
+                    Progresso do Plano
+                  </span>
+                  <span className="text-sm font-bold text-green-600">
+                    {completedNutritional}/{totalNutritionalItems} • {nutritionalPercent}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${nutritionalPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                {nutritionalPercent === 100 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-2 text-center text-green-600 font-medium text-sm"
+                  >
+                    🎉 Parabéns! Plano completo!
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Métricas */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -1215,16 +1243,44 @@ const EmotionalPlanDisplay = ({ planData }) => {
             </CardHeader>
           </Card>
 
-          {/* Progresso do Plano Emocional */}
-          <div className="px-2 md:px-0">
-            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
-              <span>Progresso do Plano</span>
-              <span>{completedEmotional}/{totalEmotionalItems} • {emotionalPercent}%</span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-rose-500" style={{ width: `${emotionalPercent}%` }} />
-            </div>
-          </div>
+          {/* Progresso do Plano Emocional com Animação */}
+          <motion.div 
+            className="px-2 md:px-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <Card className="border-l-4 border-l-rose-500">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-rose-500" />
+                    Progresso do Plano
+                  </span>
+                  <span className="text-sm font-bold text-rose-600">
+                    {completedEmotional}/{totalEmotionalItems} • {emotionalPercent}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${emotionalPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                {emotionalPercent === 100 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-2 text-center text-rose-600 font-medium text-sm"
+                  >
+                    🎉 Parabéns! Plano completo!
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Áreas de Foco */}
           {plan.focus_areas && plan.focus_areas.length > 0 && (
@@ -1482,16 +1538,44 @@ const SpiritualPlanDisplay = ({ planData }) => {
             </CardHeader>
           </Card>
 
-          {/* Progresso do Plano Espiritual */}
-          <div className="px-2 md:px-0">
-            <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
-              <span>Progresso do Plano</span>
-              <span>{completedSpiritual}/{totalSpiritualItems} • {spiritualPercent}%</span>
-            </div>
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-violet-500" style={{ width: `${spiritualPercent}%` }} />
-            </div>
-          </div>
+          {/* Progresso do Plano Espiritual com Animação */}
+          <motion.div 
+            className="px-2 md:px-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <Card className="border-l-4 border-l-violet-500">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-violet-500" />
+                    Progresso do Plano
+                  </span>
+                  <span className="text-sm font-bold text-violet-600">
+                    {completedSpiritual}/{totalSpiritualItems} • {spiritualPercent}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${spiritualPercent}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                {spiritualPercent === 100 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-2 text-center text-violet-600 font-medium text-sm"
+                  >
+                    🎉 Parabéns! Plano completo!
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Áreas de Foco */}
           {plan.focus_areas && plan.focus_areas.length > 0 && (
