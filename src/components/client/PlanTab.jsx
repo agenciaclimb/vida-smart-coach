@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dumbbell, Flame, Zap, CheckCircle, Info, MessageCircle, Loader2, Sparkles, Brain, Target, Heart, Wind, Leaf, Droplets, Bot, Cpu, Activity, Trophy, Star, Award } from 'lucide-react';
+import { Dumbbell, MessageCircle, Loader2, Sparkles, Brain, Target, Heart, Bot, Cpu, Activity, Trophy } from 'lucide-react';
 import { usePlans } from '@/contexts/data/PlansContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 // Use the real Gamification context (not the lightweight demo hook)
@@ -23,7 +23,6 @@ import {
   Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 // 🎮 COMPONENTE DE GAMIFICAÇÃO INTEGRADO
@@ -376,42 +375,84 @@ const NoPlanState = () => {
     <div className="space-y-6">
       <GamificationDisplay />
       <CheckinSystem />
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-6 py-12 px-6 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 rounded-xl border border-gray-200"
-      >
-        <div className="flex justify-center mb-4">
-          <div className="p-4 bg-gradient-to-br from-primary to-green-400 rounded-full">
-            <Sparkles className="w-12 h-12 text-white" />
-          </div>
-        </div>
-        <h3 className="text-3xl font-bold text-gray-800 mb-2">
-          IA Coach Pronta para Criar seu Plano de Transformação!
-        </h3>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-          Nossa Inteligência Artificial analisará seu perfil e criará um plano completo nas 4 áreas (Físico, Alimentar, Emocional e Espiritual) para seus objetivos.
-        </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
-          <Button 
-            onClick={handleGeneratePlan}
-            disabled={generatingPlan}
-            size="lg"
-            className="vida-smart-gradient text-white px-8 py-3 text-lg font-semibold mb-4"
-            data-tour="generate-plan"
+      <Card className="border-2 border-dashed border-gray-300">
+        <CardContent className="py-12">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, type: "spring" }}
+            className="text-center space-y-6 px-6 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 rounded-xl py-10"
           >
-            {generatingPlan ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Gerando Planos...</>
-            ) : (
-              <><Sparkles className="mr-2 h-5 w-5" />Gerar Meus Planos de Transformação</>
-            )}
-          </Button>
-          <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="lg" className="px-8 py-3 text-lg font-semibold mb-4">
-                Gerar Plano Manualmente
-              </Button>
-            </DialogTrigger>
+            <motion.div 
+              className="flex justify-center mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            >
+              <div className="p-6 bg-gradient-to-br from-primary to-green-400 rounded-full shadow-lg">
+                <Sparkles className="w-16 h-16 text-white" />
+              </div>
+            </motion.div>
+            <motion.h3 
+              className="text-3xl md:text-4xl font-bold text-gray-800 mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              IA Coach Pronta para Criar seu Plano! 🚀
+            </motion.h3>
+            <motion.p 
+              className="text-lg text-gray-600 max-w-2xl mx-auto mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              Nossa Inteligência Artificial analisará seu perfil e criará um <span className="font-semibold text-primary">plano completo nas 4 áreas</span> (Físico, Alimentar, Emocional e Espiritual) para seus objetivos.
+            </motion.p>
+            <motion.div 
+              className="flex items-center justify-center gap-2 text-sm text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span>Pronto para começar sua transformação</span>
+            </motion.div>
+            <motion.div 
+              className="flex flex-col md:flex-row gap-4 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  onClick={handleGeneratePlan}
+                  disabled={generatingPlan}
+                  size="lg"
+                  className="vida-smart-gradient text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
+                  data-tour="generate-plan"
+                >
+                  {generatingPlan ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Gerando Planos...</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-5 w-5" />Gerar Meus Planos de Transformação</>
+                  )}
+                </Button>
+              </motion.div>
+              <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+                <DialogTrigger asChild>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button variant="outline" size="lg" className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50 transition-colors">
+                      Gerar Plano Manualmente
+                    </Button>
+                  </motion.div>
+                </DialogTrigger>
             <DialogContent className="p-0 sm:p-6 sm:max-w-lg w-full sm:rounded-xl rounded-none h-[100dvh] sm:h-auto overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-lg sm:text-xl px-4 sm:px-0 pt-4 sm:pt-0">Gerar Plano Manual</DialogTitle>
@@ -461,9 +502,11 @@ const NoPlanState = () => {
                 </DialogFooter>
               </form>
             </DialogContent>
-          </Dialog>
-        </div>
-      </motion.div>
+              </Dialog>
+            </motion.div>
+          </motion.div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -614,38 +657,94 @@ const PhysicalPlanDisplay = ({ planData }) => {
         </CardHeader>
       </Card>
 
-      {/* Progresso do Plano Físico */}
-      <div className="px-2 md:px-0">
-        <div className="flex items-center justify-between text-xs mb-1 text-muted-foreground">
-          <span>Progresso do Plano</span>
-          <span>{completedPhysical}/{totalPhysicalItems} • {physicalPercent}%</span>
-        </div>
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-blue-500" style={{ width: `${physicalPercent}%` }} />
-        </div>
-      </div>
-
-      {/* Seletor de Semanas */}
-      {plan.weeks && plan.weeks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Selecione a Semana</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2 flex-wrap">
-              {plan.weeks.map((week, index) => (
-                <Button
-                  key={index}
-                  variant={activeWeek === index ? 'default' : 'outline'}
-                  onClick={() => setActiveWeek(index)}
-                  className="flex-1 min-w-[100px]"
-                >
-                  Semana {week.week || index + 1}
-                </Button>
-              ))}
+      {/* Progresso do Plano Físico com Animação */}
+      <motion.div 
+        className="px-2 md:px-0"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-blue-500" />
+                Progresso do Plano
+              </span>
+              <span className="text-sm font-bold text-blue-600">
+                {completedPhysical}/{totalPhysicalItems} • {physicalPercent}%
+              </span>
             </div>
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${physicalPercent}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+            {physicalPercent === 100 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-2 text-center text-green-600 font-medium text-sm"
+              >
+                🎉 Parabéns! Plano completo!
+              </motion.div>
+            )}
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Seletor de Semanas com Animação */}
+      {plan.weeks && plan.weeks.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
+                Selecione a Semana
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2 flex-wrap">
+                {plan.weeks.map((week, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex-1 min-w-[100px]"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant={activeWeek === index ? 'default' : 'outline'}
+                      onClick={() => setActiveWeek(index)}
+                      className={`w-full transition-all duration-200 ${
+                        activeWeek === index 
+                          ? 'vida-smart-gradient text-white shadow-lg' 
+                          : 'hover:border-primary hover:text-primary'
+                      }`}
+                    >
+                      <span className="font-semibold">Semana {week.week || index + 1}</span>
+                      {activeWeek === index && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="ml-2"
+                        >
+                          ✓
+                        </motion.span>
+                      )}
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Treinos da Semana */}
