@@ -104,8 +104,8 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
       <div className="flex flex-col min-h-screen bg-gray-50">
         <ClientHeader user={user} onLogout={signOut} />
         <main className="flex-grow pb-20 md:pb-0">
-          <div className="container mx-auto py-6 px-4 md:px-6">
-            {/* Barra de Navegação Modernizada */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="container mx-auto py-6 px-4 md:px-6">
+            {/* Barra de Navegação Modernizada - Desktop */}
             <div className="mb-6 bg-gray-100 rounded-xl p-2 shadow-sm hidden md:block">
               <NavigationBar 
                 activeTab={activeTab} 
@@ -117,26 +117,24 @@ const ClientDashboard = ({ defaultTab = 'dashboard' }) => {
               />
             </div>
 
-            {/* Conteúdo das Tabs - Mantém fallback para mobile */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="md:hidden">
-              <ScrollArea className="w-full whitespace-nowrap rounded-md mb-6">
-                <TabsList className="inline-flex w-auto">
-                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                  <TabsTrigger value="plan">Meu Plano</TabsTrigger>
-                  <TabsTrigger value="chat">IA Coach</TabsTrigger>
-                  <TabsTrigger value="calendar">Calendário</TabsTrigger>
-                  <TabsTrigger value="gamification">Gamificação</TabsTrigger>
-                  <TabsTrigger value="community">Comunidade</TabsTrigger>
-                  <TabsTrigger value="profile">Perfil & Configurações</TabsTrigger>
-                  <TabsTrigger value="referral">Indique e Ganhe</TabsTrigger>
-                  <TabsTrigger value="integrations">Integrações</TabsTrigger>
-                </TabsList>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </Tabs>
+            {/* Tabs Tradicionais - Mobile */}
+            <ScrollArea className="w-full whitespace-nowrap rounded-md mb-6 md:hidden">
+              <TabsList className="inline-flex w-auto">
+                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="plan">Meu Plano</TabsTrigger>
+                <TabsTrigger value="chat">IA Coach</TabsTrigger>
+                <TabsTrigger value="calendar">Calendário</TabsTrigger>
+                <TabsTrigger value="gamification">Gamificação</TabsTrigger>
+                <TabsTrigger value="community">Comunidade</TabsTrigger>
+                <TabsTrigger value="profile">Perfil & Configurações</TabsTrigger>
+                <TabsTrigger value="referral">Indique e Ganhe</TabsTrigger>
+                <TabsTrigger value="integrations">Integrações</TabsTrigger>
+              </TabsList>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
             
             {renderTabContent()}
-          </div>
+          </Tabs>
         </main>
         <MobileBottomNav activeTab={activeTab} onChange={handleTabChange} />
       </div>
