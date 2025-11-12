@@ -62,10 +62,66 @@ const ChatTab = () => {
                         <ScrollArea className="h-full pr-4">
                             <div className="space-y-4">
                                 {messages.length === 0 && !chatLoading && (
-                                    <div className="text-center text-gray-500 py-10">
-                                        <p>Comece uma conversa com sua IA Coach!</p>
-                                        <p>Ela está pronta para te ajudar.</p>
-                                    </div>
+                                    <motion.div 
+                                        className="text-center py-16 px-4"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ duration: 0.5 }}
+                                    >
+                                        <motion.div
+                                            className="mb-6 inline-block p-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full"
+                                            animate={{ 
+                                                scale: [1, 1.05, 1],
+                                                rotate: [0, 5, -5, 0]
+                                            }}
+                                            transition={{ 
+                                                duration: 3, 
+                                                repeat: Infinity,
+                                                ease: "easeInOut"
+                                            }}
+                                        >
+                                            <Bot className="w-16 h-16 text-blue-600" />
+                                        </motion.div>
+                                        <motion.h3 
+                                            className="text-2xl font-bold text-gray-800 mb-2"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.2 }}
+                                        >
+                                            Olá! Sou sua IA Coach 🚀
+                                        </motion.h3>
+                                        <motion.p 
+                                            className="text-gray-600 mb-6 max-w-md mx-auto"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.3 }}
+                                        >
+                                            Estou aqui para te ajudar a alcançar seus objetivos de forma personalizada. 
+                                            Vamos conversar sobre seus planos, tirar dúvidas ou ajustar sua jornada!
+                                        </motion.p>
+                                        <motion.div 
+                                            className="flex flex-wrap justify-center gap-2"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.4 }}
+                                        >
+                                            {['Como posso melhorar meu treino?', 'Dicas de alimentação saudável', 'Quero ajustar meu plano'].map((suggestion, i) => (
+                                                <motion.button
+                                                    key={i}
+                                                    onClick={() => {
+                                                        if (user?.profile) {
+                                                            sendMessage(suggestion, user.profile);
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 bg-white border-2 border-blue-200 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    {suggestion}
+                                                </motion.button>
+                                            ))}
+                                        </motion.div>
+                                    </motion.div>
                                 )}
                                 {messages.map((msg, index) => (
                                     <div
