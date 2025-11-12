@@ -1,36 +1,72 @@
 import { useState, useEffect } from 'react';
-import { motion, useSpring, useTransform } from 'framer-motion';
+import { motion, useSpring } from 'framer-motion';
 
 /**
- * AnimatedCounter - Contador animado para números
- * @param {number} value - Valor final do contador
+ * AnimatedCounter - Contador animado para números com validação robusta
+ * @param {number|string} value - Valor final do contador
  * @param {number} duration - Duração da animação em segundos (default: 1)
  * @param {string} suffix - Sufixo (ex: 'pts', 'XP', 'dias')
  * @param {string} className - Classes CSS adicionais
+ * @param {string} fontSize - Tamanho da fonte (default: 'text-2xl')
+ * @param {boolean} animate - Se deve animar (default: true)
  */
 export default function AnimatedCounter({ 
   value = 0, 
   duration = 1, 
   suffix = '', 
   className = '',
-  fontSize = 'text-2xl'
+  fontSize = 'text-2xl',
+  animate = true
 }) {
-  const [displayValue, setDisplayValue] = useState(0);
+  // Validação robusta do valor
+  const parseValue = (val) => {
+    if (typeof val === 'number' && !isNaN(val)) return val;
+    if (typeof val === 'string') {
+      const parsed = parseFloat(val);
+      return !isNaN(parsed) ? parsed : 0;
+    }
+    return 0;
+  };
+
+  const numericValue = parseValue(value);
+  const [displayValue, setDisplayValue] = useState(numericValue);
   
-  const spring = useSpring(0, {
-    duration: duration * 1000,
+  const spring = useSpring(numericValue, {
+    duration: animate ? duration * 1000 : 0,
     bounce: 0
   });
 
-  const display = useTransform(spring, (latest) => {
-    const rounded = Math.round(latest);
-    setDisplayValue(rounded);
-    return rounded;
-  });
+  useEffect(() => {
+    if (!animate) return undefined;
+    const unsubscribe = spring.on('change', (latest) => {
+      setDisplayValue(Math.round(latest));
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [spring, animate]);
 
   useEffect(() => {
-    spring.set(value);
-  }, [value, spring]);
+    const newValue = parseValue(value);
+    if (animate) {
+      spring.set(newValue);
+    } else {
+      setDisplayValue(newValue);
+    }
+  }, [value, spring, animate]);
+
+  // Fallback para renderização direta se não estiver animando
+  if (!animate) {
+    return (
+      <span className={`font-bold tabular-nums ${fontSize} ${className}`}>
+        {numericValue.toLocaleString('pt-BR')}
+        {suffix && <span className="ml-1 text-sm opacity-80">{suffix}</span>}
+      </span>
+    );
+  }
 
   return (
     <motion.span 

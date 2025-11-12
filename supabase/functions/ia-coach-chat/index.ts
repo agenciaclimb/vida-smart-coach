@@ -1,37 +1,81 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { cors } from "../_shared/cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.3';
+import { validateAuthentication, isDebugModeEnabled, isOfflineModeForced } from './auth-utils.ts';
+import { parseRequestBody, validateRequiredFields } from './body-parser.ts';
+import { buildSuccessResponse, buildErrorResponse, buildDebugData } from './response-builder.ts';
+import { determineGuardAction, safeMetadataMerge } from './guard-utils.ts';
+import { DEFAULT_STAGE_RUNTIME_CONFIG, resolveStageRuntimeConfig } from './runtime-config.ts';
+import type { StageRuntimeConfig } from './runtime-config.ts';
+import { detectStage } from './stage-detection.ts';
+import type { StageDetectionResult } from './stage-detection.ts';
+import { evaluateConversationGuard, recordConversationMetric } from './conversation-guard.ts';
+import {
+  loadConversationMemory,
+  updateConversationMemory,
+  type ConversationMemorySnapshot,
+} from './conversation-memory.ts';
+import { shouldForceProgression, type ProgressionTracker } from './progression.ts';
+import {
+  checkProactiveOpportunity,
+  recordProactiveMessage,
+  markProactiveMessageResponded,
+  type ProactiveContext,
+} from './proactive-engine.ts';
+import {
+  formatXPSummary,
+  formatStreakCelebration,
+  getMotivationalMessage,
+  type GamificationData,
+} from './gamification-display.ts';
+import {
+  getButtonSuggestion,
+  parseButtonResponse,
+  getActionInstructions,
+  isButtonResponse,
+  formatButtonsAsMenu,
+  type UserStage,
+} from './interactive-buttons.ts';
 
-type StageRuntimeConfig = {
-  enableStageHeuristics: boolean;
-  debugStageMetrics: boolean;
+type ProcessMessageParams = {
+  message: string;
+  profile: any;
+  stage: any;
+  supabase: any;
+  openaiKey: string;
+  chatHistory?: any[];
+  contextPrompt?: string;
+  contextData?: UserContextData;
+  config?: StageRuntimeConfig;
 };
 
-function getEnvFlag(name: string, defaultValue: boolean): boolean {
-  const raw = (Deno.env.get(name) || '').trim().toLowerCase();
-  if (['1', 'true', 'on', 'yes'].includes(raw)) return true;
-  if (['0', 'false', 'off', 'no'].includes(raw)) return false;
-  return defaultValue;
-}
+type StageHandler = (
+  message: string,
+  profile: any,
+  openaiKey: string,
+  chatHistory?: any[],
+  contextPrompt?: string,
+  contextData?: UserContextData,
+  config?: StageRuntimeConfig,
+) => Promise<any>;
 
-function resolveStageRuntimeConfig(): StageRuntimeConfig {
-  return {
-    enableStageHeuristics: getEnvFlag('ENABLE_STAGE_HEURISTICS_V2', true),
-    debugStageMetrics: getEnvFlag('DEBUG_STAGE_METRICS', false),
-  };
-}
-
-const DEFAULT_STAGE_RUNTIME_CONFIG: StageRuntimeConfig = {
-  enableStageHeuristics: true,
-  debugStageMetrics: false,
+const STAGE_HANDLERS: Record<string, StageHandler> = {
+  sdr: processSDRStage,
+  specialist: processSpecialistStage,
+  seller: processSellerStage,
+  partner: processPartnerStage,
 };
+
+function resolveConversationSessionId(): string {
+  return new Date().toISOString().split('T')[0];
+}
 
 // ============================================
 // 🧠 IA COACH VIDA SMART - SISTEMA ESTRATÉGICO
 // 4 Estágios: SDR → Especialista → Vendedor → Parceiro
 // ============================================
 
-serve(async (req) => {
+serve(async (req: Request) => {
   const headers = cors(req.headers.get('origin'));
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers });
@@ -39,47 +83,63 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const debugStage = url.searchParams.get('debugStage') === '1' || (req.headers.get('x-debug-stage') === '1');
+    const debugStage = isDebugModeEnabled(url, req.headers);
     
-    // 🔐 Validação de chamada: aceita chamadas internas (webhook) com secret OU chamadas autenticadas do frontend
-    const configuredSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
-    const callerSecret = req.headers.get('x-internal-secret') || '';
-    const authHeader = req.headers.get('authorization') || '';
-    
-    // Se há secret configurado e a chamada NÃO tem secret válido, verifica se tem auth token
-    if (configuredSecret && callerSecret !== configuredSecret) {
-      // Permite se vier com Authorization header (chamadas do frontend autenticado)
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn('Unauthorized call to ia-coach-chat: missing auth or secret');
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...headers, 'Content-Type': 'application/json' }
-        });
-      }
+    // 🔐 Validate authentication
+    const authResult = validateAuthentication(req.headers);
+    if (!authResult.authorized) {
+      console.warn('Unauthorized call to ia-coach-chat:', authResult.error);
+      return buildErrorResponse('Unauthorized', authResult.error || '', 401, headers);
     }
 
-    const { messageContent, userProfile, chatHistory } = await req.json();
-    
-    if (!messageContent || !userProfile) {
-      throw new Error('Mensagem e perfil do usuário são obrigatórios');
+    // Parse and validate request body
+    const parsed = await parseRequestBody(req);
+    if (!parsed) {
+      return buildErrorResponse(
+        'Bad Request',
+        'Corpo JSON inválido ou ausente',
+        400,
+        headers
+      );
     }
 
-    // Inicializar Supabase
+    const validation = validateRequiredFields(parsed);
+    if (!validation.valid) {
+      return buildErrorResponse('Bad Request', validation.error || '', 400, headers);
+    }
+
+    const { messageContent, userProfile, chatHistory } = parsed;
+
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) {
-      throw new Error('OpenAI API key não configurada');
-    }
+    const forceOffline = isOfflineModeForced(url, req.headers);
+    const noOpenAI = !openaiKey || forceOffline;
 
   // 🎯 Determinar estágio do cliente (inclui fallback para client_stages)
   const clientStage = await getCurrentStage(userProfile.id, supabase);
 
     // 📚 Carregar contexto operacional do cliente
     const contextData = await fetchUserContext(userProfile.id, supabase);
+    const conversationSessionId = resolveConversationSessionId();
+    const conversationMemory = await loadConversationMemory(userProfile.id, supabase, conversationSessionId);
+
+    // Carregar ou inicializar ProgressionTracker
+    let progressionTracker: ProgressionTracker = {
+      stage: activeStage,
+      substage: 0,
+      questionsAsked: chatHistory?.filter(m => m.role === 'assistant').map(m => m.content) || [],
+      topicsCovered: conversationMemory.entities.user_goals || [],
+      lastProgressAt: conversationMemory.entities.lastProgressAt || new Date().toISOString(),
+      stagnationCount: 0,
+    };
+
+    // Verificar se deve forçar avanço de estágio
+    const forceProgression = shouldForceProgression(progressionTracker, messageContent, chatHistory?.slice(-1)[0]?.content || '');
     
     const stageConfig = resolveStageRuntimeConfig();
 
@@ -95,15 +155,56 @@ serve(async (req) => {
     const hasPendingFeedback = contextData?.pendingFeedback && contextData.pendingFeedback.length > 0;
     
     // 🧠 Detectar estágio automaticamente baseado em sinais da conversa
-    const detectedStage = hasPendingFeedback ? 'specialist' : detectStageFromSignals(
-      messageContent,
-      chatHistory,
-      userProfile,
-      clientStage,
-      stageConfig
-    );
+    const defaultMetrics = {
+      partner: 0,
+      seller: 0,
+      specialist: 0,
+      sdr: 0,
+      planAdjustmentIntent: false,
+      interestKeywords: false,
+      planKeywords: false,
+    };
+
+    const stageDetection: StageDetectionResult = hasPendingFeedback
+      ? { stage: 'specialist', confidence: 1, metrics: defaultMetrics, reason: 'feedback_pending' }
+      : detectStage({
+          message: messageContent,
+          chatHistory,
+          userProfile,
+          currentStage: clientStage,
+          config: stageConfig,
+        });
+
+    const detectedStage = stageDetection.stage;
     const activeStage = detectedStage || clientStage.current_stage;
-    let contextPrompt = buildContextPrompt(userProfile, contextData, activeStage) || undefined;
+
+    // 💡 NOVO: Verificar se devemos enviar mensagem proativa
+    const proactiveContext: ProactiveContext = {
+      userId: userProfile.id,
+      userData: userProfile,
+      contextData,
+    };
+    const proactiveMessage = await checkProactiveOpportunity(supabase, proactiveContext);
+    
+    // Se há mensagem proativa e não é uma resposta a botão, adicionar ao contexto
+    if (proactiveMessage && !isButtonResponse(messageContent)) {
+      await recordProactiveMessage(supabase, userProfile.id, proactiveMessage);
+    }
+    let contextPrompt = buildContextPrompt(userProfile, contextData, activeStage, conversationMemory) || undefined;
+
+    const conversationGuard = evaluateConversationGuard({
+      message: messageContent,
+      chatHistory,
+      stageDetection,
+      currentStage: activeStage,
+    });
+    let stageForProcessing = conversationGuard.forceStage || activeStage;
+    if (forceProgression && !conversationGuard.blockReply) {
+      // Avançar para próximo estágio se permitido
+      if (stageForProcessing === 'sdr') stageForProcessing = 'specialist';
+      else if (stageForProcessing === 'specialist') stageForProcessing = 'seller';
+      else if (stageForProcessing === 'seller') stageForProcessing = 'partner';
+    }
 
     // 🎁 Adicionar prompt de recompensa se aplicável
     if (rewardOffer.shouldOffer) {
@@ -114,176 +215,222 @@ serve(async (req) => {
         : rewardPrompt;
     }
 
-    // 🧠 Processar mensagem com base no estágio detectado
-    const response = await processMessageByStage(
-      messageContent,
-      userProfile,
-      { ...clientStage, current_stage: activeStage },
-      supabase,
-      openaiKey,
-      chatHistory,
-      contextPrompt,
-      contextData,
-      stageConfig
-    );
+    // 💡 Adicionar mensagem proativa se aplicável
+    if (proactiveMessage && !isButtonResponse(messageContent)) {
+      contextPrompt = contextPrompt
+        ? `${contextPrompt}\n\n🤖 MENSAGEM PROATIVA:\n${proactiveMessage.message}`
+        : `🤖 MENSAGEM PROATIVA:\n${proactiveMessage.message}`;
+    }
 
-    const automation = await handleAutomations(response.text, {
-      userId: userProfile.id,
-      stage: activeStage,
-      supabase,
-      userProfile,
-      contextData,
-      originalMessage: messageContent
+    // 🎯 Adicionar botões interativos baseados no estágio
+    const stageAsUserStage = (activeStage.toUpperCase() === 'SDR' ? 'SDR' : 
+                              activeStage.charAt(0).toUpperCase() + activeStage.slice(1)) as UserStage;
+    const hasActivePlan = (contextData?.physical || contextData?.nutritional || 
+                           contextData?.emotional || contextData?.spiritual);
+    const buttonSuggestion = getButtonSuggestion(stageAsUserStage, {
+      hasActivePlan,
+      hasCompletedToday: contextData?.gamification?.total_points > 0,
+      xp: contextData?.gamification?.total_points,
+      needsAdjustment: contextData?.pendingFeedback && contextData.pendingFeedback.length > 0,
     });
+    
+    // Verificar se a mensagem do usuário é resposta a botão
+    if (isButtonResponse(messageContent) && buttonSuggestion) {
+      const parsedButton = parseButtonResponse(messageContent, buttonSuggestion.buttons);
+      if (parsedButton) {
+        const actionInstructions = getActionInstructions(parsedButton.action);
+        contextPrompt = contextPrompt
+          ? `${contextPrompt}\n\n🎯 AÇÃO DO USUÁRIO: ${parsedButton.text}\nINSTRUÇÕES: ${actionInstructions}`
+          : `🎯 AÇÃO DO USUÁRIO: ${parsedButton.text}\nINSTRUÇÕES: ${actionInstructions}`;
+        
+        // Marcar mensagem proativa como respondida se aplicável
+        if (proactiveMessage) {
+          await markProactiveMessageResponded(supabase, userProfile.id, proactiveMessage.type);
+        }
+      }
+    }
+
+    // Se não há OpenAI configurado, retornar resposta simplificada focada em recompensas
+    if (noOpenAI) {
+      const firstName = extractFirstName(userProfile?.full_name || userProfile?.name || userProfile?.email || 'Você');
+      let reply = `Oi ${firstName}!`;
+      if (rewardOffer.shouldOffer) {
+        const rewardPrompt = buildRewardOfferPrompt(rewardOffer, firstName);
+        reply = `${reply}\n\n${rewardPrompt}\n(Resposta gerada em modo simplificado — OpenAI desativado)`;
+      } else {
+        reply = `${reply} Obrigado pela mensagem! (modo simplificado: sem sugestões de IA no momento)`;
+      }
+
+      return new Response(JSON.stringify({ reply }), {
+        status: 200,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
+
+    let stageResponse:
+      | Awaited<ReturnType<typeof processMessageByStage>>
+      | {
+          text: string;
+          shouldUpdateStage: boolean;
+          newStage: string | null;
+          metadata: Record<string, any>;
+        };
+    let automation: Awaited<ReturnType<typeof handleAutomations>>;
+
+    if (conversationGuard.blockReply) {
+      const guardReply = buildGuardHoldReply(userProfile);
+      stageResponse = {
+        text: guardReply,
+        shouldUpdateStage: false,
+        newStage: null,
+        metadata: buildInteractionMetadata(stageForProcessing, messageContent, guardReply, contextData, {
+          guard_block: true,
+        }),
+      };
+      automation = { text: guardReply, executions: [] };
+    } else {
+      stageResponse = await processMessageByStage({
+        message: messageContent,
+        profile: userProfile,
+        stage: { ...clientStage, current_stage: stageForProcessing },
+        supabase,
+        openaiKey,
+        chatHistory,
+        contextPrompt,
+        contextData,
+        config: stageConfig,
+      });
+
+      automation = await handleAutomations(stageResponse.text, {
+        userId: userProfile.id,
+        stage: stageForProcessing,
+        supabase,
+        userProfile,
+        contextData,
+        originalMessage: messageContent,
+      });
+    }
 
     const metadataWithAutomation = {
-      ...(response.metadata || {}),
+      ...safeMetadataMerge(stageResponse.metadata),
       automations: automation.executions
     };
 
-    const finalReply = automation.text || response.text;
+    const guardAction = determineGuardAction(conversationGuard, stageForProcessing);
 
-    await saveInteraction(userProfile.id, activeStage, messageContent, finalReply, metadataWithAutomation, supabase);
+    const metadataWithDetection = {
+      ...metadataWithAutomation,
+      stage_detection: stageDetection,
+      conversation_guard: conversationGuard,
+      conversation_memory: conversationMemory,
+      guard_action: guardAction,
+    };
 
-    if (response.shouldUpdateStage && response.newStage) {
-      await updateClientStage(userProfile.id, response.newStage, supabase);
+    const regenExecuted = automation.executions.some(exec => exec.type === 'REGENERATE_PLAN' && exec.success);
+    let finalReply = automation.text || stageResponse.text;
+
+    // 🎮 NOVO: Adicionar gamificação visual se houve atividade registrada
+    const activityRegistered = automation.executions.some(
+      exec => exec.type === 'REGISTER_DAILY_CHECKIN' && exec.success
+    );
+    
+    if (activityRegistered && contextData?.gamification) {
+      const gamificationData = contextData.gamification as GamificationData;
+      const xpEarned = automation.executions
+        .filter(exec => exec.type === 'REGISTER_DAILY_CHECKIN' && exec.success)
+        .reduce((sum, exec) => sum + (exec.payload?.points || 0), 0);
+      
+      if (xpEarned > 0) {
+        const xpSummary = formatXPSummary(gamificationData, xpEarned);
+        finalReply = `${finalReply}\n\n${xpSummary}`;
+        
+        // Adicionar celebração de streak se aplicável
+        if (gamificationData.current_streak >= 3) {
+          const streakCelebration = formatStreakCelebration(gamificationData.current_streak);
+          finalReply = `${finalReply}\n\n${streakCelebration}`;
+        }
+        
+        // Adicionar mensagem motivacional
+        const motivational = getMotivationalMessage(gamificationData);
+        finalReply = `${finalReply}\n\n${motivational}`;
+      }
     }
 
-    return new Response(JSON.stringify({
-      reply: finalReply,
-      stage: activeStage,
-      ...(debugStage ? { debugStage: { detectedStage, persistedStage: clientStage.current_stage } } : {}),
-      timestamp: new Date().toISOString(),
-      model: "gpt-4o-mini"
-    }), {
-      headers: { ...headers, 'Content-Type': 'application/json' }
+    // 🎯 NOVO: Adicionar botões interativos ao final da resposta
+    if (buttonSuggestion && !isButtonResponse(messageContent)) {
+      const buttonsMenu = formatButtonsAsMenu(buttonSuggestion.buttons);
+      finalReply = `${finalReply}${buttonsMenu}`;
+    }
+
+    await saveInteraction(userProfile.id, activeStage, messageContent, finalReply, metadataWithDetection, supabase);
+    await updateConversationMemory({
+      userId: userProfile.id,
+      message: messageContent,
+      aiResponse: finalReply,
+      supabase,
+      sessionId: conversationSessionId,
     });
+    // Persist ProgressionTracker in stage_metadata
+    await supabase.from('user_profiles').update({
+      stage_metadata: {
+        ...safeMetadataMerge(clientStage.stage_metadata),
+        progressionTracker: {
+          ...progressionTracker,
+          lastProgressAt: new Date().toISOString(),
+        }
+      }
+    }).eq('id', userProfile.id);
+
+    let finalShouldUpdateStage = stageResponse.shouldUpdateStage;
+    let finalNewStage = stageResponse.newStage;
+
+    if (regenExecuted) {
+      finalShouldUpdateStage = true;
+      finalNewStage = 'partner';
+    }
+
+    if (finalShouldUpdateStage && finalNewStage) {
+      await updateClientStage(userProfile.id, finalNewStage, supabase);
+    }
+
+    // Record conversation metrics if there are issues
+    if (conversationGuard.issues.length > 0) {
+      await recordConversationMetric({
+        supabase,
+        userId: userProfile.id,
+        sessionId: conversationSessionId,
+        stageBefore: activeStage,
+        stageAfter: stageForProcessing,
+        action: guardAction,
+        issues: conversationGuard.issues,
+        hints: conversationGuard.hints,
+        metadata: {
+          stage_detection: stageDetection,
+          guard_block: conversationGuard.blockReply,
+        },
+      });
+    }
+
+    // Build debug data if needed
+    const debugData = debugStage
+      ? buildDebugData(detectedStage, clientStage, stageDetection, conversationGuard)
+      : null;
+
+    // Build and return successful response
+    const finalStage = regenExecuted ? 'partner' : activeStage;
+    return buildSuccessResponse(finalReply, finalStage, debugStage, debugData, headers);
 
   } catch (error: any) {
     console.error('IA Coach Error:', error);
-    return new Response(JSON.stringify({
-      error: 'Erro interno do sistema',
-      details: error?.message || String(error)
-    }), {
-      status: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' }
-    });
+    return buildErrorResponse(
+      'Erro interno do sistema',
+      error?.message || String(error),
+      500,
+      headers
+    );
   }
 });
-
-// ============================================
-// 🎯 DETECÇÃO AUTOMÁTICA DE ESTÁGIO
-// ============================================
-
-function detectStageFromSignals(
-  message: string,
-  chatHistory: any[],
-  userProfile: any,
-  currentStage: any,
-  config: StageRuntimeConfig = DEFAULT_STAGE_RUNTIME_CONFIG,
-): string | null {
-  const msgLower = message.toLowerCase();
-
-  // 🔍 SINAIS PARA CADA ESTÁGIO
-
-  // PARTNER: Cliente já ativo, fazendo check-ins ou acompanhamento
-  const partnerSignals = [
-    msgLower.includes('check-in'),
-    msgLower.includes('como foi'),
-    msgLower.includes('consegui'),
-    msgLower.includes('fiz o treino'),
-    msgLower.includes('bebi água'),
-    msgLower.includes('segui o plano'),
-    msgLower.includes('como estou'),
-    chatHistory && chatHistory.length >= 5
-  ];
-
-  // SELLER: Cliente mostra interesse direto, quer testar ou comprar
-  const sellerSignals = [
-    msgLower.includes('quero testar'),
-    msgLower.includes('teste grátis'),
-    msgLower.includes('como funciona'),
-    msgLower.includes('quanto custa'),
-    msgLower.includes('preço'),
-    msgLower.includes('assinar'),
-    msgLower.includes('começar'),
-    msgLower.includes('cadastro'),
-    msgLower.includes('quero começar'),
-  ];
-
-  // SPECIALIST: Cliente expressou dor/problema específico e quer solução
-  const specialistSignals = [
-    msgLower.includes('preciso de ajuda'),
-    msgLower.includes('estou com dificuldade'),
-    msgLower.includes('não consigo'),
-    msgLower.includes('problema com'),
-    msgLower.includes('tenho lutado'),
-    msgLower.includes('ansiedade'),
-    msgLower.includes('depressão'),
-    msgLower.includes('peso'),
-    msgLower.includes('alimentação'),
-    msgLower.includes('físico'),
-    msgLower.includes('emocional'),
-    extractPainLevel(message) >= 7,
-  ];
-
-  // SDR: Cliente inicial, ainda explorando ou fazendo perguntas genéricas
-  const sdrSignals = [
-    msgLower.includes('oi'),
-    msgLower.includes('olá'),
-    msgLower.includes('bom dia'),
-    msgLower.includes('boa tarde'),
-    msgLower.includes('boa noite'),
-    msgLower.includes('o que é'),
-    msgLower.includes('me fale sobre'),
-    message.length < 50 && !msgLower.includes('não'),
-  ];
-
-  const partnerCount = partnerSignals.filter(Boolean).length;
-  const sellerCount = sellerSignals.filter(Boolean).length;
-  const specialistCount = specialistSignals.filter(Boolean).length;
-  const sdrCount = sdrSignals.filter(Boolean).length;
-
-  const interestKeywords = /(quero|preciso|ajuda|ajudar|melhorar|arrumar|corrigir)/.test(msgLower);
-  const planKeywords = /(plano|treino|dieta|rotina|cardapio)/.test(msgLower);
-  const planAdjustmentIntent = (/\b(ajustar|ajuste|mudar|alterar|regenerar|refazer|recriar)\b/.test(msgLower) && planKeywords) || /\bnovo\s+plano\b/.test(msgLower);
-
-  if (config.debugStageMetrics) {
-    const preview = message.replace(/\s+/g, ' ').slice(0, 120);
-    console.log(JSON.stringify({
-      stage_metrics: {
-        preview,
-        counts: { partner: partnerCount, seller: sellerCount, specialist: specialistCount, sdr: sdrCount },
-        planAdjustmentIntent,
-        interestKeywords,
-        planKeywords,
-        enableStageHeuristicsV2: config.enableStageHeuristics,
-      },
-    }));
-  }
-
-  if (partnerCount >= 2) return 'partner';
-  if (sellerCount >= 2) return 'seller';
-  if (specialistCount >= 2) return 'specialist';
-
-  if (config.enableStageHeuristics) {
-    if (planAdjustmentIntent) {
-      return 'specialist';
-    }
-
-    if (specialistCount >= 1 && interestKeywords && planKeywords) {
-      return 'specialist';
-    }
-  }
-
-  if (sdrCount >= 2) return 'sdr';
-
-  return null;
-}
-
-// ============================================
-// FUNÇÕES AUXILIARES
-// ============================================
+  // ...existing code...
 
 async function getCurrentStage(userId: string, supabase: any) {
   try {
@@ -328,29 +475,20 @@ async function getCurrentStage(userId: string, supabase: any) {
   }
 }
 
-async function processMessageByStage(
-  message: string,
-  profile: any,
-  stage: any,
-  supabase: any,
-  openaiKey: string,
-  chatHistory?: any[],
-  contextPrompt?: string,
-  contextData?: UserContextData,
-  config: StageRuntimeConfig = DEFAULT_STAGE_RUNTIME_CONFIG,
-) {
-  switch (stage.current_stage) {
-    case 'sdr':
-      return await processSDRStage(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
-    case 'specialist':
-      return await processSpecialistStage(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
-    case 'seller':
-      return await processSellerStage(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
-    case 'partner':
-      return await processPartnerStage(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
-    default:
-      return await processSDRStage(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
-  }
+async function processMessageByStage(params: ProcessMessageParams) {
+  const {
+    message,
+    profile,
+    stage,
+    openaiKey,
+    chatHistory,
+    contextPrompt,
+    contextData,
+    config = DEFAULT_STAGE_RUNTIME_CONFIG,
+  } = params;
+
+  const handler = STAGE_HANDLERS[stage.current_stage] || STAGE_HANDLERS.sdr;
+  return handler(message, profile, openaiKey, chatHistory, contextPrompt, contextData, config);
 }
 
 // ============================================
@@ -371,6 +509,7 @@ async function processSDRStage(
   const questionCount = assistantMessages.length;
   const lastAssistantMsg = assistantMessages.slice(-1)[0]?.content || '';
   
+  const spinSection = buildSpinStageSection(questionCount, profile.full_name || 'Lead');
   const systemPrompt = `Você é a Vida, a IA SDR do Vida Smart Coach. Usa metodologia SPIN Selling de forma conversacional e gradual.
 
 NOME DO LEAD: ${profile.full_name || 'Lead'}
@@ -378,33 +517,7 @@ NOME DO LEAD: ${profile.full_name || 'Lead'}
 MISSÃO: Acolher o cliente com empatia, criar rapport genuíno, entender sua realidade ANTES de oferecer qualquer solução.
 
 ESTRUTURA SPIN (seguir NESTA ORDEM):
-${questionCount === 0 ? `
-1️⃣ SITUAÇÃO: Descobrir contexto atual
-  → "Oi ${profile.full_name || ''}, tudo bem? Eu sou a Vida 🙋🏽‍♀️, sua coach por aqui. Como você tem se sentido ultimamente em relação à sua saúde?"
-  → Adapte ao linguajar do cliente (formal/informal)
-  → Seja acolhedora e genuína
-` : questionCount === 1 ? `
-2️⃣ PROBLEMA: Identificar dor específica
-   → Foque na resposta anterior e pergunte sobre UM desafio específico
-   → "E como está sendo isso no dia a dia? Tem algo que te incomoda mais?"
-   → NÃO faça lista de perguntas, apenas UMA
-   → Demonstre interesse genuíno
-` : questionCount === 2 ? `
-3️⃣ IMPLICAÇÃO: Amplificar consequências
-   → "E isso tem afetado outras áreas da sua vida também?"
-   → Foque no impacto emocional/prático
-   → Seja empática
-` : questionCount === 3 ? `
-🔄 EXPLORAÇÃO: Continue aprofundando
-   → Faça mais 1-2 perguntas para entender melhor o contexto
-   → "Me conta mais sobre isso" / "Há quanto tempo você sente isso?"
-   → Construa rapport ANTES de oferecer solução
-` : `
-4️⃣ NECESSIDADE: Apresentar diagnóstico (NÃO venda ainda)
-  → "Olha, eu poderia te ajudar a entender melhor o que está acontecendo com um diagnóstico personalizado. Topa?"
-  → Se aceitar claramente → Avançar para ESPECIALISTA (apenas para diagnosticar)
-  → NÃO mencione "teste grátis" ou "7 dias" ainda
-`}
+${spinSection}
 
 REGRAS CRÍTICAS ANTI-LOOP:
 1. LEIA todo o histórico antes de responder
@@ -731,6 +844,7 @@ async function processPartnerStage(
   const currentHour = new Date().getHours();
   const isCheckInTime = (currentHour >= 7 && currentHour <= 9) || (currentHour >= 20 && currentHour <= 22);
   
+  const partnerCheckInSection = buildPartnerCheckInSection(isCheckInTime, currentHour);
   const systemPrompt = `Você é uma PARCEIRA DE TRANSFORMAÇÃO do Vida Smart Coach.
 
 PERSONALIDADE: Amiga próxima, motivadora, proativa mas natural
@@ -739,14 +853,7 @@ MISSÃO: Acompanhar diariamente com foco simples e sugerir ações específicas 
 
 NOME: ${profile.full_name}
 
-${isCheckInTime ? `
-É HORÁRIO DE CHECK-IN! ${currentHour >= 20 ? 'NOTURNO 🌙' : 'MATINAL ☀️'}
-
-${currentHour >= 20 ? 
-  'Como foi seu dia? Conseguiu seguir o plano?' :
-  'Bom dia! Como está se sentindo hoje?'
-}
-` : 'Conversa natural como amiga, uma pergunta por vez.'}
+${partnerCheckInSection}
 
 💡 SUGESTÕES PROATIVAS:
 - Se o contexto mencionar "Sugestões proativas para agora", use-as naturalmente na conversa
@@ -821,6 +928,73 @@ async function callOpenAI(messages: any[], openaiKey: string) {
   return data.choices[0]?.message?.content || "Desculpe, tive um problema técnico. Pode tentar novamente?";
 }
 
+// ============================================
+// Helpers para reduzir ternários aninhados
+// ============================================
+
+function buildSpinStageSection(questionCount: number, fullName: string): string {
+  if (questionCount === 0) {
+    return `
+1️⃣ SITUAÇÃO: Descobrir contexto atual
+  → "Oi ${fullName || ''}, tudo bem? Eu sou a Vida 🙋🏽‍♀️, sua coach por aqui. Como você tem se sentido ultimamente em relação à sua saúde?"
+  → Adapte ao linguajar do cliente (formal/informal)
+  → Seja acolhedora e genuína
+`;
+  }
+  if (questionCount === 1) {
+    return `
+2️⃣ PROBLEMA: Identificar dor específica
+   → Foque na resposta anterior e pergunte sobre UM desafio específico
+   → "E como está sendo isso no dia a dia? Tem algo que te incomoda mais?"
+   → NÃO faça lista de perguntas, apenas UMA
+   → Demonstre interesse genuíno
+`;
+  }
+  if (questionCount === 2) {
+    return `
+3️⃣ IMPLICAÇÃO: Amplificar consequências
+   → "E isso tem afetado outras áreas da sua vida também?"
+   → Foque no impacto emocional/prático
+   → Seja empática
+`;
+  }
+  if (questionCount === 3) {
+    return `
+🔄 EXPLORAÇÃO: Continue aprofundando
+   → Faça mais 1-2 perguntas para entender melhor o contexto
+   → "Me conta mais sobre isso" / "Há quanto tempo você sente isso?"
+   → Construa rapport ANTES de oferecer solução
+`;
+  }
+  return `
+4️⃣ NECESSIDADE: Apresentar diagnóstico (NÃO venda ainda)
+  → "Olha, eu poderia te ajudar a entender melhor o que está acontecendo com um diagnóstico personalizado. Topa?"
+  → Se aceitar claramente → Avançar para ESPECIALISTA (apenas para diagnosticar)
+  → NÃO mencione "teste grátis" ou "7 dias" ainda
+`;
+}
+
+function buildPartnerCheckInSection(isCheckInTime: boolean, currentHour: number): string {
+  if (!isCheckInTime) {
+    return 'Conversa natural como amiga, uma pergunta por vez.';
+  }
+  const period = currentHour >= 20 ? 'NOTURNO 🌙' : 'MATINAL ☀️';
+  const prompt = currentHour >= 20
+    ? 'Como foi seu dia? Conseguiu seguir o plano?'
+    : 'Bom dia! Como está se sentindo hoje?';
+  return `
+É HORÁRIO DE CHECK-IN! ${period}
+
+${prompt}
+`;
+}
+
+function buildPlanLabel(results: string[]): string {
+  if (results.length === 4) return 'todos os seus planos';
+  if (results.length === 1) return `o plano ${results[0]}`;
+  return `os planos ${results.join(', ')}`;
+}
+
 type AutomationAction = {
   type: string;
   payload: Record<string, any>;
@@ -879,9 +1053,13 @@ function detectHeuristicCheckin(context: AutomationContext): AutomationAction | 
   const message = original.toLowerCase();
   if (!message) return null;
 
-  const hasCheckinWord = /(check[\s-]?in|checkin)/.test(message);
-  const hasRegisterIntent = /(registr|anot|marc|lanc|fazer|faca|realizar|dar|marque|quero|preciso)/.test(message);
-  const hasNegation = /(nao\s+(registr|fazer|marque|fa[cz])|não\s+(registr|fazer|marque|fa[cz]))/.test(message);
+  const normalized = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const hasCheckinWord = /(check[\s-]?in|checkin)/.test(normalized);
+  const hasRegisterIntent = /(registr|anot|marc|lanc|fazer|faca|realizar|dar|marque|quero|preciso)/.test(
+    normalized,
+  );
+  const hasNegation = /(nao\s+(quero|preciso|faca|fazer|mudar|desejo))/.test(normalized);
 
   if (!hasCheckinWord || !hasRegisterIntent || hasNegation) {
     return null;
@@ -908,22 +1086,25 @@ function detectHeuristicPlanRegeneration(context: AutomationContext): Automation
   const message = original.toLowerCase();
   if (!message) return null;
 
-  const hasPlanWord = /(plano|treino|dieta|rotina)/.test(message);
-  const hasRegenerateIntent = /(regener|refaz|recria|ajustar|alterar|novo plano|gerar novo|atualizar plano|refazer)/.test(message);
-  const hasNegation = /(nao\s+(quero|preciso|faça|fazer)|não\s+(quero|preciso|faça|fazer))/.test(message);
+  const normalized = message.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const hasPlanWord = /(plano|treino|workout|dieta|rotina|programa)/.test(normalized);
+  const hasRegenerateIntent = /(regener|refaz|recria|ajust|alter|atualiz|novo plano|gerar novo|refazer|mudar|trocar|reeditar|reestrutur|melhorar|otimizar)/.test(normalized);
+  const hasNegation = /(nao\s+(quero|preciso|faca|fazer|mudar)|não\s+(quero|preciso|faça|fazer|mudar))/.test(message);
 
   if (!hasPlanWord || !hasRegenerateIntent || hasNegation) {
     return null;
   }
 
   const planTypes: string[] = [];
-  if (/(físic|treino|academia|muscul)/.test(message)) planTypes.push('physical');
-  if (/(nutri|dieta|refeição|aliment)/.test(message)) planTypes.push('nutritional');
-  if (/(emoc|humor|ansiedade|terapia)/.test(message)) planTypes.push('emotional');
-  if (/(espirit|propósito|medita|espiritual)/.test(message)) planTypes.push('spiritual');
+  if (/(fisic|treino|academia|muscul|forca|workout)/.test(normalized)) planTypes.push('physical');
+  if (/(nutri|dieta|refeicao|aliment)/.test(normalized)) planTypes.push('nutritional');
+  if (/(emoc|humor|ansiedad|terapia|mente)/.test(normalized)) planTypes.push('emotional');
+  if (/(espirit|proposito|medita|espiritual|fe)/.test(normalized)) planTypes.push('spiritual');
+
+  const uniquePlanTypes = Array.from(new Set(planTypes));
 
   const payload: any = {
-    plan_type: planTypes.length === 0 ? 'all' : planTypes,
+    plan_type: uniquePlanTypes.length === 0 ? 'all' : uniquePlanTypes,
     summary: original.trim(),
     overrides: {
       custom_notes: original.trim(),
@@ -935,6 +1116,8 @@ function detectHeuristicPlanRegeneration(context: AutomationContext): Automation
     payload,
   };
 }
+
+
 
 async function handleAutomations(aiResponse: string, context: AutomationContext): Promise<{ text: string; executions: AutomationExecutionResult[] }> {
   const { cleanedText, actions } = extractAutomationActions(aiResponse);
@@ -1210,11 +1393,7 @@ async function runRegeneratePlanAction(action: AutomationAction, context: Automa
     }
   }
 
-  const label = results.length === 4
-    ? 'todos os seus planos'
-    : results.length === 1
-      ? `o plano ${results[0]}`
-      : `os planos ${results.join(', ')}`;
+  const label = buildPlanLabel(results);
 
   return {
     type: action.type,
@@ -1282,19 +1461,6 @@ function analyzeAdvancementSDR(
   }
 
   return explicitConsent && interest;
-}
-
-function extractPainLevel(message: string): number {
-  const match = message.match(/(\d+)\/10|(\d+) de 10|nível (\d+)/i);
-  if (match) {
-    return parseInt(match[1] || match[2] || match[3]);
-  }
-  
-  if (message.toLowerCase().includes('muito') || message.toLowerCase().includes('demais')) return 8;
-  if (message.toLowerCase().includes('bastante') || message.toLowerCase().includes('bem')) return 7;
-  if (message.toLowerCase().includes('um pouco') || message.toLowerCase().includes('às vezes')) return 4;
-  
-  return 5;
 }
 
 // Função auxiliar para detectar objeções (atualmente não utilizada)
@@ -1594,10 +1760,11 @@ function extractPlanItems(planData: any, planType: string): Array<{ identifier: 
     if (planType === 'physical') {
       // Treinos por dia da semana
       const workouts = data.workouts || data.weekly_workouts || [];
-      workouts.forEach((workout: any, idx: number) => {
+      let idx = 0;
+      for (const workout of workouts) {
         const day = workout.day || workout.dayOfWeek || `Dia ${idx + 1}`;
         const exercises = workout.exercises || [];
-        exercises.forEach((ex: any) => {
+        for (const ex of exercises) {
           const exName = ex.name || ex.exercise;
           if (exName) {
             items.push({
@@ -1605,12 +1772,13 @@ function extractPlanItems(planData: any, planType: string): Array<{ identifier: 
               description: `${exName} (${day})`
             });
           }
-        });
-      });
+        }
+        idx += 1;
+      }
     } else if (planType === 'nutritional') {
       // Refeições
       const meals = data.meals || data.daily_meals || [];
-      meals.forEach((meal: any) => {
+      for (const meal of meals) {
         const mealName = meal.name || meal.meal_type;
         if (mealName) {
           items.push({
@@ -1618,11 +1786,11 @@ function extractPlanItems(planData: any, planType: string): Array<{ identifier: 
             description: meal.description || mealName
           });
         }
-      });
+      }
     } else if (planType === 'emotional') {
       // Práticas emocionais
       const practices = data.practices || data.daily_practices || [];
-      practices.forEach((practice: any) => {
+      for (const practice of practices) {
         const practiceName = practice.name || practice.title;
         if (practiceName) {
           items.push({
@@ -1630,11 +1798,11 @@ function extractPlanItems(planData: any, planType: string): Array<{ identifier: 
             description: practice.description || practiceName
           });
         }
-      });
+      }
     } else if (planType === 'spiritual') {
       // Práticas espirituais
       const practices = data.practices || data.daily_practices || [];
-      practices.forEach((practice: any) => {
+      for (const practice of practices) {
         const practiceName = practice.name || practice.title;
         if (practiceName) {
           items.push({
@@ -1642,7 +1810,7 @@ function extractPlanItems(planData: any, planType: string): Array<{ identifier: 
             description: practice.description || practiceName
           });
         }
-      });
+      }
     }
   } catch (err) {
     console.error('Erro ao extrair itens do plano:', err);
@@ -1693,7 +1861,12 @@ function buildInteractionMetadata(
   };
 }
 
-function buildContextPrompt(userProfile: any, context: UserContextData, stage: string): string | null {
+function buildContextPrompt(
+  userProfile: any,
+  context: UserContextData,
+  stage: string,
+  memory?: ConversationMemorySnapshot,
+): string | null {
   if (!context) return null;
 
   const lines: string[] = [];
@@ -1776,6 +1949,22 @@ function buildContextPrompt(userProfile: any, context: UserContextData, stage: s
       .map((memory: any) => `${memory.memory_type}: ${limitText(memory.content, 80)}`)
       .join(' | ');
     lines.push(`Notas importantes: ${memories}.`);
+  }
+
+  if (memory) {
+    const entities = memory.entities;
+    if (entities.user_goals.length > 0) {
+      lines.push(`Memória - Objetivos declarados: ${entities.user_goals.join(', ')}.`);
+    }
+    if (entities.pain_points.length > 0) {
+      lines.push(`Memória - Dores recorrentes: ${entities.pain_points.join(', ')}.`);
+    }
+    if (entities.restrictions.length > 0) {
+      lines.push(`Memória - Restrições: ${entities.restrictions.join(', ')}.`);
+    }
+    if (entities.emotional_state) {
+      lines.push(`Memória - Estado emocional recente: ${entities.emotional_state}.`);
+    }
   }
   
   if (context.pendingFeedback && context.pendingFeedback.length > 0) {
@@ -1945,3 +2134,7 @@ function getTriggerMessage(trigger: string): string {
   return messages[trigger] || 'Progresso consistente';
 }
 
+function buildGuardHoldReply(profile: any): string {
+  const firstName = extractFirstName(profile?.full_name || profile?.name || 'você');
+  return `Oi ${firstName}! Não consegui entender a última mensagem. Pode me contar com mais detalhes para eu te ajudar de verdade?`;
+}

@@ -1,0 +1,415 @@
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Users, Calendar, ClipboardList, Loader2, CheckCircle2, Circle, ArrowRight, Edit } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useCheckins } from '@/contexts/data/CheckinsContext';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import ProgressChart from '@/components/client/ProgressChart';
+import CompletionProgress from '@/components/client/CompletionProgress';
+import toast from 'react-hot-toast';
+import WelcomeCard from '@/components/client/WelcomeCard';
+import { debugLog, validateCheckinData, trackError } from '@/utils/debugHelpers';
+import { supabase } from '@/lib/supabase';
+import { usePlans } from '@/contexts/data/PlansContext';
+import GuidedTour from '@/components/onboarding/GuidedTour';
+import WhatsAppOnboardingPrompt from '@/components/onboarding/WhatsAppOnboardingPrompt';
+import { useGamification } from '@/contexts/data/GamificationContext';
+
+// Novos componentes do dashboard redesenhado
+import HeroGamification from '@/components/dashboard/HeroGamification';
+import CheckinCTA from '@/components/dashboard/CheckinCTA';
+import WeeklySummary from '@/components/dashboard/WeeklySummary';
+import ActionCard from '@/components/dashboard/ActionCard';
+import PersonalizedTip from '@/components/dashboard/PersonalizedTip';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+const StatCard = ({ icon, title, value, gradient, onClick }) => (
+  <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 300 }}>
+    <Card className="overflow-hidden" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+      <CardHeader className={`p-4 flex flex-row items-center justify-between space-y-0 pb-2 ${gradient}`}>
+        <div className="flex items-center">
+          <div className="p-2 bg-white/20 rounded-md mr-4">
+            {icon}
+          </div>
+          <CardTitle className="text-sm font-medium text-white">{title}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
+
+const DailyCheckInCard = () => {
+  const { user } = useAuth();
+  const { addDailyMetric, hasCheckedInToday, loadingCheckin } = useCheckins();
+  const [weight, setWeight] = useState(user?.profile?.current_weight || '');
+  const [mood, setMood] = useState('');
+  const [sleep, setSleep] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    setIsSubmitting(true);
+    
+    try {
+      const metric = {
+        weight: weight && parseFloat(weight) > 0 ? parseFloat(weight) : null,
+        mood_score: mood ? parseInt(mood) : null,
+        sleep_hours: sleep ? parseFloat(sleep) : null
+      };
+      
+      // Enhanced validation
+      const validation = validateCheckinData(metric);
+      if (!validation.isValid) {
+        validation.errors.forEach(error => toast.error(error));
+        debugLog('Check-in Validation Failed', { metric, errors: validation.errors });
+        return;
+      }
+      
+      debugLog('Check-in Submission Started', { user: user?.id, metric });
+      
+      const result = await addDailyMetric(metric);
+      
+      if (result?.success) {
+        debugLog('Check-in Success', { result });
+        toast.success('Check-in registrado com sucesso! 🎉');
+        
+        // Clear form on success
+        setMood('');
+        setSleep('');
+        // Keep weight as it doesn't change daily
+      } else if (result?.isDuplicate) {
+        debugLog('Check-in Duplicate Detected', { result });
+        // Toast already shown by addDailyMetric
+      } else {
+        debugLog('Check-in Failed', { result });
+        throw new Error(result?.error?.message || 'Falha desconhecida no check-in');
+      }
+    } catch (error) {
+      debugLog('Check-in Error', { user: user?.id, formData: { mood, sleep, weight } }, error);
+      trackError('DashboardTab.handleSubmit', error, { 
+        userId: user?.id, 
+        formData: { mood, sleep, weight } 
+      });
+      toast.error(`Erro ao registrar check-in: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (hasCheckedInToday) {
+    return (
+      <Card className="bg-lime-50 border border-lime-200">
+        <CardHeader>
+          <CardTitle className="text-lime-800">Check-in do Dia Completo! ✅</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lime-700">Ótimo trabalho por registrar seu progresso hoje. Continue assim e até amanhã!</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Check-in Rápido (Métricas)</CardTitle>
+        <CardDescription>Peso, humor e sono — registre em 30 segundos.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="weight" className="text-sm font-medium text-gray-700 mb-1 block">Peso (kg)</label>
+              <Input 
+                id="weight" 
+                type="number" 
+                step="0.1" 
+                placeholder="Ex: 75.5" 
+                value={weight} 
+                onChange={(e) => setWeight(e.target.value)} 
+              />
+            </div>
+            <div>
+              <label htmlFor="mood" className="text-sm font-medium text-gray-700 mb-1 block">Humor hoje</label>
+              <Select onValueChange={setMood} value={mood}>
+                <SelectTrigger id="mood">
+                  <SelectValue placeholder="Como se sente?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">😁 Excelente</SelectItem>
+                  <SelectItem value="4">🙂 Bom</SelectItem>
+                  <SelectItem value="3">😐 Normal</SelectItem>
+                  <SelectItem value="2">😟 Ruim</SelectItem>
+                  <SelectItem value="1">😩 Péssimo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="sleep" className="text-sm font-medium text-gray-700 mb-1 block">Sono (horas)</label>
+              <Input id="sleep" type="number" step="0.5" placeholder="Ex: 8" value={sleep} onChange={(e) => setSleep(e.target.value)} />
+            </div>
+          </div>
+          <Button type="submit" className="w-full vida-smart-gradient" disabled={isSubmitting || loadingCheckin}>
+            {isSubmitting || loadingCheckin ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Registrando...
+              </>
+            ) : (
+              'Registrar Check-in'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+
+const DashboardTab = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const { currentPlans } = usePlans?.() || { currentPlans: null };
+  const { gamificationData, loading: gamLoading } = useGamification();
+
+  const [completionsCount, setCompletionsCount] = useState(null);
+  const [interactionsCount, setInteractionsCount] = useState(null);
+  const [runTour, setRunTour] = useState(false);
+  const [showWhatsAppPrompt, setShowWhatsAppPrompt] = useState(false);
+  const [lastActivityDate, setLastActivityDate] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCounts() {
+      try {
+        if (!user?.id) return;
+
+        const [{ count: compCount }, { count: interCount }, { data: recentActivity }] = await Promise.all([
+          supabase
+            .from('plan_completions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('interactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('daily_activities')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        ]);
+        if (!cancelled) {
+          setCompletionsCount(compCount ?? 0);
+          setInteractionsCount(interCount ?? 0);
+          setLastActivityDate(recentActivity?.created_at || null);
+
+          // Show WhatsApp prompt after first plan is generated
+          const hasPlans = currentPlans && Object.keys(currentPlans).length > 0;
+          if (hasPlans) {
+            setShowWhatsAppPrompt(true);
+          }
+        }
+      } catch (e) {
+        // Silencioso: não quebra a UI
+        if (!cancelled) {
+          setCompletionsCount(0);
+          setInteractionsCount(0);
+        }
+      }
+    }
+    loadCounts();
+    return () => { cancelled = true; };
+  }, [user?.id, currentPlans]);
+
+  // Exibe loading apenas enquanto a autenticação está carregando.
+  // Se o perfil ainda não existir no banco, seguimos com valores padrão.
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+    );
+  }
+  
+  const profile = user?.profile || {};
+  
+  // Check if profile is complete for conditional WelcomeCard display
+  const hasCompleteProfile = profile?.name || profile?.full_name;
+  const hasPlans = !!(currentPlans && Object.keys(currentPlans).length > 0);
+  const hasFirstCompletion = (completionsCount ?? 0) > 0;
+  const hasFirstInteraction = (interactionsCount ?? 0) > 0;
+
+  const checklist = [
+    {
+      key: 'profile',
+      title: 'Complete seu perfil',
+      done: !!hasCompleteProfile,
+      action: () => navigate('/dashboard?tab=profile'),
+      cta: hasCompleteProfile ? 'Concluído' : 'Completar perfil'
+    },
+    {
+      key: 'plan',
+      title: 'Gere seu primeiro plano',
+      done: hasPlans,
+      action: () => navigate('/dashboard?tab=plan'),
+      cta: hasPlans ? 'Concluído' : 'Gerar plano'
+    },
+    {
+      key: 'tour',
+      title: 'Faça o tour guiado',
+      done: !!localStorage.getItem('vida_smart_tour_completed'),
+      action: () => {
+        navigate('/dashboard?tab=plan');
+        setTimeout(() => setRunTour(true), 500);
+      },
+      cta: localStorage.getItem('vida_smart_tour_completed') ? 'Concluído' : 'Iniciar tour'
+    },
+    {
+      key: 'complete_one',
+      title: 'Conclua 1 item do plano',
+      done: hasFirstCompletion,
+      action: () => navigate('/dashboard?tab=plan'),
+      cta: hasFirstCompletion ? 'Concluído' : 'Ir para o plano'
+    },
+    {
+      key: 'talk_ai',
+      title: 'Fale com a IA Coach',
+      done: hasFirstInteraction,
+      action: () => navigate('/dashboard?tab=chat'),
+      cta: hasFirstInteraction ? 'Concluído' : 'Abrir chat'
+    }
+  ];
+
+  // Preparar dados para WeeklySummary (mock temporário - substituir com dados reais)
+  const weeklyData = {
+    workouts: { current: 3, goal: 5 },
+    nutrition: { current: 4, goal: 7 },
+    wellbeing: { current: 2, goal: 3 },
+    hydration: { current: 10, goal: 14, unit: 'L' }
+  };
+
+  // Contexto para dica personalizada
+  const tipContext = {
+    userName: profile.name || profile.full_name || 'você',
+    currentStreak: gamificationData?.current_streak || 0,
+    preferredTime: { hour: 18 } // Mock - extrair de dados reais
+  };
+
+  // Handler para check-in
+  const handleCheckinSubmit = async (metric) => {
+    const result = await addDailyMetric(metric);
+    
+    if (result?.success) {
+      debugLog('Check-in Success', { result });
+      toast.success('Check-in registrado com sucesso! 🎉 +10 XP');
+      return true;
+    } else if (result?.isDuplicate) {
+      debugLog('Check-in Duplicate Detected', { result });
+      return false;
+    } else {
+      debugLog('Check-in Failed', { result });
+      throw new Error(result?.error?.message || 'Falha desconhecida no check-in');
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-6 pb-8 md:pb-0"
+    >
+      <GuidedTour run={runTour} onComplete={() => setRunTour(false)} />
+
+      {/* WhatsApp Onboarding Prompt */}
+      {showWhatsAppPrompt && <WhatsAppOnboardingPrompt onDismiss={() => setShowWhatsAppPrompt(false)} />}
+
+      {/* Show WelcomeCard if profile is incomplete */}
+      {!hasCompleteProfile && <WelcomeCard />}
+
+      {/* 1. HERO GAMIFICAÇÃO - Destaque principal */}
+      {!gamLoading && gamificationData && (
+        <HeroGamification gamificationData={gamificationData} />
+      )}
+
+      {/* 2. CALL-TO-ACTION - Check-in Diário */}
+      <CheckinCTA 
+        hasCheckedInToday={hasCheckedInToday}
+        onSubmit={handleCheckinSubmit}
+        isSubmitting={loadingCheckin}
+        defaultValues={{
+          weight: user?.profile?.current_weight || ''
+        }}
+      />
+
+      {/* 3. DICA PERSONALIZADA - IA Coach */}
+      <PersonalizedTip context={tipContext} />
+
+      {/* 4. RESUMO SEMANAL - Progresso */}
+      <WeeklySummary weeklyData={weeklyData} />
+
+      {/* 5. AÇÕES RÁPIDAS - Grid de Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <ActionCard 
+          icon={<MessageSquare />}
+          title="IA Coach"
+          description="Tire dúvidas"
+          gradient="from-blue-500 to-cyan-500"
+          badge="Online"
+          onClick={() => navigate('/dashboard?tab=chat')}
+        />
+        <ActionCard 
+          icon={<ClipboardList />}
+          title="Meu Plano"
+          description="Ver treinos"
+          gradient="from-purple-500 to-pink-500"
+          badge={hasPlans ? "Ativo" : "Criar"}
+          onClick={() => navigate('/dashboard?tab=plan')}
+        />
+        <ActionCard 
+          icon={<Calendar />}
+          title="Calendário"
+          description="Agendar"
+          gradient="from-orange-500 to-red-500"
+          onClick={() => navigate('/dashboard?tab=calendar')}
+        />
+        <ActionCard 
+          icon={<Users />}
+          title="Comunidade"
+          description="Conectar"
+          gradient="from-green-500 to-teal-500"
+          onClick={() => navigate('/dashboard?tab=community')}
+        />
+      </div>
+
+      {/* 6. GRÁFICOS DE PROGRESSO - Seção Avançada */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Evolução Detalhada</CardTitle>
+            <CardDescription>Acompanhe suas métricas nas últimas semanas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProgressChart />
+          </CardContent>
+        </Card>
+
+        <CompletionProgress />
+      </div>
+
+      {/* Spacer extra para a bottom nav no mobile */}
+      <div className="h-6 md:hidden" />
+    </motion.div>
+  );
+};
+
+export default DashboardTab;

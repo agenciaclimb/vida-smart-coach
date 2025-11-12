@@ -171,6 +171,33 @@ serve(async (req) => {
       // Não falhar aqui pois o resgate já foi criado
     }
 
+    const processedAt = new Date().toISOString();
+
+    const { error: confirmError } = await supabase
+      .from('reward_redemptions')
+      .update({
+        status: 'approved',
+        processed_at: processedAt,
+      })
+      .eq('id', redemption.id);
+
+    if (confirmError) {
+      console.error('Confirm redemption error:', confirmError);
+      return new Response(JSON.stringify({
+        error: 'Erro ao confirmar resgate',
+        details: confirmError.message,
+      }), {
+        status: 500,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const confirmedRedemption = {
+      ...redemption,
+      status: 'approved',
+      processed_at: processedAt,
+    };
+
     // 📊 Registrar evento de gamificação
     await supabase
       .from('gamification_events')
@@ -179,7 +206,7 @@ serve(async (req) => {
         event_type: 'reward_redeemed',
         event_data: {
           reward_id: rewardId,
-          reward_title: redemption.reward?.title,
+          reward_title: confirmedRedemption.reward?.title,
           xp_spent: validationResult.reward_cost,
           coupon_code: couponCode,
         },
@@ -192,11 +219,12 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       redemption: {
-        id: redemption.id,
-        couponCode: redemption.coupon_code,
-        status: redemption.status,
-        expiresAt: redemption.expires_at,
-        reward: redemption.reward,
+        id: confirmedRedemption.id,
+        couponCode: confirmedRedemption.coupon_code,
+        status: confirmedRedemption.status,
+        expiresAt: confirmedRedemption.expires_at,
+        processedAt: confirmedRedemption.processed_at,
+        reward: confirmedRedemption.reward,
       },
       userXPAfter: validationResult.user_xp - validationResult.reward_cost,
     }), {

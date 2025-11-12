@@ -68,6 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       log("warn", "Supabase initialization failed", { error: err.message });
     }
 
+    const registrationResult = await registerStripeEvent(event.id, supabase);
+    if (!registrationResult.shouldProcess) {
+      return res.status(200).json({ ok: true, skipped: true });
+    }
+
     // Process event
     try {
       switch (event.type) {
@@ -88,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           log("info", "Unhandled event type", { type: event.type });
       }
 
-      return res.status(200).json({ received: true });
+      return res.status(200).json({ ok: true });
     } catch (processingError: any) {
       log("error", "Error processing webhook", {
         type: event.type,
@@ -203,4 +208,29 @@ async function handleSubscriptionChange(
     });
     throw error;
   }
+}
+
+async function registerStripeEvent(
+  eventId: string,
+  supabase: any
+): Promise<{ shouldProcess: boolean }> {
+  if (!supabase) {
+    return { shouldProcess: true };
+  }
+
+  const { error } = await supabase
+    .from("stripe_events")
+    .insert({ event_id: eventId });
+
+  if (!error) {
+    return { shouldProcess: true };
+  }
+
+  if (error.code === "23505") {
+    log("info", "Stripe event already processed", { eventId });
+    return { shouldProcess: false };
+  }
+
+  log("error", "Failed to register Stripe event", { eventId, error: error.message });
+  throw error;
 }

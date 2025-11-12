@@ -5,7 +5,7 @@
  * Automatiza todo o processo: migrações, build e deploy
  */
 
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -37,6 +37,20 @@ function runCommand(command, options = {}) {
 }
 
 /**
+ * Verifica se um comando está disponível no PATH (cross-platform)
+ */
+function hasCommand(cmd) {
+  try {
+    const isWin = process.platform === 'win32';
+    const whichCmd = isWin ? 'where' : 'which';
+    const res = spawnSync(whichCmd, [cmd], { encoding: 'utf8' });
+    return res.status === 0;
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
  * Verifica se todas as dependências estão instaladas
  */
 function checkDependencies() {
@@ -59,9 +73,9 @@ function checkDependencies() {
 async function runMigrations() {
   console.log('🗄️ Executando migrações do Supabase...');
   
-  // Verifica se o Supabase CLI está disponível
-  const supabaseCheck = runCommand('which supabase');
-  if (!supabaseCheck.success) {
+  // Verifica se o Supabase CLI está disponível (Windows/Linux/Mac)
+  const supabaseCliAvailable = hasCommand('supabase');
+  if (!supabaseCliAvailable) {
     console.log('⚠️ Supabase CLI não encontrado, pulando migrações locais');
     return true;
   }
@@ -134,15 +148,15 @@ function deployToVercel() {
   console.log('🚀 Fazendo deploy no Vercel...');
   
   // Verifica se Vercel CLI está disponível
-  const vercelCheck = runCommand('which vercel');
-  if (!vercelCheck.success) {
-    console.log('⚠️ Vercel CLI não encontrado');
-    console.log('💡 Para deploy automático, instale: npm i -g vercel');
-    return false;
+  let vercelCmd = 'vercel';
+  const vercelAvailable = hasCommand('vercel');
+  if (!vercelAvailable) {
+    console.log('⚠️ Vercel CLI não encontrado globalmente, tentando via npx...');
+    vercelCmd = 'npx vercel';
   }
 
   // Faz deploy
-  const deployResult = runCommand('vercel --prod --yes');
+  const deployResult = runCommand(`${vercelCmd} --prod --yes`);
   if (!deployResult.success) {
     console.log('❌ Deploy no Vercel falhou');
     return false;
@@ -158,7 +172,8 @@ function deployToVercel() {
 async function healthCheck() {
   console.log('🏥 Verificando saúde da aplicação...');
   
-  const siteUrl = process.env.VITE_APP_BASE_URL || 'https://www.appvidasmart.com';
+  // Usa URL configurada ou domínio padrão correto de produção
+  const siteUrl = process.env.VITE_APP_BASE_URL || 'https://appvidasmart.com';
   
   try {
     const response = await fetch(siteUrl);
@@ -199,8 +214,8 @@ function generateDeployReport(startTime, results) {
   console.log(`\n📈 Taxa de sucesso: ${successCount}/${totalSteps} (${Math.round(successCount/totalSteps*100)}%)`);
   
   if (successCount === totalSteps) {
-    console.log('\n🎉 Deploy concluído com sucesso!');
-    console.log(`🌐 Site disponível em: ${process.env.VITE_APP_BASE_URL || 'https://www.appvidasmart.com'}`);
+  console.log('\n🎉 Deploy concluído com sucesso!');
+  console.log(`🌐 Site disponível em: ${process.env.VITE_APP_BASE_URL || 'https://appvidasmart.com'}`);
   } else {
     console.log('\n⚠️ Deploy concluído com algumas falhas. Verifique os logs acima.');
   }

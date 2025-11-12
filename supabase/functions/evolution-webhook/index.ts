@@ -276,9 +276,9 @@ serve(async (req) => {
             const isLooping = lastAssistantMessages.length >= 2 && 
                              lastAssistantMessages[0].content === lastAssistantMessages[1].content;
 
-            // ⏱️ TIMEOUT: 25 segundos para evitar retry do webhook
+            // ⏱️ TIMEOUT: 120 segundos para evitar cancelar a IA durante a regeneracao de plano
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000);
+            const timeoutId = setTimeout(() => controller.abort(), 120000);
 
             try {
               // Injetar aviso anti-loop se detectado
@@ -321,6 +321,126 @@ serve(async (req) => {
                 iaDebug.ok = true;
                 iaDebug.stage = iaCoachData.stage;
                 iaDebug.replyLength = responseMessage.length;
+
+                // 🔧 NOVO: Executar ações solicitadas pela IA (ex.: gerar plano)
+                const actions = Array.isArray(iaCoachData.actions) ? iaCoachData.actions : [];
+                for (const action of actions) {
+                  if (!action || typeof action !== 'object') continue;
+                  if (action.type === 'generate_plan') {
+                    // Avisar o usuário ANTES de gerar (para evitar delay percebido)
+                    const planTypeLabel = action.planType === 'nutritional' ? 'nutricional' : action.planType === 'emotional' ? 'emocional' : action.planType === 'spiritual' ? 'espiritual' : 'físico';
+                    const preGenMsg = `Vou gerar seu plano ${planTypeLabel} agora. Te aviso quando estiver pronto! ⏳`;
+                    
+                    // Enviar aviso imediato via Evolution
+                    const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
+                    const evolutionToken = Deno.env.get("EVOLUTION_API_TOKEN") || Deno.env.get("EVOLUTION_API_SECRET") || Deno.env.get("EVOLUTION_API_KEY");
+                    if (evolutionApiUrl && evolutionToken) {
+                      const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
+                      const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
+                      await fetch(sendUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "apikey": evolutionToken },
+                        body: JSON.stringify({ number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''), text: preGenMsg })
+                      }).catch(err => console.warn('warn: pre-gen notification failed', err));
+                    }
+
+                    try {
+                      // Desativar planos anteriores do mesmo tipo para evitar múltiplos ativos
+                      try {
+                        await supabase
+                          .from('user_training_plans')
+                          .update({ is_active: false })
+                          .eq('user_id', matchedUser.id)
+                          .eq('plan_type', action.planType || 'physical');
+                      } catch (_deactErr) {
+                        console.warn('warn: could not deactivate previous plans', _deactErr);
+                      }
+
+                      const overrides = action.overrides || {};
+                      const payload = {
+                        userId: matchedUser.id,
+                        planType: action.planType || 'physical',
+                        userProfile: {
+                          id: matchedUser.id,
+                          full_name: matchedUser.full_name || 'Usuário',
+                          // Espalhar overrides diretamente sem aninhá-los novamente
+                          goal: overrides.goal,
+                          experience: overrides.experience,
+                          limitations: overrides.limitations,
+                          schedule: overrides.schedule,
+                          preferences: overrides.preferences,
+                          restrictions: overrides.restrictions,
+                          challenges: overrides.challenges,
+                          stressors: overrides.stressors,
+                          practices: overrides.practices,
+                          interests: overrides.interests,
+                          time: overrides.time
+                        }
+                      };
+
+                      const doCall = () => fetch(`${supabaseUrl}/functions/v1/generate-plan`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${supabaseKey}`,
+                          'X-Internal-Secret': Deno.env.get('INTERNAL_FUNCTION_SECRET') || ''
+                        },
+                        body: JSON.stringify(payload)
+                      });
+
+                      console.log('[generate_plan action] calling generate-plan:', { userId: matchedUser.id, planType: action.planType || 'physical', overrides });
+                      let genRes = await doCall();
+                      let errDetails = '';
+                      if (!genRes.ok) {
+                        errDetails = await genRes.text().catch(() => '');
+                        console.error('[generate_plan] first call failed:', { status: genRes.status, body: errDetails });
+                        // Retry once after brief delay
+                        await new Promise(r => setTimeout(r, 500));
+                        genRes = await doCall();
+                        if (!genRes.ok) {
+                          const errDetails2 = await genRes.text().catch(() => '');
+                          console.error('[generate_plan] retry also failed:', { status: genRes.status, body: errDetails2 });
+                          errDetails = errDetails2 || errDetails;
+                        }
+                      }
+
+                      // Enviar confirmação/falha via Evolution (substitui a linha técnica no responseMessage)
+                      let postGenMsg = '';
+                      if (genRes.ok) {
+                        const json = await genRes.json().catch(() => ({}));
+                        console.log('[generate_plan action] success:', json?.plan?.id);
+                        postGenMsg = `✅ Pronto! Seu plano ${planTypeLabel} foi gerado com sucesso. Abra o app em "Meu Plano" para conferir os detalhes.`;
+                      } else {
+                        console.error('[generate_plan] final fail details:', { status: genRes.status, errDetails });
+                        postGenMsg = `⚠️ Tive um imprevisto técnico ao gerar o plano (${genRes.status}). Posso tentar novamente em alguns minutos ou você pode gerar pelo app em "Meu Plano".`;
+                      }
+                      
+                      // Enviar resultado via Evolution
+                      if (evolutionApiUrl && evolutionToken && postGenMsg) {
+                        const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
+                        const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
+                        await fetch(sendUrl, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "apikey": evolutionToken },
+                          body: JSON.stringify({ number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''), text: postGenMsg })
+                        }).catch(err => console.warn('warn: post-gen notification failed', err));
+                      }
+
+                    } catch (genErr) {
+                      console.error('generate-plan error:', genErr);
+                      const fallbackMsg = `⚠️ Tive um probleminha para gerar o plano agora. Vou monitorar por aqui, mas se preferir, você pode gerar pelo app na aba "Meu Plano".`;
+                      if (evolutionApiUrl && evolutionToken) {
+                        const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
+                        const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
+                        await fetch(sendUrl, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "apikey": evolutionToken },
+                          body: JSON.stringify({ number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''), text: fallbackMsg })
+                        }).catch(err => console.warn('warn: fallback notification failed', err));
+                      }
+                    }
+                  }
+                }
               } else {
                 console.error("IA Coach error:", await iaCoachResponse.text());
                 responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";

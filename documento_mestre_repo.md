@@ -337,6 +337,403 @@ Legenda de Status: Concluído | Em Progresso | Pendente
 - Churn 30d: 40% → 25% (-37.5%)
 - NPS: 42 → 57 (+15 pontos)
 
+---
+
+### 📋 PLANO DE EXECUÇÃO ESTRUTURADO (11/11/2025)
+
+**📄 Plano detalhado:** Ver `PLANO_EXCELENCIA_WHATSAPP.md` para especificações completas.
+
+**🎯 OBJETIVO:** Resolver problemas de qualidade de código identificados pelo SonarQube, implementar sistema proativo e enriquecimento WhatsApp (Semanas 1-4 do PLANO_EXCELENCIA_WHATSAPP.md).
+
+**📊 STATUS ATUAL:**
+- ✅ Semana 1-2: Memória contextual, anti-loop, progressão forçada, testes (28/28 passando)
+- 🔴 Semana 3-4: Refatoração SonarQube, proatividade, gamificação WhatsApp (PENDENTE)
+
+---
+
+#### 🔴 SPRINT 1: REFATORAÇÃO E QUALIDADE DE CÓDIGO (11-17/11/2025)
+
+**Prioridade:** P0 - BLOQUEADOR  
+**Responsável:** Agente Autônomo IA  
+**Estimativa:** 20-25 horas  
+**Critério de aceitação geral:** 0 erros críticos SonarQube, complexidade < 15, 100% testes passando
+
+##### T1.1: Refatorar função `serve()` handler principal
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts` (linhas 1-200)  
+**Complexidade atual:** 42 → **Meta:** <15  
+**Esforço:** 6h
+
+**Problemas específicos:**
+- 9+ parâmetros em várias chamadas de função
+- Lógica de roteamento complexa
+- Validações espalhadas
+- Try-catch aninhados
+
+**Ações concretas:**
+1. Extrair validação de requisição para função `validateRequest(req): ValidationResult`
+2. Criar objeto `RequestContext` com todos os dados necessários
+3. Implementar router pattern: `routeByStage(context): Promise<Response>`
+4. Separar lógica de automações em `handleAutomations(context): void`
+5. Usar early returns para reduzir aninhamento
+
+**Critérios de aceitação:**
+- [ ] Complexidade cognitiva < 15 (SonarQube)
+- [ ] Máximo 3 parâmetros por função
+- [ ] 0 warnings de ternários aninhados
+- [ ] Testes unitários criados para cada função extraída
+- [ ] Todos os testes existentes continuam passando
+
+**Arquivos afetados:**
+- `supabase/functions/ia-coach-chat/index.ts`
+- Novos: `src/handlers/request-validator.ts`, `src/handlers/stage-router.ts`, `src/handlers/automations.ts`
+
+---
+
+##### T1.2: Refatorar `buildContextPrompt()`
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts` (linhas ~800-1000)  
+**Complexidade atual:** 27 → **Meta:** <15  
+**Esforço:** 4h
+
+**Problemas específicos:**
+- Muitos blocos condicionais aninhados
+- Concatenação de strings complexa
+- Lógica de formatação misturada com lógica de negócio
+
+**Ações concretas:**
+1. Extrair formatadores por tipo: `formatActivities()`, `formatMissions()`, `formatPlans()`, `formatMemory()`
+2. Criar interface `ContextSection` com `title`, `content`, `condition`
+3. Implementar `ContextBuilder` com pattern builder
+4. Usar template literals organizados
+5. Extrair constantes de prompts para arquivo separado
+
+**Critérios de aceitação:**
+- [ ] Complexidade cognitiva < 15
+- [ ] Funções auxiliares com máximo 20 linhas
+- [ ] Prompts em arquivo separado `src/prompts/context-templates.ts`
+- [ ] Testes com snapshots para cada tipo de contexto
+- [ ] 100% cobertura de testes
+
+**Arquivos afetados:**
+- `supabase/functions/ia-coach-chat/index.ts`
+- Novos: `src/services/context-builder/index.ts`, `src/prompts/context-templates.ts`
+
+---
+
+##### T1.3: Refatorar `selectProactiveSuggestions()`
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts` (linhas ~1100-1250)  
+**Complexidade atual:** 24 → **Meta:** <15  
+**Esforço:** 4h
+
+**Problemas específicos:**
+- Muitas condições aninhadas para diferentes tipos de sugestões
+- Lógica de pontuação misturada com lógica de seleção
+- Repetição de código para diferentes categorias
+
+**Ações concretas:**
+1. Criar interface `ProactiveSuggestion` com `type`, `priority`, `score`, `condition`
+2. Implementar pattern Strategy com `SuggestionProvider` por categoria
+3. Criar `SuggestionScorer` isolado
+4. Usar `SuggestionSelector` com algoritmo de ranking
+5. Extrair regras de negócio para configuração
+
+**Critérios de aceitação:**
+- [ ] Complexidade cognitiva < 15
+- [ ] 1 provider por tipo de sugestão (hidratação, workout, streak, etc)
+- [ ] Sistema de scoring isolado e testável
+- [ ] Configuração de prioridades em arquivo JSON
+- [ ] Testes para cada provider e para o selector
+
+**Arquivos afetados:**
+- `supabase/functions/ia-coach-chat/index.ts`
+- Novos: `src/services/proactive/index.ts`, `src/services/proactive/providers/`, `src/services/proactive/scorer.ts`
+
+---
+
+##### T1.4: Refatorar `extractPlanItems()` e `runRegeneratePlanAction()`
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts` (linhas ~1300-1500)  
+**Complexidade atual:** 31 e 21 → **Meta:** <15  
+**Esforço:** 5h
+
+**Problemas específicos:**
+- Parsing complexo de estruturas JSON variadas
+- Muitos casos especiais para diferentes formatos de plano
+- Validação e normalização misturadas
+
+**Ações concretas:**
+1. Criar `PlanParser` com estratégias por tipo (physical, nutritional, etc)
+2. Implementar `PlanItemNormalizer` isolado
+3. Extrair validação para `PlanValidator`
+4. Criar DTOs para estruturas de plano
+5. Simplificar `runRegeneratePlanAction` usando serviços
+
+**Critérios de aceitação:**
+- [ ] Complexidade cognitiva < 15 em ambas
+- [ ] 1 parser por tipo de plano
+- [ ] Validação com retorno estruturado de erros
+- [ ] DTOs tipados para todas as estruturas de plano
+- [ ] Testes com fixtures reais de planos
+
+**Arquivos afetados:**
+- `supabase/functions/ia-coach-chat/index.ts`
+- Novos: `src/services/plan-parser/index.ts`, `src/services/plan-parser/normalizer.ts`, `src/types/plan-dtos.ts`
+
+---
+
+##### T1.5: Resolver ternários aninhados (9 ocorrências)
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts` (linhas: 271, 312, 457, 463, 468, 814, 816, 1295)  
+**Esforço:** 2h
+
+**Ações concretas:**
+1. Substituir por if-else com early returns
+2. Extrair lógica condicional para funções nomeadas
+3. Usar guard clauses quando apropriado
+4. Aplicar pattern Replace Conditional with Polymorphism onde fizer sentido
+
+**Critérios de aceitação:**
+- [ ] 0 ternários aninhados (SonarQube)
+- [ ] Código mais legível e mantível
+- [ ] Testes garantindo mesma funcionalidade
+
+---
+
+##### T1.6: Corrigir uso de forEach para for...of
+**Status:** 🔴 PENDENTE  
+**Arquivo:** `supabase/functions/ia-coach-chat/index.ts`  
+**Esforço:** 1h
+
+**Ações concretas:**
+1. Identificar todos os `forEach` (grep)
+2. Substituir por `for...of` onde não há necessidade de side effects
+3. Manter `forEach` apenas em casos de operações imutáveis
+
+**Critérios de aceitação:**
+- [ ] forEach usado apenas onde apropriado
+- [ ] Performance não degradada
+- [ ] Testes verificando comportamento idêntico
+
+---
+
+#### 🟡 SPRINT 2: PROATIVIDADE E ENRIQUECIMENTO WHATSAPP (18-24/11/2025)
+
+**Prioridade:** P1 - ALTA  
+**Responsável:** Agente Autônomo IA  
+**Estimativa:** 18-20 horas  
+**Dependências:** Sprint 1 concluído (código refatorado)
+
+##### T2.1: Implementar sistema de regras proativas
+**Status:** 🔴 PENDENTE  
+**Esforço:** 6h
+
+**Ações concretas:**
+1. Criar tabela `proactive_messages` (migration)
+2. Implementar `ProactiveEngine` com 8 regras base
+3. Sistema de cooldown por regra e usuário
+4. Integração com schedule (cron ou trigger)
+5. Handler de respostas do usuário
+
+**Critérios de aceitação:**
+- [ ] Migration aplicada com índices de performance
+- [ ] 8 regras implementadas e testadas individualmente
+- [ ] Cooldown funcional (não spamming)
+- [ ] Respeita horário de sono (22h-7h)
+- [ ] Máximo 3 mensagens proativas/dia
+
+**Arquivos:**
+- Novo: `supabase/migrations/20251118_create_proactive_messages.sql`
+- Novo: `supabase/functions/proactive-engine/index.ts`
+- Novo: `src/services/proactive/rules.ts`
+
+---
+
+##### T2.2: Implementar formatação rica de mensagens WhatsApp
+**Status:** 🔴 PENDENTE  
+**Esforço:** 4h
+
+**Ações concretas:**
+1. Criar templates para gamificação (level up, streak, conquistas)
+2. Formatter com markdown WhatsApp (*bold*, _italic_, ```code```)
+3. Templates para proatividade
+4. Sistema de placeholders dinâmicos
+
+**Critérios de aceitação:**
+- [ ] Templates para todas as celebrações
+- [ ] Formatação markdown válida
+- [ ] Emojis contextuais
+- [ ] Preview visual dos templates
+
+**Arquivos:**
+- Novo: `src/services/message-formatter/templates.ts`
+- Novo: `src/services/message-formatter/index.ts`
+
+---
+
+##### T2.3: Implementar botões interativos (Evolution API)
+**Status:** 🔴 PENDENTE  
+**Esforço:** 5h
+
+**Ações concretas:**
+1. Estudar API Evolution para botões/listas
+2. Criar `ButtonBuilder` para diferentes estágios
+3. Handler de callbacks de botões
+4. Integrar com evolution-webhook
+
+**Critérios de aceitação:**
+- [ ] Botões funcionais em todos os estágios
+- [ ] Callbacks processados corretamente
+- [ ] Fallback para texto quando botões não disponíveis
+- [ ] Testes com mock da API Evolution
+
+**Arquivos:**
+- Novo: `src/services/button-builder/index.ts`
+- Atualizado: `supabase/functions/evolution-webhook/index.ts`
+
+---
+
+##### T2.4: Implementar handlers de ações rápidas
+**Status:** 🔴 PENDENTE  
+**Esforço:** 5h
+
+**Ações concretas:**
+1. Criar edge function `quick-actions`
+2. Implementar handlers: check-in, log water, view plan, view progress
+3. Validação e autorização
+4. Resposta formatada com próxima ação
+
+**Critérios de aceitação:**
+- [ ] 8 ações implementadas
+- [ ] Autenticação via X-Internal-Secret
+- [ ] Persistência no banco
+- [ ] Feedback imediato ao usuário
+- [ ] Testes E2E para cada ação
+
+**Arquivos:**
+- Novo: `supabase/functions/quick-actions/index.ts`
+- Novo: `src/services/quick-actions/handlers.ts`
+
+---
+
+#### 🟢 SPRINT 3: TESTES E VALIDAÇÃO (25/11-01/12/2025)
+
+**Prioridade:** P0 - CRÍTICO  
+**Responsável:** Agente Autônomo IA  
+**Estimativa:** 12-15 horas  
+**Dependências:** Sprints 1 e 2 concluídos
+
+##### T3.1: Criar testes E2E completos
+**Status:** 🔴 PENDENTE  
+**Esforço:** 8h
+
+**Ações concretas:**
+1. Jornada completa SDR → Partner com proatividade
+2. Jornada com ajuste de plano via feedback
+3. Jornada com botões interativos
+4. Cenários de erro e recuperação
+
+**Critérios de aceitação:**
+- [ ] 4 jornadas completas testadas
+- [ ] Tempo de execução < 5min
+- [ ] 100% dos cenários passando
+- [ ] Cobertura de código > 90%
+
+**Arquivos:**
+- `supabase/functions/ia-coach-chat/__tests__/e2e-*.test.ts`
+
+---
+
+##### T3.2: Testes de performance e carga
+**Status:** 🔴 PENDENTE  
+**Esforço:** 3h
+
+**Ações concretas:**
+1. Script de carga com k6 ou artillery
+2. 100 mensagens/min sustentado
+3. Latência p95 < 1.5s
+4. Memória estável
+
+**Critérios de aceitação:**
+- [ ] Throughput > 100 msgs/min
+- [ ] P95 < 1.5s
+- [ ] P99 < 3s
+- [ ] 0 memory leaks
+
+---
+
+##### T3.3: Validação manual checklist
+**Status:** 🔴 PENDENTE  
+**Esforço:** 4h
+
+**Ações concretas:**
+1. Testar cada funcionalidade manualmente via WhatsApp real
+2. Documentar casos de uso e resultados
+3. Validar com 3+ usuários beta
+
+**Critérios de aceitação:**
+- [ ] Checklist 100% validado
+- [ ] Feedback de usuários beta coletado
+- [ ] Bugs críticos documentados e corrigidos
+
+---
+
+#### 📊 MÉTRICAS DE SUCESSO DO PLANO
+
+| Métrica | Baseline | Meta | Como Medir |
+|---------|----------|------|------------|
+| Complexidade cognitiva (média) | 27 | <15 | SonarQube scan |
+| Code smells críticos | 46 | 0 | SonarQube scan |
+| Cobertura de testes | 50% | >90% | Vitest coverage |
+| Testes passando | 28/28 | 50+/50+ | Vitest run |
+| Latência p95 | ~2s | <1.5s | Logs production |
+| Taxa de loops | ~5% | 0% | Metrics table |
+| Mensagens proativas enviadas | 0 | >100/dia | Proactive messages table |
+| Uso de botões interativos | 0% | >30% | Webhook logs |
+
+---
+
+#### 🚨 PROTOCOLO DE EXECUÇÃO PARA IAs
+
+**REGRAS FUNDAMENTAIS:**
+
+1. **ORDEM ESTRITA:** Executar sprints na ordem (1 → 2 → 3). Não pular etapas.
+
+2. **VALIDAÇÃO CONTÍNUA:** 
+   - Após cada tarefa: rodar `npx vitest run` e `get_errors` (SonarQube)
+   - Só avançar se testes passando e sem novos erros
+
+3. **DOCUMENTAÇÃO OBRIGATÓRIA:**
+   - Atualizar STATUS após cada tarefa
+   - Marcar ✅ nos checkboxes dos critérios de aceitação
+   - Adicionar log no documento mestre
+
+4. **ROLLBACK IMEDIATO:**
+   - Se testes quebrarem: reverter mudança e re-planejar
+   - Se complexidade aumentar: refatorar novamente
+   - Se performance degradar: otimizar antes de prosseguir
+
+5. **COMUNICAÇÃO:**
+   - Reportar progresso a cada 2 tarefas concluídas
+   - Alertar sobre bloqueios ou riscos identificados
+   - Pedir validação humana em decisões arquiteturais
+
+**VERIFICAÇÃO DE CONCLUSÃO:**
+
+Tarefa considerada CONCLUÍDA apenas quando:
+- [ ] Código implementado e commitado
+- [ ] Todos os testes passando (incluindo novos)
+- [ ] SonarQube sem novos erros críticos
+- [ ] Documentação atualizada
+- [ ] Critérios de aceitação 100% marcados
+- [ ] Revisão de código (self-review) concluída
+
+**PRÓXIMA AÇÃO IMEDIATA:**
+1. Executar `get_errors` para baseline atual de erros SonarQube
+2. Iniciar T1.1 (Refatorar serve() handler)
+3. Criar branch `refactor/sprint-1-serve-handler`
+
 ## 🧾 Atualizações registradas (log)
 
 - 22/10/2025 — Roadmap UX/UI e Gamificação criado (Responsável: JE • Execução: GitHub Copilot) — Status: Em Planejamento

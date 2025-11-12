@@ -42,6 +42,38 @@ serve(async (req) => {
       profile = data;
     }
 
+    // ===== BUSCAR FEEDBACKS PENDENTES DO USUÁRIO =====
+    const { data: pendingFeedbacks, error: feedbackError } = await supabase
+      .from('plan_feedback')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('plan_type', planType)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (feedbackError) {
+      console.error('Erro ao buscar feedbacks:', feedbackError);
+      // Não bloqueia a geração, apenas loga o erro
+    } else {
+      console.log(`📋 Feedbacks pendentes encontrados: ${pendingFeedbacks?.length || 0}`);
+    }
+
+    // Construir seção de feedbacks para o prompt
+    let feedbackSection = '';
+    const feedbackIds: string[] = [];
+    
+    if (pendingFeedbacks && pendingFeedbacks.length > 0) {
+      console.log(`🔄 Incluindo ${pendingFeedbacks.length} feedback(s) no contexto de geração`);
+      feedbackSection = '\n\n🔄 FEEDBACKS PENDENTES DO USUÁRIO (IMPORTANTE - INCORPORAR NO PLANO):\n';
+      pendingFeedbacks.forEach((fb: any, idx: number) => {
+        feedbackSection += `\n${idx + 1}. [${fb.plan_type.toUpperCase()}] "${fb.feedback_text}"\n   (Submetido em: ${new Date(fb.created_at).toLocaleDateString('pt-BR')})`;
+        feedbackIds.push(fb.id);
+      });
+      feedbackSection += '\n\n⚠️ INSTRUÇÃO: Ajuste o plano considerando TODOS os feedbacks acima. Seja específico nas mudanças e valide as sugestões do usuário com empatia.\n';
+    } else {
+      console.log('ℹ️ Nenhum feedback pendente para este plano');
+    }
+
     // ===== Regeneração: normalizar inputs personalizados para influenciar a IA =====
     // Os diálogos de regeneração enviam campos como goal/experience/limitations etc.
     // Aqui mapeamos esses campos para os utilizados no prompt e reforçamos no PERFIL.
@@ -90,6 +122,9 @@ serve(async (req) => {
 
     // Prompts específicos por tipo de plano
     const extraSection = extraNotes.length ? `\n\nINFORMAÇÕES ADICIONAIS FORNECIDAS PELO USUÁRIO:\n- ${extraNotes.join('\n- ')}` : '';
+    
+    // Adicionar seção de feedbacks ao contexto
+    const fullExtraSection = extraSection + feedbackSection;
 
     const planPrompts = {
       physical: `Você é um Personal Trainer com base científica (NSCA/ACSM). Gere um plano de treino em JSON ESTRUTURADO e COMPLETO.
@@ -102,6 +137,8 @@ PERFIL:
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 - Nível: ${profile.activity_level || 'iniciante'}
 - Limitações: ${(userProfile as any)?.limitations || 'nenhuma informada'}
+
+${fullExtraSection}
 
 PRINCÍPIOS OBRIGATÓRIOS:
 - Periodização curta de 4 semanas: Semana 1 adaptação técnica; Semanas 2-3 progressão; Semana 4 consolidar/deload leve se iniciante. O array "weeks" DEVE ter 4 itens (1,2,3,4).
@@ -171,7 +208,7 @@ PERFIL:
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 - Restrições: ${profile.dietary_restrictions || 'nenhuma'}
 
-${extraSection}
+${fullExtraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -202,7 +239,7 @@ PERFIL:
 - Idade: ${profile.age || 'não informada'}
 - Objetivo: ${profile.goal_type || 'saúde geral'}
 
-${extraSection}
+${fullExtraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -231,7 +268,7 @@ PERFIL:
 - Nome: ${profile.full_name}
 - Idade: ${profile.age || 'não informada'}
 
-${extraSection}
+${fullExtraSection}
 
 ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 {
@@ -317,9 +354,30 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
 
     if (saveError) throw saveError;
 
+    // ===== MARCAR FEEDBACKS COMO PROCESSADOS =====
+    if (feedbackIds.length > 0) {
+      const { error: updateFeedbackError } = await supabase
+        .from('plan_feedback')
+        .update({
+          status: 'processed',
+          processed_at: new Date().toISOString(),
+          plan_updated: true,
+          ai_response: `Plano ${planType} regenerado incorporando feedback do usuário`
+        })
+        .in('id', feedbackIds);
+
+      if (updateFeedbackError) {
+        console.error('Erro ao atualizar feedbacks:', updateFeedbackError);
+        // Não bloqueia a resposta, apenas loga
+      } else {
+        console.log(`✅ ${feedbackIds.length} feedback(s) marcado(s) como processado(s)`);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       plan: savedPlan,
+      feedbacks_processed: feedbackIds.length,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
