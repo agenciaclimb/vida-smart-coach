@@ -1,20 +1,20 @@
 # 📋 LEIA-ME: DIAGNÓSTICO GERAL DO SISTEMA
 
-**Data:** 14 de Outubro de 2025  
-**Status:** ✅ Concluído  
+**Data:** 29 de Novembro de 2025  
+**Status:** ✅ Atualizado  
 **Tempo de Leitura:** 2 minutos
 
 ---
 
 ## 🎯 O QUE FOI FEITO?
 
-Foi realizado um **diagnóstico geral completo** do sistema Vida Smart Coach, incluindo:
+Foi realizado um **novo diagnóstico geral completo** do sistema Vida Smart Coach, incluindo:
 
 - ✅ Análise de 189 arquivos de código
 - ✅ Auditoria de 80 warnings de linting
 - ✅ Avaliação de build, deploy e database
 - ✅ Score de qualidade: 78/100
-- ✅ Criação de 6 documentos técnicos (64 KB)
+- ✅ Atualização de 6 documentos técnicos
 
 ---
 
@@ -24,7 +24,7 @@ Foi realizado um **diagnóstico geral completo** do sistema Vida Smart Coach, in
 
 ---
 
-## 📚 DOCUMENTOS CRIADOS
+## 📚 DOCUMENTOS ATUALIZADOS
 
 ### Para Começar Rápido
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** (8 KB)
@@ -64,56 +64,19 @@ Foi realizado um **diagnóstico geral completo** do sistema Vida Smart Coach, in
 
 ---
 
-## 🚀 POR ONDE COMEÇAR?
+## 📈 PRINCIPAIS NÚMEROS (29/11/2025)
 
-### Se você é...
-
-**👨‍💻 Desenvolvedor:**
-```bash
-# Leia isso primeiro
-cat QUICK_REFERENCE.md
-
-# Depois isso
-cat DIAGNOSTICO_TECNICO_ACOES.md
-```
-
-**🔧 Tech Lead:**
-```bash
-# Comece aqui
-cat DIAGNOSTICO_TECNICO_ACOES.md
-
-# Depois leia completo
-cat DIAGNOSTICO_GERAL_SISTEMA.md
-```
-
-**💼 Gestão/CEO:**
-```bash
-# Seu documento principal
-cat RESUMO_EXECUTIVO.md
-
-# Para métricas visuais
-cat DASHBOARD_STATUS.md
-```
-
-**❓ Não sabe por onde começar:**
-```bash
-# Índice geral
-cat INDICE_DIAGNOSTICO.md
-```
-
----
-
-## 📈 PRINCIPAIS NÚMEROS
-
-```
+\`\`\`
 Status:           🟢 Operacional
 Score:            78/100 (Bom)
-Build:            ✅ 6.8s
+Build:            ✅ 8.59s
 Warnings:         ⚠️  80 (não críticos)
 TypeScript:       25% (47/189)
 Testes:           ❌ 0
-Bundle:           340 KB (gz)
-```
+Edge Functions:   ✅ 19
+Migrações:        ✅ 38
+Bundle:           340.54 KB (gz)
+\`\`\`
 
 ---
 
@@ -135,72 +98,35 @@ Bundle:           340 KB (gz)
 
 ---
 
-## 🎯 PRÓXIMOS PASSOS IMEDIATOS
+## 🚀 POR ONDE COMEÇAR?
 
-### Hoje
-- [x] Diagnóstico completo realizado
-- [x] Documentação criada
-- [ ] Review com equipe técnica
+### Se você é...
 
-### Esta Semana
-- [ ] Apresentar para gestão
-- [ ] Aprovar budget (mínimo Fase 1)
-- [ ] Alocar desenvolvedor
-- [ ] Iniciar correções
+**👨‍💻 Desenvolvedor:**
+\`\`\`bash
+cat QUICK_REFERENCE.md
+\`\`\`
 
-### Próximas 2 Semanas
-- [ ] Executar Fase 1 (warnings)
-- [ ] Avaliar resultados
-- [ ] Iniciar Fase 2 (testes)
+**🔧 Tech Lead:**
+\`\`\`bash
+cat DIAGNOSTICO_TECNICO_ACOES.md
+\`\`\`
 
----
+**💼 Gestão/CEO:**
+\`\`\`bash
+cat RESUMO_EXECUTIVO.md
+\`\`\`
 
-## 📋 TOP 3 AÇÕES MAIS URGENTES
-
-### 1️⃣ Corrigir Warnings (20 horas)
-```bash
-# Executar correção automática
-pnpm exec eslint . --ext .js,.jsx,.ts,.tsx --fix
-
-# Resultado: 80 → ~20 warnings
-```
-
-### 2️⃣ Remover Variáveis Não Usadas (4 horas)
-```bash
-# 18 variáveis identificadas para remover
-# Ver lista em: DIAGNOSTICO_TECNICO_ACOES.md
-```
-
-### 3️⃣ Validar .env.local (2 horas)
-```bash
-# Verificar sintaxe e duplicatas
-# Script: scripts/validate-env.mjs
-```
-
----
-
-## 🔗 LINKS ÚTEIS
-
-### Online
-- 🌐 [Produção](https://www.appvidasmart.com)
-- 🗄️ [Supabase](https://supabase.com/dashboard/project/zzugbgoylwbaojdnunuz)
-- 🚀 [Vercel](https://vercel.com/agenciaclimb/vida-smart-coach)
-- 💻 [GitHub](https://github.com/agenciaclimb/vida-smart-coach)
-
-### Documentação Local
-```bash
-# Ver todos os documentos de diagnóstico
-ls -lh DIAGNOSTICO*.md DASHBOARD*.md RESUMO*.md QUICK*.md INDICE*.md
-
-# Abrir índice completo
+**❓ Não sabe por onde começar:**
+\`\`\`bash
 cat INDICE_DIAGNOSTICO.md
-```
+\`\`\`
 
 ---
 
 ## ⚡ COMANDOS RÁPIDOS
 
-```bash
+\`\`\`bash
 # Status atual
 pnpm build                            # Verificar build
 git status                            # Estado do repo
@@ -213,124 +139,14 @@ pnpm exec eslint . --fix              # Corrigir warnings
 cat QUICK_REFERENCE.md                # Guia rápido
 cat DIAGNOSTICO_TECNICO_ACOES.md      # Ações técnicas
 cat RESUMO_EXECUTIVO.md               # Visão de negócio
-```
+\`\`\`
 
 ---
 
-## ❓ PERGUNTAS FREQUENTES
-
-### "Por que 6 documentos?"
-- Cada público (dev, tech lead, gestão) precisa de informação diferente
-- Facilita navegação e busca
-- Permite leitura rápida (2-20 min) ou profunda
-
-### "Qual ler primeiro?"
-- Depende do seu papel (ver seção "Por Onde Começar")
-- Em dúvida? Comece pelo INDICE_DIAGNOSTICO.md
-
-### "Preciso ler todos?"
-- Não! Leia apenas o relevante para você
-- Desenvolvedor: 2 documentos (15 min)
-- Gestão: 1 documento (5 min)
-- Tech Lead: 3 documentos (30 min)
-
-### "E se eu quiser só os números?"
-- DASHBOARD_STATUS.md tem tudo visual
-- RESUMO_EXECUTIVO.md tem decisões de negócio
-- QUICK_REFERENCE.md tem comandos rápidos
-
----
-
-## 📊 ESTRUTURA DA DOCUMENTAÇÃO
-
-```
-DIAGNÓSTICO COMPLETO
-│
-├── 📄 LEIA-ME-DIAGNOSTICO.md         ← VOCÊ ESTÁ AQUI
-│   └── Ponto de partida, links para tudo
-│
-├── 📚 INDICE_DIAGNOSTICO.md
-│   └── Mapa completo, fluxos de leitura
-│
-├── ⚡ QUICK_REFERENCE.md
-│   └── Comandos diários, troubleshooting
-│
-├── 📊 DASHBOARD_STATUS.md
-│   └── Métricas visuais, status atual
-│
-├── 🔧 DIAGNOSTICO_TECNICO_ACOES.md
-│   └── Ações práticas, scripts prontos
-│
-├── 🔍 DIAGNOSTICO_GERAL_SISTEMA.md
-│   └── Análise completa, 9 categorias
-│
-└── 📋 RESUMO_EXECUTIVO.md
-    └── Visão de negócio, ROI
-```
-
----
-
-## ✅ CHECKLIST RÁPIDA
-
-### Para Desenvolvedores
-- [ ] Li QUICK_REFERENCE.md
-- [ ] Entendi comandos principais
-- [ ] Sei como corrigir warnings
-- [ ] Conheço padrões de código
-
-### Para Tech Lead
-- [ ] Li DIAGNOSTICO_TECNICO_ACOES.md
-- [ ] Revisei DIAGNOSTICO_GERAL_SISTEMA.md
-- [ ] Entendi plano de 3 fases
-- [ ] Priorizei ações imediatas
-
-### Para Gestão
-- [ ] Li RESUMO_EXECUTIVO.md
-- [ ] Vi DASHBOARD_STATUS.md
-- [ ] Entendi investimento vs ROI
-- [ ] Tomei decisão sobre budget
-
----
-
-## 🎉 PRONTO PARA COMEÇAR!
-
-Escolha seu documento e comece a leitura:
-
-```bash
-# Desenvolvedor
-cat QUICK_REFERENCE.md
-
-# Tech Lead
-cat DIAGNOSTICO_TECNICO_ACOES.md
-
-# Gestão
-cat RESUMO_EXECUTIVO.md
-
-# Navegação completa
-cat INDICE_DIAGNOSTICO.md
-```
-
----
-
-## 📞 SUPORTE
-
-**Dúvidas técnicas?**
-- Consulte QUICK_REFERENCE.md (troubleshooting)
-- Veja DIAGNOSTICO_TECNICO_ACOES.md (ações detalhadas)
-
-**Dúvidas de negócio?**
-- Consulte RESUMO_EXECUTIVO.md (ROI e investimento)
-- Veja DASHBOARD_STATUS.md (métricas)
-
-**Não encontrou o que procura?**
-- Consulte INDICE_DIAGNOSTICO.md (busca completa)
-
----
-
-**📅 Criado em:** 14/10/2025  
+**📅 Diagnóstico atualizado em:** 29/11/2025  
 **👤 Por:** Copilot AI Agent  
 **✅ Status:** Completo e pronto para uso  
-**📧 Feedback:** Abra issue no GitHub
+**🔄 Próxima revisão:** 06/12/2025
 
 ---
 
