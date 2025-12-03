@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logger } from "../_shared/logger.ts";
+import { iaCoachCircuitBreaker, evolutionApiCircuitBreaker } from "../_shared/circuit-breaker.ts";
+import { checkRateLimit, getRateLimitMessage, logRateLimitViolation } from "../_shared/rate-limit.ts";
 
 // CORS headers
 const corsHeaders = {
@@ -57,6 +60,24 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+
+  // ⏱️ Métricas de observabilidade
+  const metrics = {
+    startTime: Date.now(),
+    userId: null as string | null,
+    phone: null as string | null,
+    messageLength: 0,
+    stage: null as string | null,
+    iaLatency: 0,
+    evolutionLatency: 0,
+    totalLatency: 0,
+    error: null as string | null,
+    errorType: null as string | null,
+    isDuplicate: false,
+    isEmergency: false,
+    loopDetected: false,
+    circuitBreakerActive: false,
+  };
 
   try {
   const url = new URL(req.url);
@@ -138,13 +159,68 @@ serve(async (req) => {
     // Normalizar telefone para storage consistente (sem @s.whatsapp.net)
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
     
-    console.log('📞 Phone lookup:', {
-      raw: phoneNumber,
-      normalized: normalizedPhone,
-      matched: !!matchedUser,
-      userId: matchedUser?.id,
-      userName: matchedUser?.full_name,
+    // Atualizar métricas
+    metrics.userId = matchedUser?.id || null;
+    metrics.phone = normalizedPhone;
+    metrics.messageLength = messageContent.length;
+    
+    // Logger estruturado
+    const log = logger.withContext({
+      userId: metrics.userId,
+      phone: normalizedPhone,
+      messageId,
     });
+    
+    log.info('Webhook received', {
+      matched: !!matchedUser,
+      userName: matchedUser?.full_name,
+      messageLength: messageContent.length,
+    });
+    
+    // 🛡️ RATE LIMITING
+    const rateLimit = await checkRateLimit(supabase, metrics.userId, normalizedPhone);
+    if (!rateLimit.allowed) {
+      log.warn('Rate limit exceeded', {
+        limit: rateLimit.limit,
+        resetIn: rateLimit.resetIn,
+      });
+      
+      await logRateLimitViolation(supabase, metrics.userId, normalizedPhone, rateLimit.limit);
+      
+      const rateLimitMsg = getRateLimitMessage(
+        rateLimit.remaining,
+        rateLimit.resetIn,
+        !!metrics.userId
+      );
+      
+      // Enviar mensagem de rate limit (sem contar contra o limite)
+      // Retornar 429 mas enviar mensagem educativa
+      metrics.error = 'Rate limit exceeded';
+      metrics.errorType = 'rate_limit';
+      metrics.totalLatency = Date.now() - metrics.startTime;
+      
+      // Salvar métrica antes de retornar
+      await supabase.from('whatsapp_metrics').insert(metrics).catch(() => {});
+      
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: 'Rate limited',
+          resetIn: rateLimit.resetIn,
+          limit: rateLimit.limit,
+        }),
+        { 
+          status: 429,
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": rateLimit.remaining.toString(),
+            "X-RateLimit-Reset": rateLimit.resetIn.toString(),
+          }
+        }
+      );
+    }
 
     // Log da mensagem recebida
     const currentTimestamp = Date.now();
@@ -169,7 +245,11 @@ serve(async (req) => {
 
       // Se count >= 2 (incluindo a que acabamos de inserir), é duplicação
       if (count && count >= 2) {
-        console.log("Duplicate message ignored:", messageId, "count:", count);
+        log.info('Duplicate message ignored', { messageId, count });
+        metrics.isDuplicate = true;
+        metrics.totalLatency = Date.now() - metrics.startTime;
+        await supabase.from('whatsapp_metrics').insert(metrics).catch(() => {});
+        
         return new Response(
           JSON.stringify({ ok: true, message: "Duplicate message ignored" }),
           { 
@@ -197,6 +277,9 @@ serve(async (req) => {
 
     // Verificar emergência
     if (isEmergency(messageContent)) {
+      log.warn('Emergency detected', { keywords: EMERGENCY_KEYWORDS });
+      metrics.isEmergency = true;
+      
       const evolutionApiUrl = Deno.env.get("EVOLUTION_API_URL") || Deno.env.get("EVOLUTION_BASE_URL");
       const evolutionToken =
         Deno.env.get("EVOLUTION_API_TOKEN") ||
@@ -275,6 +358,11 @@ serve(async (req) => {
             
             const isLooping = lastAssistantMessages.length >= 2 && 
                              lastAssistantMessages[0].content === lastAssistantMessages[1].content;
+            
+            if (isLooping) {
+              log.warn('Loop detected', { lastMessages: lastAssistantMessages.map(m => m.content) });
+              metrics.loopDetected = true;
+            }
 
             // ⏱️ TIMEOUT: 120 segundos para evitar cancelar a IA durante a regeneracao de plano
             const controller = new AbortController();
@@ -287,25 +375,54 @@ serve(async (req) => {
                 effectiveMessageContent = `[SYSTEM: A última resposta da IA foi repetida. AVANCE para uma nova pergunta ou área diferente.]\nUsuário: ${messageContent}`;
               }
 
-              const iaCoachResponse = await fetch(`${supabaseUrl}/functions/v1/ia-coach-chat`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  // Use whichever token is available/valid for this project (anon preferred, else service role)
-                  "Authorization": `Bearer ${iaAuthToken}`,
-                  // 🔐 Segredo interno para validar chamada entre funções
-                  "X-Internal-Secret": Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+              // 🛡️ CIRCUIT BREAKER: Protege contra falhas da IA
+              const iaStartTime = Date.now();
+              const iaCallResult = await iaCoachCircuitBreaker.execute(
+                async () => {
+                  const response = await fetch(`${supabaseUrl}/functions/v1/ia-coach-chat`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${iaAuthToken}`,
+                      "X-Internal-Secret": Deno.env.get('INTERNAL_FUNCTION_SECRET') || '',
+                    },
+                    body: JSON.stringify({
+                      messageContent: effectiveMessageContent,
+                      userProfile: { 
+                        id: matchedUser.id, 
+                        full_name: matchedUser.full_name || "Usuário WhatsApp" 
+                      },
+                      chatHistory: formattedHistory
+                    }),
+                    signal: controller.signal
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error(`IA Coach returned ${response.status}`);
+                  }
+                  
+                  return response;
                 },
-                body: JSON.stringify({
-                  messageContent: effectiveMessageContent,
-                  userProfile: { 
-                    id: matchedUser.id, 
-                    full_name: matchedUser.full_name || "Usuário WhatsApp" 
-                  },
-                  chatHistory: formattedHistory
-                }),
-                signal: controller.signal
-              });
+                // Fallback se circuit breaker está OPEN
+                async () => ({
+                  ok: true,
+                  status: 503,
+                  json: async () => ({
+                    reply: "Desculpe, estou temporariamente indisponível devido a instabilidade. Tente novamente em alguns minutos. 🙏",
+                    stage: 'fallback',
+                  })
+                })
+              );
+
+              const iaCoachResponse = iaCallResult.result;
+              metrics.iaLatency = Date.now() - iaStartTime;
+              metrics.circuitBreakerActive = iaCallResult.fromFallback;
+              
+              if (iaCallResult.fromFallback) {
+                log.warn('Using fallback (circuit breaker)', {
+                  circuitState: iaCoachCircuitBreaker.getState(),
+                });
+              }
 
               clearTimeout(timeoutId);
 
@@ -313,11 +430,17 @@ serve(async (req) => {
               if (iaCoachResponse.ok) {
                 const iaCoachData = await iaCoachResponse.json();
                 responseMessage = iaCoachData.reply || iaCoachData.response || iaCoachData.text || "Desculpe, não consegui processar sua mensagem.";
-                console.log('🤖 IA Coach:', {
+                
+                // Atualizar métricas de sucesso
+                metrics.stage = iaCoachData.stage;
+                
+                log.info('IA Coach response', {
                   stage: iaCoachData.stage,
                   replyLength: responseMessage.length,
                   loopDetected: isLooping,
+                  iaLatency: metrics.iaLatency,
                 });
+                
                 iaDebug.ok = true;
                 iaDebug.stage = iaCoachData.stage;
                 iaDebug.replyLength = responseMessage.length;
@@ -442,26 +565,37 @@ serve(async (req) => {
                   }
                 }
               } else {
-                console.error("IA Coach error:", await iaCoachResponse.text());
+                const errorText = await iaCoachResponse.text();
+                log.error("IA Coach error", new Error(errorText), { status: iaCoachResponse.status });
+                metrics.error = `IA Coach error: ${iaCoachResponse.status}`;
+                metrics.errorType = 'ia_error';
                 responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
                 iaDebug.ok = false;
               }
             } catch (fetchError: any) {
               clearTimeout(timeoutId);
               if (fetchError.name === 'AbortError') {
-                console.error("IA Coach timeout after 25s");
+                log.error("IA Coach timeout", fetchError, { timeout: 120000 });
+                metrics.error = 'IA Coach timeout';
+                metrics.errorType = 'ia_timeout';
                 responseMessage = "Desculpe, estou demorando um pouco. Pode tentar novamente?";
               } else {
-                console.error("Error calling IA Coach:", fetchError);
+                log.error("Error calling IA Coach", fetchError);
+                metrics.error = fetchError.message;
+                metrics.errorType = 'ia_error';
                 responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
               }
             }
           } else {
-            console.warn("Nenhum token JWT disponível (ANON ou SERVICE). Usando fallback de saudação.");
+            log.warn("No JWT token available");
+            metrics.error = 'No JWT token';
+            metrics.errorType = 'config_error';
             responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
           }
         } catch (error) {
-          console.error("Error calling IA Coach:", error);
+          log.error("Error calling IA Coach", error as Error);
+          metrics.error = (error as Error).message;
+          metrics.errorType = 'ia_error';
           responseMessage = "Olá! Sou seu Vida Smart Coach. Como posso ajudá-lo hoje?";
         }
       } else {
@@ -490,20 +624,36 @@ serve(async (req) => {
         const instanceId = instance || Deno.env.get("EVOLUTION_INSTANCE_ID") || Deno.env.get("EVOLUTION_INSTANCE_NAME") || "";
         const sendUrl = `${evolutionApiUrl}/message/sendText/${instanceId}`;
         
-        const sendResult = await fetch(sendUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": evolutionToken,
+        // 🛡️ CIRCUIT BREAKER para Evolution API
+        const evolutionStartTime = Date.now();
+        const evolutionResult = await evolutionApiCircuitBreaker.execute(
+          async () => {
+            const response = await fetch(sendUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": evolutionToken,
+              },
+              body: JSON.stringify({
+                number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
+                text: responseMessage
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Evolution API returned ${response.status}`);
+            }
+            
+            return response;
           },
-          body: JSON.stringify({
-            number: phoneNumber.replace('@s.whatsapp.net', '').replace(/\D/g, ''),
-            text: responseMessage
-          }),
-        }).catch(err => {
-          console.error("Failed to send response:", err);
-          return null;
-        });
+          async () => {
+            log.warn('Evolution API fallback (circuit breaker)');
+            return { ok: false, status: 503 };
+          }
+        );
+        
+        const sendResult = evolutionResult.result;
+        metrics.evolutionLatency = Date.now() - evolutionStartTime;
 
         // Se debug=send, retornar o status e corpo da Evolution sem salvar histórico
         if (debugParam === 'send') {
@@ -517,7 +667,16 @@ serve(async (req) => {
 
         if (sendResult && !sendResult.ok) {
           const errText = await sendResult.text().catch(() => '');
-          console.error("Evolution send failed:", sendResult.status, errText);
+          log.error("Evolution send failed", new Error(errText), { 
+            status: sendResult.status,
+            evolutionLatency: metrics.evolutionLatency,
+          });
+          metrics.error = `Evolution send failed: ${sendResult.status}`;
+          metrics.errorType = 'evolution_error';
+        } else if (sendResult && sendResult.ok) {
+          log.info('Message sent successfully', { 
+            evolutionLatency: metrics.evolutionLatency,
+          });
         }
 
         // ✅ Armazenar resposta da IA no histórico SOMENTE após envio bem-sucedido
@@ -533,6 +692,12 @@ serve(async (req) => {
       }
     }
 
+    // 📊 Salvar métricas
+    metrics.totalLatency = Date.now() - metrics.startTime;
+    await supabase.from('whatsapp_metrics').insert(metrics).catch((err) => {
+      log.error('Failed to save metrics', err);
+    });
+
     return new Response(
       JSON.stringify({ ok: true, received: true }),
       { 
@@ -542,7 +707,27 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Webhook error:", error);
+    logger.error("Webhook error", error as Error, {
+      userId: metrics.userId,
+      phone: metrics.phone,
+    });
+    
+    // Tentar salvar métrica de erro
+    metrics.error = (error as Error).message;
+    metrics.errorType = 'webhook_error';
+    metrics.totalLatency = Date.now() - metrics.startTime;
+    
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase.from('whatsapp_metrics').insert(metrics);
+      }
+    } catch (metricsError) {
+      logger.error('Failed to save error metrics', metricsError as Error);
+    }
+    
     return new Response(
       JSON.stringify({ ok: false, error: "Internal error" }),
       { 
