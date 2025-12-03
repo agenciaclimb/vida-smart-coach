@@ -58,3 +58,5 @@ tmp*.cjs
 tmp*.mjs
 *.backup
 *.bak
+
+.vercel
