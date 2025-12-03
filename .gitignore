@@ -46,3 +46,15 @@ correcao_*.js
 evolution_webhook_*.js
 TESTE_*.sql
 CORRECAO_*.sql
+
+# Agent outputs com informações sensíveis
+agent_outputs/ops-integrity-*.md
+agent_outputs/*sensitive*.md
+
+# Arquivos temporários gerados por scripts
+tmp*.txt
+tmp*.sql
+tmp*.cjs
+tmp*.mjs
+*.backup
+*.bak

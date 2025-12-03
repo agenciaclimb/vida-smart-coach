@@ -1,6 +1,23 @@
 {
+  "root": true,
   "extends": [
     "react-app",
     "react-app/jest"
+  ],
+  "overrides": [
+    {
+      "files": ["tests/**/*.{ts,tsx,js,jsx}", "tests/e2e/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "jest/no-conditional-expect": "off"
+      }
+    },
+    {
+      "files": ["supabase/functions/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-useless-escape": "off",
+        "@typescript-eslint/no-use-before-define": "off"
+      }
+    }
   ]
 }

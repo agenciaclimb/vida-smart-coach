@@ -1,9 +1,0 @@
-remote: This repository moved. Please use the new location:        
-remote:   https://github.com/agenciaclimb/vida-smart-coach.git        
-remote: 
-remote: Create a pull request for 'stabilize/lock-providers' on GitHub by visiting:        
-remote:      https://github.com/agenciaclimb/vida-smart-coach/pull/new/stabilize/lock-providers        
-remote: 
-branch 'stabilize/lock-providers' set up to track 'origin/stabilize/lock-providers'.
-To https://github.com/agenciaClimb/vida-smart-coach.git
- * [new branch]      stabilize/lock-providers -> stabilize/lock-providers

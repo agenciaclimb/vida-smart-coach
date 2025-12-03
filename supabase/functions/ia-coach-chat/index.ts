@@ -1464,7 +1464,6 @@ function analyzeAdvancementSDR(
 }
 
 // Função auxiliar para detectar objeções (atualmente não utilizada)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function detectObjection(message: string): string | null {
   const lowerMessage = message.toLowerCase();
   

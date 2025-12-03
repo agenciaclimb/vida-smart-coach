@@ -11,7 +11,9 @@ import {
     TrendingUp, Star, Zap, Crown, Medal, Flame, CheckCircle, Timer,
     Heart, Brain, Dumbbell, Apple, Sparkles, Share2
 } from 'lucide-react';
+import { PillarStyles, missionDifficultyColors, gradients } from '@/styles/designTokens';
 import CompletionProgress from '@/components/client/CompletionProgress';
+import ChallengesSection from '@/components/client/ChallengesSection';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useGamification } from '@/contexts/data/GamificationContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -80,22 +82,19 @@ const GamificationTabEnhanced = () => {
     };
 
     const getCategoryIcon = (category) => {
+        const color = PillarStyles[category]?.iconColor || '';
+        const className = `w-5 h-5 ${color}`;
         const icons = {
-            physical: <Dumbbell className="w-5 h-5" />,
-            nutrition: <Apple className="w-5 h-5" />,
-            emotional: <Heart className="w-5 h-5" />,
-            spiritual: <Sparkles className="w-5 h-5" />
+            physical: <Dumbbell className={className} />,
+            nutrition: <Apple className={className} />,
+            emotional: <Heart className={className} />,
+            spiritual: <Sparkles className={className} />
         };
-        return icons[category] || <Star className="w-5 h-5" />;
+        return icons[category] || <Star className={className} />;
     };
 
     const getMissionDifficultyColor = (type) => {
-        const colors = {
-            easy: 'bg-green-100 text-green-800 border-green-200',
-            medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-            challenging: 'bg-red-100 text-red-800 border-red-200'
-        };
-        return colors[type] || colors.easy;
+        return missionDifficultyColors[type] || missionDifficultyColors.easy;
     };
 
     const handleQuickActivity = async ({ activityType, activityName, activityKey, points }) => {
@@ -175,7 +174,7 @@ const GamificationTabEnhanced = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <Card className="shadow-lg bg-gradient-to-br from-primary to-purple-600 text-white">
+                    <Card className={`shadow-lg ${gradients.bluePurple} text-white`}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">
                                 <Crown className="w-8 h-8" />
@@ -265,7 +264,7 @@ const GamificationTabEnhanced = () => {
                                 <CardContent className="space-y-3">
                                     <Button 
                                         onClick={() => navigate('/rewards')}
-                                        className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+                                        className={`w-full justify-start ${gradients.purplePink} hover:opacity-90 text-white border-0`}
                                     >
                                         <Gift className="w-4 h-4 mr-2" />
                                         🎁 Loja de Recompensas
@@ -353,29 +352,29 @@ const GamificationTabEnhanced = () => {
                                 <CardContent className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Dumbbell className="w-4 h-4 text-blue-500" />
-                                            <span>Físico</span>
+                                            <Dumbbell className={`w-4 h-4 ${PillarStyles.physical.iconColor}`} />
+                                            <span>{PillarStyles.physical.label}</span>
                                         </div>
                                         <span className="font-bold">{userStats?.physical_points || 0}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Apple className="w-4 h-4 text-green-500" />
-                                            <span>Alimentar</span>
+                                            <Apple className={`w-4 h-4 ${PillarStyles.nutrition.iconColor}`} />
+                                            <span>{PillarStyles.nutrition.label}</span>
                                         </div>
                                         <span className="font-bold">{userStats?.nutrition_points || 0}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Heart className="w-4 h-4 text-red-500" />
-                                            <span>Emocional</span>
+                                            <Heart className={`w-4 h-4 ${PillarStyles.emotional.iconColor}`} />
+                                            <span>{PillarStyles.emotional.label}</span>
                                         </div>
                                         <span className="font-bold">{userStats?.emotional_points || 0}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-purple-500" />
-                                            <span>Espiritual</span>
+                                            <Sparkles className={`w-4 h-4 ${PillarStyles.spiritual.iconColor}`} />
+                                            <span>{PillarStyles.spiritual.label}</span>
                                         </div>
                                         <span className="font-bold">{userStats?.spiritual_points || 0}</span>
                                     </div>
@@ -613,9 +612,7 @@ const GamificationTabEnhanced = () => {
                                         <CardHeader className="pb-3">
                                             <CardTitle className="text-sm flex items-center gap-2">
                                                 {getCategoryIcon(category)}
-                                                {category === 'physical' ? 'Físico' : 
-                                                 category === 'nutrition' ? 'Alimentar' : 
-                                                 category === 'emotional' ? 'Emocional' : 'Espiritual'}
+                                                {PillarStyles[category]?.label || category}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="pt-0">
@@ -637,83 +634,9 @@ const GamificationTabEnhanced = () => {
                         </div>
                     </TabsContent>
 
-                    {/* Events Tab */}
+                    {/* Events Tab - Challenges System */}
                     <TabsContent value="events" className="mt-6">
-                        <div className="space-y-6">
-                            {events.map((event) => {
-                                const isParticipating = userParticipation.find(p => p.event_id === event.id);
-                                return (
-                                    <Card key={event.id}>
-                                        <CardHeader>
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <CardTitle className="flex items-center gap-2">
-                                                        {event.event_type === 'challenge' ? <Target className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
-                                                        {event.name}
-                                                    </CardTitle>
-                                                    <CardDescription>{event.description}</CardDescription>
-                                                </div>
-                                                <Badge variant={isParticipating ? "default" : "outline"}>
-                                                    {event.event_type === 'challenge' ? 'Desafio' : 
-                                                     event.event_type === 'competition' ? 'Competição' : 'Evento'}
-                                                </Badge>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                                    <div className="flex items-center gap-1">
-                                                        <Calendar className="w-4 h-4" />
-                                                        {format(new Date(event.start_date), 'dd/MM/yyyy', { locale: ptBR })} - 
-                                                        {format(new Date(event.end_date), 'dd/MM/yyyy', { locale: ptBR })}
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <Users className="w-4 h-4" />
-                                                        {event.current_participants || 0} participantes
-                                                    </div>
-                                                </div>
-                                                
-                                                {!isParticipating ? (
-                                                    <Button 
-                                                        onClick={() => handleJoinEvent(event)}
-                                                        disabled={isSubmitting}
-                                                        className="w-full vida-smart-gradient"
-                                                    >
-                                                        {isSubmitting ? (
-                                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                        ) : (
-                                                            'Participar do Evento'
-                                                        )}
-                                                    </Button>
-                                                ) : (
-                                                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                                        <div className="flex items-center gap-2 text-green-800">
-                                                            <CheckCircle className="w-4 h-4" />
-                                                            <span className="font-medium">Você está participando!</span>
-                                                        </div>
-                                                        {isParticipating.is_completed && (
-                                                            <p className="text-sm text-green-600 mt-1">
-                                                                Evento completado! +{isParticipating.points_earned} pontos
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-
-                            {events.length === 0 && (
-                                <Card>
-                                    <CardContent className="text-center py-12">
-                                        <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                        <p className="text-gray-500">Nenhum evento ativo no momento</p>
-                                        <p className="text-sm text-gray-400 mt-1">Fique de olho para novos eventos!</p>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                        <ChallengesSection />
                     </TabsContent>
 
                     {/* Referrals Tab */}

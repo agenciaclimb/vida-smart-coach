@@ -1,3 +1,48 @@
+// Centralized design tokens for gradients, colors and pillar-specific styles
+// Keep this minimal and className-centric to work smoothly with Tailwind
+
+export const gradients = {
+  // Generic primary gradient helpers
+  primary: 'vida-smart-gradient', // button or surface
+  primaryBg: 'bg-vida-smart-gradient', // background-only variant
+  // Common alternates used in UI
+  purplePink: 'bg-gradient-to-r from-purple-500 to-pink-500',
+  bluePurple: 'bg-gradient-to-br from-blue-500 to-purple-600',
+};
+
+export const missionDifficultyColors = {
+  easy: 'bg-green-100 text-green-800 border-green-200',
+  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  challenging: 'bg-red-100 text-red-800 border-red-200',
+};
+
+// Pillar style tokens by category key used across the app
+export const PillarStyles = {
+  physical: {
+    label: 'Físico',
+    iconColor: 'text-blue-500',
+    accent: 'text-blue-600',
+  },
+  nutrition: {
+    label: 'Alimentar',
+    iconColor: 'text-green-500',
+    accent: 'text-green-600',
+  },
+  emotional: {
+    label: 'Emocional',
+    iconColor: 'text-red-500',
+    accent: 'text-red-600',
+  },
+  spiritual: {
+    label: 'Espiritual',
+    iconColor: 'text-purple-500',
+    accent: 'text-purple-600',
+  },
+};
+
+export function getPillarLabel(key) {
+  return (PillarStyles[key] && PillarStyles[key].label) || key;
+}
 /**
  * DESIGN TOKENS - VIDA SMART COACH
  * 

@@ -11,6 +11,7 @@ import ChatSkeleton from '@/components/chat/ChatSkeleton';
 import { useChat } from '@/contexts/data/ChatContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useLocation } from 'react-router-dom';
+import { gradients } from '@/styles/designTokens';
 
 const ChatTab = () => {
     const { messages, sendMessage, loading: chatLoading } = useChat();
@@ -63,7 +64,7 @@ const ChatTab = () => {
                 className="h-[calc(100vh-200px)] flex flex-col"
             >
                 <Card className="flex flex-col flex-grow shadow-lg rounded-2xl overflow-hidden">
-                    <CardHeader className="bg-vida-smart-gradient text-white py-4">
+                    <CardHeader className={`${gradients.primary} text-white py-4`}>
                         <CardTitle className="text-xl flex items-center">
                             <Bot className="mr-2" /> Sua IA Coach
                         </CardTitle>
@@ -123,7 +124,7 @@ const ChatTab = () => {
                                                             sendMessage(suggestion, user.profile);
                                                         }
                                                     }}
-                                                    className="px-4 py-2 bg-white border-2 border-blue-200 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all"
+                                                    className={`px-4 py-2 bg-white border-2 border-primary/30 text-primary rounded-full text-sm font-medium hover:${gradients.primary} hover:text-white hover:border-primary transition-all`}
                                                     whileHover={{ scale: 1.05 }}
                                                     whileTap={{ scale: 0.95 }}
                                                 >
