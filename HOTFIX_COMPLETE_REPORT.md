@@ -23,7 +23,7 @@
 4. **Performance:** Prompts muito longos (~200 linhas) + queries DB lentas (716ms cada)
 
 ### Solução Implementada
-1. **Usuário de teste permanente:** UUID fixo `00000000-0000-0000-0000-000000000001`
+1. **Usuário de teste permanente:** UUID fixo `<TEST_USER_UUID>`
 2. **Migration:** `20251204_create_test_user_for_health_checks.sql`
 3. **Otimização radical:**
    - Prompts simplificados 95% (200 linhas → 2 linhas)
@@ -184,7 +184,7 @@ Coverage:    73% (statements)
 
 1. **`supabase/migrations/20251204_create_test_user_for_health_checks.sql`**
    - Migration para criar usuário de teste
-   - UUID fixo: `00000000-0000-0000-0000-000000000001`
+   - UUID fixo: `<TEST_USER_UUID>` (all zeros with suffix 1)
    - Email: `healthcheck@vidasmart.test`
 
 2. **`create-test-user.mjs`**
