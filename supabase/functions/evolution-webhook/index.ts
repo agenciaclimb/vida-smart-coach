@@ -226,8 +226,9 @@ serve(async (req) => {
     const currentTimestamp = Date.now();
     await supabase.from("whatsapp_messages").insert({
       user_id: matchedUser?.id || null,
-      phone: normalizedPhone,  // Usar normalizado para busca consistente
+      phone_number: normalizedPhone,
       message: messageContent,
+      message_content: messageContent,  // Tabela requer ambos campos
       event: "messages.upsert",
       timestamp: currentTimestamp,
     });
@@ -238,7 +239,7 @@ serve(async (req) => {
       const { count } = await supabase
         .from("whatsapp_messages")
         .select("*", { count: 'exact', head: true })
-        .eq("phone", normalizedPhone)  // Usar normalizado para deduplicação
+        .eq("phone_number", normalizedPhone)  // Corrigido: tabela usa phone_number
         .eq("message", messageContent)
         .eq("event", "messages.upsert")
         .gte("timestamp", thirtySecondsAgo);
