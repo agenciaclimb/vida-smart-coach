@@ -127,129 +127,41 @@ serve(async (req) => {
     const fullExtraSection = extraSection + feedbackSection;
 
     const planPrompts = {
-      physical: `Personal Trainer (NSCA/ACSM). Gere plano de treino JSON estruturado.
+      physical: `Personal Trainer (NSCA/ACSM). JSON treino 4 semanas.
 
-PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, ${profile.current_weight || '?'}kg, ${profile.height || '?'}cm, objetivo: ${profile.goal_type || 'saúde'}, nível: ${profile.activity_level || 'iniciante'}, limitações: ${(userProfile as any)?.limitations || 'nenhuma'}
-
-${fullExtraSection}
-
-DIRETRIZES:
-- 4 semanas progressivas (adaptação→progressão→consolidação)
-- 3x/semana (Seg/Qua/Sex), 5-7 exercícios/treino
-- Padrões: empurrar, puxar, joelhos/quadris, core
-- Reps por objetivo: força 3-6, hipertrofia 6-12, resistência 12-20
-- Respeite limitações, ajuste exercícios
-- Progresso semanal em notes
-
-FORMATO JSON (RETORNE SOMENTE O JSON VÁLIDO):
-{
-  "title": "Plano de Treino ${profile.goal_type || 'Personalizado'}",
-  "description": "Plano de ${profile.activity_level || 'iniciante'} focado em ${profile.goal_type || 'saúde'} com progressão semanal",
-  "duration_weeks": 4,
-  "weeks": [
-    {
-      "week": 1,
-      "focus": "Adaptação técnica e mobilidade",
-      "workouts": [
-        {
-          "day": "Segunda",
-          "name": "Treino A - Peito/Tríceps e Core",
-          "exercises": [
-            { "name": "Supino reto", "sets": 3, "reps": "8-10", "rest_seconds": 90, "notes": "Técnica; RPE 6-7" },
-            { "name": "Supino inclinado com halteres", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Controle excêntrico" },
-            { "name": "Crucifixo em máquina", "sets": 3, "reps": "12-15", "rest_seconds": 60, "notes": "Amplitude confortável" },
-            { "name": "Tríceps testa ou corda", "sets": 3, "reps": "10-12", "rest_seconds": 60, "notes": "Evite dor nas articulações" },
-            { "name": "Prancha", "sets": 3, "reps": "30-45s", "rest_seconds": 45, "notes": "Core estável" }
-          ]
-        },
-        {
-          "day": "Quarta",
-          "name": "Treino B - Costas/Bíceps e Core",
-          "exercises": [
-            { "name": "Remada curvada ou máquina", "sets": 3, "reps": "8-12", "rest_seconds": 90, "notes": "Coluna neutra" },
-            { "name": "Puxada na frente", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Controle escapular" },
-            { "name": "Remada baixa", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Amplitude completa" },
-            { "name": "Rosca direta", "sets": 3, "reps": "10-12", "rest_seconds": 60, "notes": "Evite balanço" },
-            { "name": "Prancha lateral", "sets": 3, "reps": "25-40s", "rest_seconds": 45, "notes": "Core anti-rotação" }
-          ]
-        },
-        {
-          "day": "Sexta",
-          "name": "Treino C - Pernas/Glúteos e Core",
-          "exercises": [
-            { "name": "Agachamento livre ou goblet", "sets": 3, "reps": "8-10", "rest_seconds": 120, "notes": "Se joelho sensível, agachamento caixa" },
-            { "name": "Levantamento terra romeno", "sets": 3, "reps": "8-10", "rest_seconds": 120, "notes": "Quadril dominante" },
-            { "name": "Leg press ou passada", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Amplitude confortável" },
-            { "name": "Elevação pélvica (hip thrust)", "sets": 3, "reps": "10-12", "rest_seconds": 90, "notes": "Foco em glúteos" },
-            { "name": "Abdominal infra", "sets": 3, "reps": "12-15", "rest_seconds": 45, "notes": "Controle lombar" }
-          ]
-        }
-      ]
-    }
-  ]
-}`,
-
-  nutritional: `Nutricionista. Plano alimentar JSON.
-
-PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, peso: ${profile.current_weight || '?'}kg → ${profile.target_weight || '?'}kg, objetivo: ${profile.goal_type || 'saúde'}, restrições: ${profile.dietary_restrictions || 'nenhuma'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, ${profile.current_weight || '?'}kg, objetivo: ${profile.goal_type || 'saúde'}, nível: ${profile.activity_level || 'iniciante'}
 
 ${fullExtraSection}
 
-ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
-{
-  "title": "Plano Nutricional Personalizado",
-  "description": "Descrição do plano",
-  "daily_calories": 1800,
-  "macronutrients": {
-    "protein": 130,
-    "carbs": 180,
-    "fat": 60
-  },
-  "water_intake_liters": 3,
-  "meals": [
-    {
-      "name": "Café da Manhã",
-      "time": "08:00",
-      "calories": 350,
-      "items": ["Ovos mexidos", "Pão integral", "Fruta"]
-    }
-  ],
-  "tips": ["Dica 1", "Dica 2"]
-}`,
+Retorne JSON:
+{"title":"Plano Treino","description":"4 semanas","duration_weeks":4,"weeks":[{"week":1,"focus":"Adaptação","workouts":[{"day":"Segunda","name":"A","exercises":[{"name":"exerc","sets":3,"reps":"8-10","rest_seconds":90,"notes":""}]}]}]}`,
 
-  emotional: `Psicólogo especialista. Plano emocional JSON.
+  nutritional: `Nutricionista. JSON alimentar.
 
-PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, objetivo: ${profile.goal_type || 'saúde'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, ${profile.current_weight || '?'}kg→${profile.target_weight || '?'}kg
 
 ${fullExtraSection}
 
 JSON:
-{
-  "title": "Plano Emocional",
-  "description": "Rotinas para equilíbrio",
-  "focus_areas": ["Reduzir ansiedade", "Autoestima"],
-  "daily_routines": [{"time": "Manhã", "duration_minutes": 10, "activity": "Check-in e respiração"}],
-  "techniques": [{"name": "Respiração 4-7-8", "description": "Acalmar sistema nervoso"
-    }
-  ],
-  "weekly_goals": ["Meta 1", "Meta 2"]
-}`,
+{"title":"Nutricional","daily_calories":1800,"macronutrients":{"protein":130,"carbs":180,"fat":60},"meals":[{"name":"Café","time":"08:00","items":["item"]}],"tips":["dica"]}`,
 
-  spiritual: `Coach espiritual. Plano de crescimento JSON.
+  emotional: `Psicólogo. JSON emocional.
 
 PERFIL: ${profile.full_name}, ${profile.age || '?'}anos
 
 ${fullExtraSection}
 
 JSON:
-{
-  "title": "Plano Espiritual",
-  "description": "Práticas para conexão e propósito",
-  "focus_areas": ["Propósito", "Gratidão"],
-  "daily_practices": [{"time": "Manhã", "activity": "Silêncio e intenção"}],
-  "weekly_reflection_prompts": ["Propósito esta semana?", "Lições aprendidas?"],
-  "monthly_goals": ["Meta relevante"]
-}`
+{"title":"Emocional","focus_areas":["área"],"daily_routines":[{"time":"Manhã","activity":"atividade"}],"techniques":[{"name":"técnica","description":"desc"}],"weekly_goals":["meta"]}`,
+
+  spiritual: `Coach espiritual. JSON espiritual.
+
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos
+
+${fullExtraSection}
+
+JSON:
+{"title":"Espiritual","focus_areas":["área"],"daily_practices":[{"time":"Manhã","activity":"prática"}],"weekly_reflection_prompts":["pergunta"],"monthly_goals":["meta"]}`
     };
 
     const prompt = planPrompts[planType as keyof typeof planPrompts];
@@ -257,13 +169,9 @@ JSON:
       throw new Error(`Tipo de plano inválido: ${planType}`);
     }
 
-    // Chamar OpenAI com timeout de 25s (HOTFIX: prevenir timeout)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
-
+    // Chamar OpenAI (Supabase Edge Function já tem timeout nativo de 60s)
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: 'POST',
-      signal: controller.signal,
       headers: { 
         Authorization: `Bearer ${openaiKey}`, 
         "Content-Type": "application/json" 
@@ -284,8 +192,6 @@ JSON:
         ]
       })
     });
-
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.statusText}`);

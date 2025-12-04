@@ -85,9 +85,9 @@ for (const func of CRITICAL_FUNCTIONS) {
   const startTime = Date.now();
   
   try {
-    // Timeout de 10 segundos para evitar espera excessiva
+    // Timeout de 30 segundos para generate-plan otimizado
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     const response = await fetch(`${SUPABASE_URL}${func.path}`, {
       method: func.method,
