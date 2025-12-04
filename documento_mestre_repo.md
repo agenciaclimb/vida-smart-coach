@@ -734,7 +734,155 @@ Tarefa considerada CONCLUÍDA apenas quando:
 2. Iniciar T1.1 (Refatorar serve() handler)
 3. Criar branch `refactor/sprint-1-serve-handler`
 
-## 🧾 Atualizações registradas (log)
+## 🧪 PROTOCOLO DE TESTES, CORREÇÃO IMEDIATA E VALIDAÇÃO (HOTFIX PROTOCOL 1.0)
+
+### Status: ATIVO — Aplicável a todo o ciclo de desenvolvimento
+
+Este protocolo define o processo oficial de testes, correção imediata e validação contínua para o Vida Smart Coach, baseado em sua arquitetura real e nos objetivos holísticos do sistema. O protocolo se aplica tanto a IAs quanto a desenvolvedores humanos e deve ser seguido rigorosamente para garantir qualidade de nível profissional.
+
+### 1. Objetivo
+
+Assegurar que todos os módulos do Vida Smart (WhatsApp, site, painel do cliente, painel de afiliados, painel administrativo, Supabase e integrações externas como Stripe e Google Calendar) permaneçam estáveis e funcionais, oferecendo uma experiência de coaching holístico (físico, alimentar, emocional e espiritual) sem interrupções.
+
+### 2. Princípios Fundamentais
+
+**Falha não é negociável:** qualquer erro detectado interrompe imediatamente o processo de desenvolvimento até ser diagnosticado, corrigido, testado e documentado.
+
+**Causa raiz obrigatória:** nunca corrija sintomas sem entender a origem do problema.
+
+**Correção responsável:** a solução deve manter o comportamento esperado e não introduzir gambiarras ou regressões.
+
+**Transparência total:** todas as correções devem ser registradas no Documento Mestre com contexto completo.
+
+### 3. Escopo de Aplicação
+
+Este protocolo se aplica a todos os testes e validações que abrangem:
+
+- **Fluxos E2E de cliente:** cadastro e onboarding via WhatsApp, contratação de planos pelo site (Stripe), geração de plano personalizado, check‑ins diários, acompanhamento de metas e envio de notificações pelo Google Calendar.
+
+- **E2E de afiliados e parceiros:** criação de afiliados, uso do link exclusivo, acompanhamento de comissões, cadastro de novos parceiros.
+
+- **E2E administrativos:** gestão de usuários, planos, pagamentos e churn; geração de relatórios e execução de gatilhos automáticos de IA.
+
+- **Integrações:** Supabase (database e functions), Evolution API/WhatsApp, Stripe (pagamentos e split), Google Calendar, Vercel (deploy e serverless) e serviços de notificação.
+
+- **Testes de integração** entre módulos (por exemplo, geração de plano alimenta dados no painel, pontuação de gamificação atualiza ranking, etc.).
+
+- **Testes unitários** de componentes isolados (funções de IA, cálculos de pontuação, validação de treinos, etc.).
+
+- **Testes manuais** executados pela equipe de QA quando necessário.
+
+### 4. Procedimento Fail‑Fast
+
+#### 4.1 Detecção de falha
+
+Se qualquer teste automatizado ou manual detectar uma falha (erro de código, comportamento inesperado, quebra de integração ou degradação da experiência do usuário), interrompa imediatamente:
+
+- Pare a geração de novo código ou novas funcionalidades;
+- Não execute testes adicionais antes da correção;
+- Notifique o time responsável se for falha de infraestrutura externa (por exemplo, Stripe ou Evolution API).
+
+#### 4.2 Diagnóstico da causa raiz
+
+A IA ou o desenvolvedor deve:
+
+- Identificar o módulo e o contexto: cliente final, afiliado, administrador ou integração;
+- Isolar o arquivo/endpoint/função envolvidos (por exemplo, Supabase function, webhook de pagamento, tarefa cron de Vercel);
+- Documentar o passo a passo para reproduzir o erro;
+- Anotar logs, dados de entrada e estado do sistema no momento da falha.
+
+#### 4.3 Correção imediata e branch fixa
+
+- Criar branch `fix/[nome-da-falha]` a partir da branch principal;
+- Implementar a correção real, evitando soluções temporárias;
+- Executar todos os testes unitários relevantes para o módulo alterado;
+- Registrar commit com mensagem clara (`fix: [descrição curta]`);
+- Abrir Pull Request descrevendo o problema, a causa raiz, a solução e os arquivos modificados.
+
+#### 4.4 Atualização do Documento Mestre
+
+Após abrir o PR, registre a correção sob **#update_log** no Documento Mestre com:
+
+- Data e hora da correção;
+- Fluxo/teste que falhou;
+- Causa raiz e impacto do bug (por exemplo, "Clientes não conseguiam gerar treinos" ou "Afiliados não recebiam comissões de nível 2");
+- Tipo de correção (Supabase, webhook, Vercel, IA, Stripe, WhatsApp, etc.);
+- Arquivos ou funções modificadas;
+- Link do PR;
+- Observações adicionais.
+
+#### 4.5 Verificação de logs e estado global
+
+Enquanto trabalha na correção, consulte os logs de:
+
+- Supabase Functions e banco (erros de consulta, permissões, triggers);
+- Vercel (falhas em deploy ou funções serverless);
+- Evolution API/WhatsApp (erros de envio ou recebimento de mensagens);
+- Stripe (pagamentos e splits);
+- Google Calendar (inserção ou alteração de eventos);
+- Serviços de gamificação e pontuação.
+
+Somente prosseguir quando os logs estiverem limpos e sem erros relacionados.
+
+### 5. Revalidação Total
+
+Após a correção:
+
+- Execute novamente toda a suíte de testes E2E, cobrindo todos os fluxos de cliente, afiliados e admins;
+- Rode todos os testes de integração e unitários;
+- Realize um teste manual de ponta a ponta no fluxo afetado;
+- Garanta que a experiência do usuário permaneça consistente (respostas da IA adequadas, tempos de carregamento aceitáveis, mensagens e eventos no horário correto);
+- Verifique novamente logs de todos os serviços.
+
+Se qualquer nova falha aparecer, reinicie o processo desde 4.1.
+
+### 6. Critérios de Estabilidade ("Green State")
+
+O projeto só pode avançar após confirmar:
+
+- ✅ 100% dos testes E2E, integração e unitários passaram;
+- ✅ Todos os serviços (Supabase, Vercel, WhatsApp, Stripe, Google Calendar) sem erros nos logs;
+- ✅ Nenhuma regressão em funcionalidades já validadas (físico, alimentar, emocional, espiritual, gamificação, afiliados, administrativos);
+- ✅ Respostas da IA Coach coerentes e sem loops ou contradições;
+- ✅ Usuários conseguem contratar planos, acessar painéis, gerar planos personalizados e participar de gamificação sem problemas;
+- ✅ Afiliados recebem comissões e conseguem gerenciar sua rede;
+- ✅ Administradores têm acesso a relatórios e configurações sem falhas.
+
+### 7. Checklist Final Antes de Merge
+
+- [ ] Todos os testes passaram e foram reexecutados após a correção;
+- [ ] O Documento Mestre foi atualizado com #update_log;
+- [ ] Logs de todos os serviços foram revisados e não apresentam erros;
+- [ ] A correção está alinhada com a arquitetura e as regras de negócio do Vida Smart;
+- [ ] Não foram introduzidas gambiarras ou workarounds temporários;
+- [ ] A experiência do usuário (cliente, afiliado e administrador) foi validada manualmente;
+- [ ] Revisão de código realizada por outro membro da equipe e aprovada.
+
+### 8. Objetivos Estratégicos
+
+Este protocolo não apenas corrige bugs, mas reforça os objetivos do Vida Smart:
+
+- **Excelência técnica:** entregar um produto confiável e seguro;
+- **Experiência holística:** garantir bem-estar físico, alimentar, emocional e espiritual por meio de uma IA acolhedora e motivadora;
+- **Transparência e confiança:** registrar todas as mudanças e garantir previsibilidade para usuários e parceiros;
+- **Crescimento sustentável:** permitir evoluções rápidas sem comprometer a qualidade.
+
+---
+
+## 🧾 Atualizações registradas (#update_log)
+
+- **04/12/2025** — HOTFIX: Correção estrutura whatsapp_messages (Responsável: JE • Execução: GitHub Copilot) — Status: ✅ Concluído
+  - **Problema:** IA respondendo sem contexto; mensagens duplicadas (4x); histórico vazio (0 mensagens salvas).
+  - **Causa raiz:** Webhook enviava campos `phone` + `message`, mas tabela requer `phone_number` + `message_content`.
+  - **Impacto:** INSERT falhando silenciosamente → histórico vazio → IA sem memória → respostas robóticas → duplicação não detectada.
+  - **Correção:** `supabase/functions/evolution-webhook/index.ts` (linhas 230, 234, 244)
+    - Linha 230: Adicionado `phone_number` + `message_content` no INSERT
+    - Linha 244: Corrigido query de duplicatas para usar `phone_number`
+  - **Validação:** INSERT testado com sucesso (Status 201); estrutura 100% validada; registro criado corretamente.
+  - **Deploy:** Commit 09a8b43; deploy manual via Supabase Dashboard; aguardando validação em produção.
+  - **Protocolo:** HOTFIX PROTOCOL 1.0 aplicado rigorosamente (detecção → diagnóstico → correção → validação).
+  - **Arquivos:** `HOTFIX_REPORT_20251204.md`, `supabase/migrations/20251204_create_whatsapp_messages.sql`.
+  - **Próximo passo:** Validação pós-deploy com `verificar_salvamento_mensagens.mjs`.
 
 - 22/10/2025 — Roadmap UX/UI e Gamificação criado (Responsável: JE • Execução: GitHub Copilot) — Status: Em Planejamento
   - Diagnóstico: Visual estático, gamificação superficial, falta de progressão visual, baixo engajamento emocional.
