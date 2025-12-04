@@ -5234,211 +5234,143 @@ Database (PostgreSQL)
 
 ---
 
-## 🧪 PROTOCOLO DE TESTES E HOTFIX
+## 🧪 PROTOCOLO DE TESTES, CORREÇÃO IMEDIATA E VALIDAÇÃO – VIDA SMART COACH (HOTFIX PROTOCOL 1.0)
 
-### Objetivo
-Formalizar o processo de correção rápida de bugs críticos em produção, garantindo qualidade sem comprometer velocidade. Este protocolo se aplica a situações onde um bug está afetando usuários ativamente e requer intervenção imediata.
+Este documento define o processo oficial de testes, correção imediata e validação contínua para o Vida Smart Coach, baseado em sua arquitetura real e nos objetivos holísticos do sistema. O protocolo se aplica tanto a IAs quanto a desenvolvedores humanos e deve ser seguido rigorosamente para garantir qualidade de nível profissional.
 
-### Princípios Fundamentais
-1. **Fail-Fast**: Detectar problemas antes que usuários reportem
-2. **Zero Regression**: Novas correções não devem quebrar funcionalidades existentes
-3. **Validation-First**: Sempre validar localmente antes de deploy
-4. **Rollback-Ready**: Ter plano B para reverter mudanças se necessário
-5. **Documentation-Always**: Documentar cada hotfix para aprendizado futuro
+### 1. Objetivo
 
-### Escopo de Aplicação
-- Bugs críticos (P0) que afetam funcionalidade principal
-- Erros que bloqueiam fluxos essenciais (login, pagamento, chat IA)
-- Problemas de segurança ou vazamento de dados
-- Performance degradada (> 5s latência em endpoints críticos)
+Assegurar que todos os módulos do Vida Smart (WhatsApp, site, painel do cliente, painel de afiliados, painel administrativo, Supabase e integrações externas como Stripe e Google Calendar) permaneçam estáveis e funcionais, oferecendo uma experiência de coaching holístico (físico, alimentar, emocional e espiritual) sem interrupções.
 
-**NÃO se aplica a:**
-- Features novas (usar processo normal de desenvolvimento)
-- Melhorias de UX/UI não críticas
-- Refatorações de código (agendar para sprint regular)
+### 2. Princípios Fundamentais
 
----
+**Falha não é negociável:** qualquer erro detectado interrompe imediatamente o processo de desenvolvimento até ser diagnosticado, corrigido, testado e documentado.
 
-### 🚨 PROCEDIMENTO FAIL-FAST (5 Passos)
+**Causa raiz obrigatória:** nunca corrija sintomas sem entender a origem do problema.
 
-#### **PASSO 1: PAUSA E DIAGNÓSTICO** (5-10 min)
-```bash
-# Checklist rápido
-□ O que quebrou? (funcionalidade específica)
-□ Desde quando? (horário/commit)
-□ Quantos usuários impactados?
-□ Há workaround temporário?
-□ É rollback ou fix-forward?
-```
+**Correção responsável:** a solução deve manter o comportamento esperado e não introduzir gambiarras ou regressões.
 
-**Ferramentas de diagnóstico:**
-- Logs Supabase: `Dashboard > Logs > Edge Functions`
-- Sentry/Error tracking (se configurado)
-- Health check script: `node scripts/health-check-functions.mjs`
-- Git diff: `git diff HEAD~1..HEAD` (último commit)
+**Transparência total:** todas as correções devem ser registradas no Documento Mestre com contexto completo.
 
----
+### 3. Escopo de Aplicação
 
-#### **PASSO 2: ISOLAMENTO DO PROBLEMA** (10-15 min)
-```bash
-# Reproduzir localmente
-1. Checkout do commit problemático
-2. Replicar cenário exato do bug
-3. Confirmar comportamento esperado vs atual
-4. Identificar causa raiz (código, config, dados)
-```
+Este protocolo se aplica a todos os testes e validações que abrangem:
 
-**Perguntas-chave:**
-- É problema de código ou configuração?
-- Afeta apenas Edge Functions ou também frontend?
-- Há dependência de dados específicos no DB?
-- Outros sistemas estão envolvidos (Evolution API, OpenAI)?
+**Fluxos E2E de cliente:** cadastro e onboarding via WhatsApp, contratação de planos pelo site (Stripe), geração de plano personalizado, check-ins diários, acompanhamento de metas e envio de notificações pelo Google Calendar.
 
----
+**E2E de afiliados e parceiros:** criação de afiliados, uso do link exclusivo, acompanhamento de comissões, cadastro de novos parceiros.
 
-#### **PASSO 3: FIX RÁPIDO E VALIDAÇÃO LOCAL** (20-30 min)
-```bash
-# Implementar correção
-1. Criar branch: hotfix/nome-do-bug
-2. Fazer mudança mínima necessária
-3. Rodar testes locais:
-   pnpm test                    # Unit tests
-   pnpm test:coverage           # Com cobertura
-   node tools/secret-scan.js    # Secret scan
+**E2E administrativos:** gestão de usuários, planos, pagamentos e churn; geração de relatórios e execução de gatilhos automáticos de IA.
 
-4. Validar manualmente:
-   - Testar cenário original do bug
-   - Testar fluxos relacionados (regressão)
-   - Verificar console/logs para erros
-```
+**Integrações:** Supabase (database e functions), Evolution API/WhatsApp, Stripe (pagamentos e split), Google Calendar, Vercel (deploy e serverless) e serviços de notificação.
 
-**Critérios de aprovação local:**
-- ✅ Bug original resolvido
-- ✅ Testes passando (coverage > 70%)
-- ✅ Sem novos warnings/errors no console
-- ✅ Fluxos principais funcionando (smoke test)
+**Testes de integração** entre módulos (por exemplo, geração de plano alimenta dados no painel, pontuação de gamificação atualiza ranking, etc.).
 
----
+**Testes unitários** de componentes isolados (funções de IA, cálculos de pontuação, validação de treinos, etc.).
 
-#### **PASSO 4: DEPLOY CONTROLADO** (10-15 min)
-```bash
-# Deploy Edge Functions (se aplicável)
-supabase functions deploy nome-da-funcao
+**Testes manuais** executados pela equipe de QA quando necessário.
 
-# Se migration necessária
-supabase migration up  # Ou aplicar via Dashboard SQL Editor
+### 4. Procedimento Fail-Fast
 
-# Validar deploy
-node scripts/health-check-functions.mjs
-```
+#### 4.1 Detecção de falha
 
-**Monitoramento pós-deploy (primeiros 10 min):**
-- [ ] Endpoint respondendo (status 200)
-- [ ] Latência normal (< 3s)
-- [ ] Sem novos erros nos logs
-- [ ] 3-5 testes manuais com usuários diferentes
+Se qualquer teste automatizado ou manual detectar uma falha (erro de código, comportamento inesperado, quebra de integração ou degradação da experiência do usuário), interrompa imediatamente:
 
----
+- Pare a geração de novo código ou novas funcionalidades;
+- Não execute testes adicionais antes da correção;
+- Notifique o time responsável se for falha de infraestrutura externa (por exemplo, Stripe ou Evolution API).
 
-#### **PASSO 5: REVALIDAÇÃO TOTAL** (15-20 min)
-```bash
-# Checklist de validação completa
-□ Fluxo WhatsApp end-to-end
-□ IA respondendo com contexto correto
-□ Gamificação registrando eventos
-□ Dashboard renderizando dados atualizados
-□ Pagamentos processando (se aplicável)
-```
+#### 4.2 Diagnóstico da causa raiz
 
-**Comandos úteis:**
-```bash
-# Verificar mensagens WhatsApp salvando
-node verificar_salvamento_mensagens.mjs
+A IA ou o desenvolvedor deve:
 
-# Testar IA com contexto
-curl -X POST https://<PROJECT>.supabase.co/functions/v1/ia-coach-chat \
-  -H "Authorization: Bearer <TOKEN>" \
-  -d '{"message":"Olá"}'
+- Identificar o módulo e o contexto: cliente final, afiliado, administrador ou integração;
+- Isolar o arquivo/endpoint/função envolvidos (por exemplo, Supabase function, webhook de pagamento, tarefa cron de Vercel);
+- Documentar o passo a passo para reproduzir o erro;
+- Anotar logs, dados de entrada e estado do sistema no momento da falha.
 
-# Health check completo
-node scripts/health-check-functions.mjs
-```
+#### 4.3 Correção imediata e branch fixa
 
----
+- Criar branch `fix/[nome-da-falha]` a partir da branch principal;
+- Implementar a correção real, evitando soluções temporárias;
+- Executar todos os testes unitários relevantes para o módulo alterado;
+- Registrar commit com mensagem clara (`fix: [descrição curta]`);
+- Abrir Pull Request descrevendo o problema, a causa raiz, a solução e os arquivos modificados.
 
-### ✅ CRITÉRIOS DE "GREEN STATE"
+#### 4.4 Atualização do Documento Mestre
 
-Antes de considerar o hotfix concluído, todos devem estar ✅:
+Após abrir o PR, registre a correção sob **#update_log** no Documento Mestre com:
 
-#### **Técnico:**
-- [ ] Todos testes unitários passando (`pnpm test`)
-- [ ] Coverage > 70% statements, 65% branches
-- [ ] Lint/TypeCheck sem erros (`pnpm ci`)
-- [ ] Secret scan limpo
-- [ ] Health checks passando (3/3 functions)
-- [ ] Latência < 3s em endpoints críticos
+- Data e hora da correção;
+- Fluxo/teste que falhou;
+- Causa raiz e impacto do bug (por exemplo, "Clientes não conseguiam gerar treinos" ou "Afiliados não recebiam comissões de nível 2");
+- Tipo de correção (Supabase, webhook, Vercel, IA, Stripe, WhatsApp, etc.);
+- Arquivos ou funções modificadas;
+- Link do PR;
+- Observações adicionais.
 
-#### **Funcional:**
-- [ ] Bug original resolvido (cenário específico testado)
-- [ ] Fluxos principais funcionando (WhatsApp, IA, Dashboard)
-- [ ] Nenhuma regressão detectada (testes manuais)
-- [ ] 3+ usuários de teste validados
+#### 4.5 Verificação de logs e estado global
 
-#### **Documentação:**
-- [ ] Commit message descritivo (fix: bug-nome - descrição)
-- [ ] #update_log atualizado com data, problema, solução
-- [ ] CHANGELOG.md atualizado (se versão semver)
-- [ ] Stakeholders notificados (se necessário)
+Enquanto trabalha na correção, consulte os logs de:
+
+- Supabase Functions e banco (erros de consulta, permissões, triggers);
+- Vercel (falhas em deploy ou funções serverless);
+- Evolution API/WhatsApp (erros de envio ou recebimento de mensagens);
+- Stripe (pagamentos e splits);
+- Google Calendar (inserção ou alteração de eventos);
+- Serviços de gamificação e pontuação.
+
+Somente prosseguir quando os logs estiverem limpos e sem erros relacionados.
+
+### 5. Revalidação Total
+
+Após a correção:
+
+- Execute novamente toda a suíte de testes E2E, cobrindo todos os fluxos de cliente, afiliados e admins;
+- Rode todos os testes de integração e unitários;
+- Realize um teste manual de ponta a ponta no fluxo afetado;
+- Garanta que a experiência do usuário permaneça consistente (respostas da IA adequadas, tempos de carregamento aceitáveis, mensagens e eventos no horário correto);
+- Verifique novamente logs de todos os serviços.
+
+Se qualquer nova falha aparecer, reinicie o processo desde 4.1.
+
+### 6. Critérios de Estabilidade ("Green State")
+
+O projeto só pode avançar após confirmar:
+
+- ✅ 100% dos testes E2E, integração e unitários passaram;
+- ✅ Todos os serviços (Supabase, Vercel, WhatsApp, Stripe, Google Calendar) sem erros nos logs;
+- ✅ Nenhuma regressão em funcionalidades já validadas (físico, alimentar, emocional, espiritual, gamificação, afiliados, administrativos);
+- ✅ Respostas da IA Coach coerentes e sem loops ou contradições;
+- ✅ Usuários conseguem contratar planos, acessar painéis, gerar planos personalizados e participar de gamificação sem problemas;
+- ✅ Afiliados recebem comissões e conseguem gerenciar sua rede;
+- ✅ Administradores têm acesso a relatórios e configurações sem falhas.
+
+### 7. Checklist Final Antes de Merge
+
+- [ ] Todos os testes passaram e foram reexecutados após a correção;
+- [ ] O Documento Mestre foi atualizado com #update_log;
+- [ ] Logs de todos os serviços foram revisados e não apresentam erros;
+- [ ] A correção está alinhada com a arquitetura e as regras de negócio do Vida Smart;
+- [ ] Não foram introduzidas gambiarras ou workarounds temporários;
+- [ ] A experiência do usuário (cliente, afiliado e administrador) foi validada manualmente;
+- [ ] Revisão de código realizada por outro membro da equipe e aprovada.
+
+### 8. Objetivos Estratégicos
+
+Este protocolo não apenas corrige bugs, mas reforça os objetivos do Vida Smart:
+
+**Excelência técnica:** entregar um produto confiável e seguro;
+
+**Experiência holística:** garantir bem-estar físico, alimentar, emocional e espiritual por meio de uma IA acolhedora e motivadora;
+
+**Transparência e confiança:** registrar todas as mudanças e garantir previsibilidade para usuários e parceiros;
+
+**Crescimento sustentável:** permitir evoluções rápidas sem comprometer a qualidade.
 
 ---
 
-### 📋 CHECKLIST ANTES DE MERGE
-
-```markdown
-## Hotfix: [Nome do Bug]
-
-**Problema:** Descrição breve do bug
-**Causa Raiz:** O que causou o problema
-**Solução:** Como foi resolvido
-**Impacto:** Quantos usuários afetados, por quanto tempo
-
-### Validação Técnica
-- [ ] Testes passando (`pnpm test`)
-- [ ] Coverage >= 70%
-- [ ] Lint/TypeCheck limpo
-- [ ] Secret scan OK
-- [ ] Health checks OK (3/3)
-
-### Validação Funcional  
-- [ ] Bug original resolvido
-- [ ] Fluxos principais OK (WhatsApp, IA, Dashboard)
-- [ ] Nenhuma regressão
-- [ ] 3+ testes manuais
-
-### Documentação
-- [ ] Commit descritivo
-- [ ] #update_log atualizado
-- [ ] CHANGELOG.md atualizado
-- [ ] Team notificado
-
-### Deploy
-- [ ] Edge Functions deployed
-- [ ] Migrations aplicadas (se necessário)
-- [ ] Monitoramento 10 min pós-deploy OK
-
-**Aprovado por:** [Nome]
-**Data/Hora:** [DD/MM/YYYY HH:MM]
-```
-
----
-
-### 🎯 OBJETIVOS ESTRATÉGICOS DO PROTOCOLO
-
-1. **Reduzir MTTR (Mean Time To Recovery):** < 1h para bugs críticos
-2. **Zero downtime:** Hotfixes não devem derrubar o sistema
-3. **Aprendizado contínuo:** Cada hotfix gera documentação para prevenir recorrência
-4. **Automação progressiva:** Aumentar cobertura de testes e CI/CD a cada ciclo
-5. **Cultura de qualidade:** Fail-fast é melhor que fail-late
+**Status do Protocolo: ATIVO** – aplicar para todo o ciclo de desenvolvimento e manutenção do Vida Smart.
 
 ---
 
