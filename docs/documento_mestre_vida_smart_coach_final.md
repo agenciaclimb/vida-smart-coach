@@ -5563,7 +5563,7 @@ node scripts/health-check-functions.mjs
 
 **Solução (HOTFIX PROTOCOL 1.0 - Seção 4.3):**
 1. **Criado usuário de teste permanente:**
-   - UUID fixo: `00000000-0000-0000-0000-000000000001`
+   - UUID fixo: `<TEST_USER_UUID>` (all zeros with suffix 1)
    - Email: `healthcheck@vidasmart.test`
    - Profile completo com dados válidos
 2. **Migration:** `20251204_create_test_user_for_health_checks.sql`
