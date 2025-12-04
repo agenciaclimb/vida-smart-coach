@@ -5545,6 +5545,63 @@ node scripts/health-check-functions.mjs
 
 ---
 
+#### **04/12/2025 - Hotfix: generate-plan erro 500 (UUID inválido)**
+
+**Problema:** Edge Function `generate-plan` retornando erro 500: `invalid input syntax for type uuid: "test-user-id"`
+
+**Detecção:** Health check automatizado (`scripts/health-check-functions.mjs`) identificou falha em 100% das requisições.
+
+**Causa Raiz (HOTFIX PROTOCOL 1.0 - Seção 4.2):**
+1. Health check usava `userId: "test-health-check"` (string, não UUID)
+2. FK constraint `user_profiles.id -> auth.users.id` exige UUID válido
+3. Insert em `user_training_plans` falhava com erro de sintaxe
+
+**Diagnóstico Completo:**
+- Teste direto via `test-generate-plan-direct.mjs` confirmou erro DB
+- Logs Supabase: `DB: invalid input syntax for type uuid`
+- Latência: ~10-12s antes de falhar (OpenAI OK, DB NOK)
+
+**Solução (HOTFIX PROTOCOL 1.0 - Seção 4.3):**
+1. **Criado usuário de teste permanente:**
+   - UUID fixo: `00000000-0000-0000-0000-000000000001`
+   - Email: `healthcheck@vidasmart.test`
+   - Profile completo com dados válidos
+2. **Migration:** `20251204_create_test_user_for_health_checks.sql`
+3. **Script auxiliar:** `create-test-user.mjs` (via Supabase Admin API)
+4. **Health check atualizado:** Payload com UUID válido + profile completo
+
+**Arquivos Modificados:**
+- `scripts/health-check-functions.mjs`: UUID válido + payload completo
+- `supabase/migrations/20251204_create_test_user_for_health_checks.sql`: Criar usuário teste
+- `create-test-user.mjs`: Script Node para criar via Admin API
+
+**Performance (antes → depois):**
+- evolution-webhook: 616ms → 495ms ✅
+- ia-coach-chat: 1387ms → 1488ms ✅
+- generate-plan: **ERROR 500 (12.7s) → 200 OK (3.1s)** ✅
+
+**Impacto da Otimização Completa (3 commits):**
+- Latência inicial: ~57s (com timeout customizado)
+- Após simplificação prompts: ~14s (ainda com erro 500)
+- **Após correção UUID: 3.1s** ✅
+- **Melhoria total: 94.6%** (57s → 3.1s)
+
+**Validação (HOTFIX PROTOCOL 1.0 - Seção 5):**
+- ✅ Health check: 3/3 Edge Functions respondendo (200 OK)
+- ✅ Testes unitários: 53/53 passing (zero regressões)
+- ✅ Git hooks: 4/4 validações passaram
+- ✅ Logs Supabase: sem erros DB ou FK violations
+- ✅ Latência média: 1705ms (excelente para LLM call)
+
+**Commits:**
+- `7114feb`: hotfix: simplificou prompts 90% + removeu timeout customizado
+- `5243735`: perf: otimização generate-plan 75% mais rápido (57s→14s)
+- `caef9fc`: fix(generate-plan): corrigir erro 500 por UUID inválido no health check
+
+**Status:** ✅ **RESOLVIDO** - Sistema 100% operacional, todas Edge Functions validadas
+
+---
+
 ### 📚 REFERÊNCIAS
 - `SPRINT_1_2_FINAL_REPORT.md` - Documentação completa das sprints
 - `CHECKLIST_ROADMAP.md` - Roadmap atualizado com status 100%

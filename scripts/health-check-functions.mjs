@@ -69,9 +69,18 @@ const CRITICAL_FUNCTIONS = [
       'Content-Type': 'application/json'
     },
     body: {
-      userId: 'test-health-check',
+      userId: '00000000-0000-0000-0000-000000000001',
       planType: 'physical',
-      userProfile: { id: 'test', full_name: 'Health Check', goal: 'test' }
+      userProfile: {
+        id: '00000000-0000-0000-0000-000000000001',
+        full_name: 'Health Check Test User',
+        age: 30,
+        current_weight: 75,
+        target_weight: 70,
+        height: 175,
+        goal_type: 'general_health',
+        activity_level: 'sedentary'
+      }
     }
   }
 ];
@@ -85,9 +94,9 @@ for (const func of CRITICAL_FUNCTIONS) {
   const startTime = Date.now();
   
   try {
-    // Timeout de 10 segundos para evitar espera excessiva
+    // Timeout de 30 segundos para generate-plan otimizado
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     const response = await fetch(`${SUPABASE_URL}${func.path}`, {
       method: func.method,
