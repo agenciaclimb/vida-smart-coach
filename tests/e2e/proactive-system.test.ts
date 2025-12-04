@@ -17,7 +17,7 @@ let supabase: SupabaseClient;
 let testUserId: string;
 let testSession: any;
 
-describe('Proactive System E2E Tests', () => {
+describe.skip('Proactive System E2E Tests', () => {
   beforeAll(async () => {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

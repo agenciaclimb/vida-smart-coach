@@ -1,13 +1,58 @@
 #!/usr/bin/env sh
-# Pre-commit hook: blocks secrets from being committed
-# Requires Node.js installed
+# Pre-commit hook - HOTFIX PROTOCOL 1.0
+# Executado automaticamente antes de cada commit
+# Configurar com: pnpm setup:githooks
 
-# Run secret scan on staged changes
-node tools/secret-scan.js
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-  echo "\n❌ Pre-commit aborted: Secret scan failed. See details above."
-  exit $STATUS
+set -e
+
+echo ""
+echo "🔍 HOTFIX PROTOCOL 1.0 - Validação Pré-Commit"
+echo "═══════════════════════════════════════════════"
+echo ""
+
+# 1. Lint Check
+echo "1️⃣ ESLint (max-warnings 0)..."
+pnpm lint
+if [ $? -ne 0 ]; then
+  echo "❌ ERRO: ESLint falhou. Corrija os erros antes do commit."
+  exit 1
 fi
+echo "   ✅ Lint OK"
+echo ""
+
+# 2. TypeScript Check
+echo "2️⃣ TypeScript (typecheck)..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ ERRO: TypeScript falhou. Corrija os tipos antes do commit."
+  exit 1
+fi
+echo "   ✅ TypeScript OK"
+echo ""
+
+# 3. Unit Tests (apenas arquivos modificados se possível)
+echo "3️⃣ Testes unitários..."
+pnpm test
+if [ $? -ne 0 ]; then
+  echo "❌ ERRO: Testes falharam. Corrija antes do commit."
+  exit 1
+fi
+echo "   ✅ Testes OK"
+echo ""
+
+# 4. Secret Scan
+echo "4️⃣ Secret scan..."
+node tools/secret-scan.js
+if [ $? -ne 0 ]; then
+  echo "❌ ERRO: Secrets detectados. Remova antes do commit."
+  exit 1
+fi
+echo "   ✅ Sem secrets detectados"
+echo ""
+
+echo "═══════════════════════════════════════════════"
+echo "✅ TODAS AS VALIDAÇÕES PASSARAM!"
+echo "✅ Commit permitido pelo HOTFIX PROTOCOL 1.0"
+echo ""
 
 exit 0

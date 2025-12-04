@@ -21,7 +21,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'html'],
       reportsDirectory: './coverage',
       include: [
         'src/**/*.{ts,tsx,js,jsx}',
@@ -36,6 +36,13 @@ export default defineConfig({
         '**/node_modules/**',
         '**/dist/**',
       ],
+      // HOTFIX PROTOCOL 1.0 - Cobertura mínima obrigatória
+      thresholds: {
+        statements: 70,
+        branches: 65,
+        functions: 70,
+        lines: 70,
+      },
     },
   },
 });

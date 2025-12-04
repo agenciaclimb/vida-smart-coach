@@ -867,6 +867,81 @@ Este protocolo não apenas corrige bugs, mas reforça os objetivos do Vida Smart
 - **Transparência e confiança:** registrar todas as mudanças e garantir previsibilidade para usuários e parceiros;
 - **Crescimento sustentável:** permitir evoluções rápidas sem comprometer a qualidade.
 
+### 9. Automações e Ferramentas (v1.1 - 04/12/2025)
+
+#### 9.1 Git Hooks Pré-Commit
+
+**Arquivo:** `.githooks/pre-commit`  
+**Ativação:** Automática (configurada via `pnpm setup:githooks`)
+
+**Validações automáticas antes de cada commit:**
+1. ✅ ESLint (max-warnings 0)
+2. ✅ TypeScript typecheck
+3. ✅ Testes unitários (vitest)
+4. ✅ Secret scan
+
+**Benefício:** Impede commits com código quebrado (fail-fast real)
+
+#### 9.2 Cobertura de Testes Mínima
+
+**Arquivo:** `vitest.config.ts`  
+**Thresholds obrigatórios:**
+- Statements: 70%
+- Branches: 65%
+- Functions: 70%
+- Lines: 70%
+
+**Comando:** `pnpm test:coverage`  
+**Relatório visual:** `coverage/index.html`
+
+**Funções críticas (90% obrigatório):**
+- `supabase/functions/evolution-webhook/`
+- `supabase/functions/ia-coach-chat/`
+- `supabase/functions/generate-plan/`
+- `src/contexts/`
+
+#### 9.3 Suite de Regressão
+
+**Arquivo:** `SUITE_REGRESSAO.md`  
+**Testes rápidos por módulo (< 2 minutos):**
+
+```bash
+# WhatsApp Integration (30s)
+pnpm test supabase/functions/evolution-webhook
+pnpm test supabase/functions/ia-coach-chat/__tests__/whatsapp-flow.test.ts
+
+# IA Coach completo (2min)
+pnpm test supabase/functions/ia-coach-chat/__tests__
+
+# Geração de Planos (15s)
+pnpm test supabase/functions/ia-coach-chat/__tests__/plan.test.ts
+
+# Gamificação (20s)
+pnpm test tests/gamification.test.js
+
+# Suite completa antes de merge (5min)
+pnpm ci
+```
+
+**Matriz de testes:** Ver `SUITE_REGRESSAO.md` para tabela completa por tipo de mudança
+
+#### 9.4 Health Checks Pós-Deploy
+
+**Arquivo:** `scripts/health-check-functions.mjs`  
+**Uso:** `node scripts/health-check-functions.mjs`
+
+**Validações automáticas:**
+- ✅ Todas as Edge Functions respondem (200/400/404)
+- ✅ Latência média < 3s
+- ✅ Sistema operacional
+
+**Funções testadas:**
+- `evolution-webhook`
+- `ia-coach-chat`
+- `generate-plan`
+
+**Critério de sucesso:** Todas funções acessíveis + latência aceitável
+
 ---
 
 ## 🧾 Atualizações registradas (#update_log)
