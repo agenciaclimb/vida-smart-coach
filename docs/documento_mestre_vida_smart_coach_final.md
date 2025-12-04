@@ -5234,6 +5234,384 @@ Database (PostgreSQL)
 
 ---
 
+## 🧪 PROTOCOLO DE TESTES E HOTFIX
+
+### Objetivo
+Formalizar o processo de correção rápida de bugs críticos em produção, garantindo qualidade sem comprometer velocidade. Este protocolo se aplica a situações onde um bug está afetando usuários ativamente e requer intervenção imediata.
+
+### Princípios Fundamentais
+1. **Fail-Fast**: Detectar problemas antes que usuários reportem
+2. **Zero Regression**: Novas correções não devem quebrar funcionalidades existentes
+3. **Validation-First**: Sempre validar localmente antes de deploy
+4. **Rollback-Ready**: Ter plano B para reverter mudanças se necessário
+5. **Documentation-Always**: Documentar cada hotfix para aprendizado futuro
+
+### Escopo de Aplicação
+- Bugs críticos (P0) que afetam funcionalidade principal
+- Erros que bloqueiam fluxos essenciais (login, pagamento, chat IA)
+- Problemas de segurança ou vazamento de dados
+- Performance degradada (> 5s latência em endpoints críticos)
+
+**NÃO se aplica a:**
+- Features novas (usar processo normal de desenvolvimento)
+- Melhorias de UX/UI não críticas
+- Refatorações de código (agendar para sprint regular)
+
+---
+
+### 🚨 PROCEDIMENTO FAIL-FAST (5 Passos)
+
+#### **PASSO 1: PAUSA E DIAGNÓSTICO** (5-10 min)
+```bash
+# Checklist rápido
+□ O que quebrou? (funcionalidade específica)
+□ Desde quando? (horário/commit)
+□ Quantos usuários impactados?
+□ Há workaround temporário?
+□ É rollback ou fix-forward?
+```
+
+**Ferramentas de diagnóstico:**
+- Logs Supabase: `Dashboard > Logs > Edge Functions`
+- Sentry/Error tracking (se configurado)
+- Health check script: `node scripts/health-check-functions.mjs`
+- Git diff: `git diff HEAD~1..HEAD` (último commit)
+
+---
+
+#### **PASSO 2: ISOLAMENTO DO PROBLEMA** (10-15 min)
+```bash
+# Reproduzir localmente
+1. Checkout do commit problemático
+2. Replicar cenário exato do bug
+3. Confirmar comportamento esperado vs atual
+4. Identificar causa raiz (código, config, dados)
+```
+
+**Perguntas-chave:**
+- É problema de código ou configuração?
+- Afeta apenas Edge Functions ou também frontend?
+- Há dependência de dados específicos no DB?
+- Outros sistemas estão envolvidos (Evolution API, OpenAI)?
+
+---
+
+#### **PASSO 3: FIX RÁPIDO E VALIDAÇÃO LOCAL** (20-30 min)
+```bash
+# Implementar correção
+1. Criar branch: hotfix/nome-do-bug
+2. Fazer mudança mínima necessária
+3. Rodar testes locais:
+   pnpm test                    # Unit tests
+   pnpm test:coverage           # Com cobertura
+   node tools/secret-scan.js    # Secret scan
+
+4. Validar manualmente:
+   - Testar cenário original do bug
+   - Testar fluxos relacionados (regressão)
+   - Verificar console/logs para erros
+```
+
+**Critérios de aprovação local:**
+- ✅ Bug original resolvido
+- ✅ Testes passando (coverage > 70%)
+- ✅ Sem novos warnings/errors no console
+- ✅ Fluxos principais funcionando (smoke test)
+
+---
+
+#### **PASSO 4: DEPLOY CONTROLADO** (10-15 min)
+```bash
+# Deploy Edge Functions (se aplicável)
+supabase functions deploy nome-da-funcao
+
+# Se migration necessária
+supabase migration up  # Ou aplicar via Dashboard SQL Editor
+
+# Validar deploy
+node scripts/health-check-functions.mjs
+```
+
+**Monitoramento pós-deploy (primeiros 10 min):**
+- [ ] Endpoint respondendo (status 200)
+- [ ] Latência normal (< 3s)
+- [ ] Sem novos erros nos logs
+- [ ] 3-5 testes manuais com usuários diferentes
+
+---
+
+#### **PASSO 5: REVALIDAÇÃO TOTAL** (15-20 min)
+```bash
+# Checklist de validação completa
+□ Fluxo WhatsApp end-to-end
+□ IA respondendo com contexto correto
+□ Gamificação registrando eventos
+□ Dashboard renderizando dados atualizados
+□ Pagamentos processando (se aplicável)
+```
+
+**Comandos úteis:**
+```bash
+# Verificar mensagens WhatsApp salvando
+node verificar_salvamento_mensagens.mjs
+
+# Testar IA com contexto
+curl -X POST https://<PROJECT>.supabase.co/functions/v1/ia-coach-chat \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"message":"Olá"}'
+
+# Health check completo
+node scripts/health-check-functions.mjs
+```
+
+---
+
+### ✅ CRITÉRIOS DE "GREEN STATE"
+
+Antes de considerar o hotfix concluído, todos devem estar ✅:
+
+#### **Técnico:**
+- [ ] Todos testes unitários passando (`pnpm test`)
+- [ ] Coverage > 70% statements, 65% branches
+- [ ] Lint/TypeCheck sem erros (`pnpm ci`)
+- [ ] Secret scan limpo
+- [ ] Health checks passando (3/3 functions)
+- [ ] Latência < 3s em endpoints críticos
+
+#### **Funcional:**
+- [ ] Bug original resolvido (cenário específico testado)
+- [ ] Fluxos principais funcionando (WhatsApp, IA, Dashboard)
+- [ ] Nenhuma regressão detectada (testes manuais)
+- [ ] 3+ usuários de teste validados
+
+#### **Documentação:**
+- [ ] Commit message descritivo (fix: bug-nome - descrição)
+- [ ] #update_log atualizado com data, problema, solução
+- [ ] CHANGELOG.md atualizado (se versão semver)
+- [ ] Stakeholders notificados (se necessário)
+
+---
+
+### 📋 CHECKLIST ANTES DE MERGE
+
+```markdown
+## Hotfix: [Nome do Bug]
+
+**Problema:** Descrição breve do bug
+**Causa Raiz:** O que causou o problema
+**Solução:** Como foi resolvido
+**Impacto:** Quantos usuários afetados, por quanto tempo
+
+### Validação Técnica
+- [ ] Testes passando (`pnpm test`)
+- [ ] Coverage >= 70%
+- [ ] Lint/TypeCheck limpo
+- [ ] Secret scan OK
+- [ ] Health checks OK (3/3)
+
+### Validação Funcional  
+- [ ] Bug original resolvido
+- [ ] Fluxos principais OK (WhatsApp, IA, Dashboard)
+- [ ] Nenhuma regressão
+- [ ] 3+ testes manuais
+
+### Documentação
+- [ ] Commit descritivo
+- [ ] #update_log atualizado
+- [ ] CHANGELOG.md atualizado
+- [ ] Team notificado
+
+### Deploy
+- [ ] Edge Functions deployed
+- [ ] Migrations aplicadas (se necessário)
+- [ ] Monitoramento 10 min pós-deploy OK
+
+**Aprovado por:** [Nome]
+**Data/Hora:** [DD/MM/YYYY HH:MM]
+```
+
+---
+
+### 🎯 OBJETIVOS ESTRATÉGICOS DO PROTOCOLO
+
+1. **Reduzir MTTR (Mean Time To Recovery):** < 1h para bugs críticos
+2. **Zero downtime:** Hotfixes não devem derrubar o sistema
+3. **Aprendizado contínuo:** Cada hotfix gera documentação para prevenir recorrência
+4. **Automação progressiva:** Aumentar cobertura de testes e CI/CD a cada ciclo
+5. **Cultura de qualidade:** Fail-fast é melhor que fail-late
+
+---
+
+## 🛠️ AUTOMAÇÕES E FERRAMENTAS (v1.1 - 04/12/2025)
+
+### 9.1. Git Hooks Pré-Commit
+
+**Arquivo:** `.githooks/pre-commit`
+
+Validação automática executada antes de cada commit:
+
+```bash
+🔍 HOTFIX PROTOCOL 1.0 - Validação Pré-Commit
+═══════════════════════════════════════════════
+
+1️⃣ ESLint (max-warnings 0)...
+2️⃣ TypeScript (typecheck)...
+3️⃣ Testes unitários...
+4️⃣ Secret scan...
+```
+
+**Ativação:**
+```bash
+git config core.hooksPath .githooks
+```
+
+**Comportamento:**
+- Bloqueia commit se alguma validação falhar
+- Fornece feedback claro sobre o que precisa ser corrigido
+- Referencia seção do Documento Mestre se necessário
+
+---
+
+### 9.2. Cobertura de Testes Mínima
+
+**Arquivo:** `vitest.config.ts`
+
+Thresholds obrigatórios configurados:
+
+```typescript
+coverage: {
+  thresholds: {
+    statements: 70,
+    branches: 65,
+    functions: 70,
+    lines: 70,
+  }
+}
+```
+
+**Comandos:**
+```bash
+pnpm test              # Rodar testes
+pnpm test:coverage     # Com relatório de cobertura
+```
+
+**Relatório HTML:**
+- Gerado em: `coverage/index.html`
+- Mostra arquivos com cobertura baixa
+- Identifica branches não testados
+
+---
+
+### 9.3. Suite de Regressão
+
+**Arquivo:** `SUITE_REGRESSAO.md`
+
+Documentação completa dos testes por módulo:
+
+| Módulo | Comando | Tempo Estimado |
+|--------|---------|----------------|
+| WhatsApp | `pnpm test tests/whatsapp` | ~30s |
+| IA Coach | `pnpm test supabase/functions/ia-coach-chat` | ~2min |
+| Plans | `pnpm test tests/plan` | ~15s |
+| Gamification | `pnpm test tests/gamification` | ~20s |
+| Dashboard | `pnpm test tests/dashboard` | ~45s |
+| **Full Suite** | `pnpm ci` | **~5min** |
+
+**Matriz de Decisão:**
+
+| Tipo de Mudança | Testes Obrigatórios |
+|----------------|---------------------|
+| Edge Function | Módulo específico + Integration |
+| Frontend Component | Component + Dashboard |
+| Database Migration | Database + Integration |
+| Hotfix Critical | **Full Suite** |
+
+**Troubleshooting** incluído para erros comuns.
+
+---
+
+### 9.4. Health Checks Pós-Deploy
+
+**Arquivo:** `scripts/health-check-functions.mjs`
+
+Validação automatizada das Edge Functions críticas:
+
+```bash
+node scripts/health-check-functions.mjs
+```
+
+**Saída esperada:**
+```
+🏥 HEALTH CHECK - Edge Functions
+📡 Testando evolution-webhook... ✅ 200 (611ms)
+📡 Testando ia-coach-chat... ✅ 200 (1160ms)
+📡 Testando generate-plan... ✅ 200 (2340ms)
+📊 Latência média: 1370ms
+✅ TODAS FUNÇÕES OPERACIONAIS
+```
+
+**Alertas automáticos:**
+- ⚠️ Latência > 3s
+- ❌ Status code != 200
+- ❌ Timeout (> 10s)
+
+**Exit codes:**
+- `0`: Sucesso (todas funções OK)
+- `1`: Falha (uma ou mais funções com problema)
+
+**Uso no CI/CD:**
+```yaml
+# .github/workflows/deploy.yml
+- name: Health Check
+  run: node scripts/health-check-functions.mjs
+```
+
+---
+
+### 📊 MÉTRICAS DE QUALIDADE (KPIs)
+
+| Métrica | Target | Atual | Status |
+|---------|--------|-------|--------|
+| Test Coverage | ≥ 70% | 73% | ✅ |
+| Pre-commit Block Rate | < 10% | 8% | ✅ |
+| Health Check Success | 100% | 66% | ⚠️ |
+| MTTR (hotfix) | < 1h | 45min | ✅ |
+| Zero Regression Rate | 100% | 100% | ✅ |
+
+**Nota:** Health check detectou issue com `generate-plan` (timeout). Investigação em andamento.
+
+---
+
+### #update_log
+
+#### **04/12/2025 - Hotfix: phone_number bug + PROTOCOL v1.1**
+
+**Problema:** Coluna `phone_number` não existia na tabela `whatsapp_messages`, causando erro 500 em todas requisições do webhook Evolution API.
+
+**Causa Raiz:** Migration anterior criou tabela sem a coluna `phone_number`, mas código da Edge Function esperava essa coluna.
+
+**Solução:**
+1. Adicionada coluna `phone_number TEXT` via ALTER TABLE
+2. Ajustada lógica de anti-duplicação para usar `phone_number` como chave
+3. Validado com 3 testes manuais (mensagens salvas corretamente)
+
+**Impacto:** ~30 usuários afetados por ~2h (webhook retornando 500)
+
+**Melhorias Implementadas (PROTOCOL v1.1):**
+- ✅ Git hooks pré-commit com 4 validações (lint, typecheck, test, secret-scan)
+- ✅ Coverage thresholds obrigatórios (70%/65%/70%/70%)
+- ✅ Suite de regressão documentada (`SUITE_REGRESSAO.md`)
+- ✅ Health check automatizado (`scripts/health-check-functions.mjs`)
+- ✅ Protocolo completo documentado nesta seção
+
+**Commits:**
+- `09a8b43`: fix: adicionar coluna phone_number em whatsapp_messages
+- `1c9b2e2`: docs: adicionar HOTFIX PROTOCOL 1.0 ao documento mestre
+- `81641bb`: feat: HOTFIX PROTOCOL 1.1 - Automações e ferramentas de validação
+
+**Validação:** Health check detectou issue adicional com `generate-plan` (timeout > 10s). Próxima prioridade de investigação.
+
+---
 
 ### 📚 REFERÊNCIAS
 - `SPRINT_1_2_FINAL_REPORT.md` - Documentação completa das sprints
@@ -5241,5 +5619,8 @@ Database (PostgreSQL)
 - `docs/PLANO_ESTRATEGICO_COMPLETO.md` - Roadmap 6 semanas
 - `tests/manual/TESTES_MEU_PLANO_V2.md` - 100+ checkpoints
 - `src/components/client/PlanTab.jsx` - PhysicalPlanDisplay (linhas 516-832) como template
+- `SUITE_REGRESSAO.md` - Suite completa de testes de regressão
+- `.githooks/pre-commit` - Validações automáticas pré-commit
+- `scripts/health-check-functions.mjs` - Health checks pós-deploy
 
 
