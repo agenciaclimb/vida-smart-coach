@@ -127,28 +127,19 @@ serve(async (req) => {
     const fullExtraSection = extraSection + feedbackSection;
 
     const planPrompts = {
-      physical: `Você é um Personal Trainer com base científica (NSCA/ACSM). Gere um plano de treino em JSON ESTRUTURADO e COMPLETO.
+      physical: `Personal Trainer (NSCA/ACSM). Gere plano de treino JSON estruturado.
 
-PERFIL:
-- Nome: ${profile.full_name}
-- Idade: ${profile.age || 'não informada'}
-- Peso: ${profile.current_weight || 'não informado'}kg
-- Altura: ${profile.height || 'não informada'}cm
-- Objetivo: ${profile.goal_type || 'saúde geral'}
-- Nível: ${profile.activity_level || 'iniciante'}
-- Limitações: ${(userProfile as any)?.limitations || 'nenhuma informada'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, ${profile.current_weight || '?'}kg, ${profile.height || '?'}cm, objetivo: ${profile.goal_type || 'saúde'}, nível: ${profile.activity_level || 'iniciante'}, limitações: ${(userProfile as any)?.limitations || 'nenhuma'}
 
 ${fullExtraSection}
 
-PRINCÍPIOS OBRIGATÓRIOS:
-- Periodização curta de 4 semanas: Semana 1 adaptação técnica; Semanas 2-3 progressão; Semana 4 consolidar/deload leve se iniciante. O array "weeks" DEVE ter 4 itens (1,2,3,4).
-- Frequência: 3 sessões/semana (Segunda, Quarta, Sexta) ou respeite restrição de tempo se informada.
-- Cada treino DEVE ter entre 5 e 7 exercícios (array exercises com 5-7 itens), cobrindo padrões: empurrar, puxar, joelhos/quadris, core.
-- Volume semanal por grupo muscular (objetivo hipertrofia): 10-16 séries; força: 8-12 séries pesadas; emagrecimento: 8-12 séries moderadas + 1-2 condicionamentos.
-- Faixas de repetições por objetivo: força 3-6; hipertrofia 6-12; resistência/definição 12-20. Ajuste o descanso (força 120-180s; hipertrofia 60-120s; resistência 30-60s).
-- Respeite limitações (ex.: joelho/coluna): substitua exercícios por variações seguras e acrescente nota.
-- Inclua pelo menos 1 exercício de core por sessão.
-- Progrida semana a semana (em sets, reps OU carga sugerida) e registre em notes: "Progredir +1-2 reps ou +2,5-5%".
+DIRETRIZES:
+- 4 semanas progressivas (adaptação→progressão→consolidação)
+- 3x/semana (Seg/Qua/Sex), 5-7 exercícios/treino
+- Padrões: empurrar, puxar, joelhos/quadris, core
+- Reps por objetivo: força 3-6, hipertrofia 6-12, resistência 12-20
+- Respeite limitações, ajuste exercícios
+- Progresso semanal em notes
 
 FORMATO JSON (RETORNE SOMENTE O JSON VÁLIDO):
 {
@@ -198,15 +189,9 @@ FORMATO JSON (RETORNE SOMENTE O JSON VÁLIDO):
   ]
 }`,
 
-  nutritional: `Você é um Nutricionista expert. Crie um plano alimentar personalizado em JSON.
+  nutritional: `Nutricionista. Plano alimentar JSON.
 
-PERFIL:
-- Nome: ${profile.full_name}
-- Idade: ${profile.age || 'não informada'}
-- Peso atual: ${profile.current_weight || 'não informado'}kg
-- Peso alvo: ${profile.target_weight || 'não informado'}kg
-- Objetivo: ${profile.goal_type || 'saúde geral'}
-- Restrições: ${profile.dietary_restrictions || 'nenhuma'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, peso: ${profile.current_weight || '?'}kg → ${profile.target_weight || '?'}kg, objetivo: ${profile.goal_type || 'saúde'}, restrições: ${profile.dietary_restrictions || 'nenhuma'}
 
 ${fullExtraSection}
 
@@ -232,60 +217,38 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
   "tips": ["Dica 1", "Dica 2"]
 }`,
 
-  emotional: `Você é um Psicólogo especialista em bem-estar. Crie um plano emocional personalizado em JSON.
+  emotional: `Psicólogo especialista. Plano emocional JSON.
 
-PERFIL:
-- Nome: ${profile.full_name}
-- Idade: ${profile.age || 'não informada'}
-- Objetivo: ${profile.goal_type || 'saúde geral'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos, objetivo: ${profile.goal_type || 'saúde'}
 
 ${fullExtraSection}
 
-ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
+JSON:
 {
-  "title": "Plano de Bem-Estar Emocional",
-  "description": "Rotinas para equilíbrio emocional",
-  "focus_areas": ["Reduzir ansiedade", "Melhorar autoestima"],
-  "daily_routines": [
-    {
-      "time": "Manhã",
-      "duration_minutes": 10,
-      "activity": "Check-in de humor e respiração consciente"
-    }
-  ],
-  "techniques": [
-    {
-      "name": "Respiração 4-7-8",
-      "description": "Técnica para acalmar o sistema nervoso"
+  "title": "Plano Emocional",
+  "description": "Rotinas para equilíbrio",
+  "focus_areas": ["Reduzir ansiedade", "Autoestima"],
+  "daily_routines": [{"time": "Manhã", "duration_minutes": 10, "activity": "Check-in e respiração"}],
+  "techniques": [{"name": "Respiração 4-7-8", "description": "Acalmar sistema nervoso"
     }
   ],
   "weekly_goals": ["Meta 1", "Meta 2"]
 }`,
 
-  spiritual: `Você é um Coach espiritual. Crie um plano de crescimento espiritual personalizado em JSON.
+  spiritual: `Coach espiritual. Plano de crescimento JSON.
 
-PERFIL:
-- Nome: ${profile.full_name}
-- Idade: ${profile.age || 'não informada'}
+PERFIL: ${profile.full_name}, ${profile.age || '?'}anos
 
 ${fullExtraSection}
 
-ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
+JSON:
 {
-  "title": "Plano de Crescimento Espiritual",
+  "title": "Plano Espiritual",
   "description": "Práticas para conexão e propósito",
-  "focus_areas": ["Conexão com propósito", "Gratidão"],
-  "daily_practices": [
-    {
-      "time": "Manhã",
-      "activity": "Momento de silêncio e definição de intenção"
-    }
-  ],
-  "weekly_reflection_prompts": [
-    "Como vivi meu propósito esta semana?",
-    "Que lições aprendi sobre mim mesmo(a)?"
-  ],
-  "monthly_goals": ["Objetivo 1", "Objetivo 2"]
+  "focus_areas": ["Propósito", "Gratidão"],
+  "daily_practices": [{"time": "Manhã", "activity": "Silêncio e intenção"}],
+  "weekly_reflection_prompts": ["Propósito esta semana?", "Lições aprendidas?"],
+  "monthly_goals": ["Meta relevante"]
 }`
     };
 
@@ -294,21 +257,25 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
       throw new Error(`Tipo de plano inválido: ${planType}`);
     }
 
-    // Chamar OpenAI
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Chamar OpenAI com timeout de 25s (HOTFIX: prevenir timeout)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: 'POST',
+      signal: controller.signal,
       headers: { 
         Authorization: `Bearer ${openaiKey}`, 
         "Content-Type": "application/json" 
       },
       body: JSON.stringify({
-  model: 'gpt-4o-mini',
-  temperature: 0.4,
+        model: 'gpt-4o-mini',
+        temperature: 0.4,
         response_format: { type: "json_object" },
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista que SEMPRE retorna respostas EXCLUSIVAMENTE em formato JSON válido, sem qualquer texto adicional antes ou depois.'
+            content: 'Especialista que retorna APENAS JSON válido, sem texto adicional.'
           },
           {
             role: 'user',
@@ -317,6 +284,8 @@ ESTRUTURA JSON (IMPORTANTE: retorne APENAS o JSON, sem texto adicional):
         ]
       })
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.statusText}`);
