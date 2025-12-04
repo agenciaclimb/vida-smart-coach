@@ -128,9 +128,9 @@ serve(async (req: Request) => {
     const conversationSessionId = resolveConversationSessionId();
     const conversationMemory = await loadConversationMemory(userProfile.id, supabase, conversationSessionId);
 
-    // Carregar ou inicializar ProgressionTracker
+    // Carregar ou inicializar ProgressionTracker (usa clientStage.current_stage temporariamente)
     let progressionTracker: ProgressionTracker = {
-      stage: activeStage,
+      stage: clientStage.current_stage,
       substage: 0,
       questionsAsked: chatHistory?.filter(m => m.role === 'assistant').map(m => m.content) || [],
       topicsCovered: conversationMemory.entities.user_goals || [],
